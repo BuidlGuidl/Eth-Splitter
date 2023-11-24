@@ -77,10 +77,8 @@ export const Header = () => {
     </>
   );
 
-  console.log(chains);
-
   return (
-    <div className="sticky lg:static top-0 navbar bg-base-100 min-h-0 flex-shrink-0 justify-between z-20 px-0 sm:px-2">
+    <div className="sticky lg:static top-0 navbar  min-h-0 flex-shrink-0 justify-between z-20 shadow-md bg-primary px-0 sm:px-2">
       <div className="navbar-start w-auto lg:w-1/2">
         <div className="lg:hidden dropdown" ref={burgerMenuRef}>
           <label
@@ -104,20 +102,21 @@ export const Header = () => {
             </ul>
           )}
         </div>
+
         <Link href="/" passHref className="hidden lg:flex items-center gap-2 ml-4 mr-6 shrink-0">
-          <div className="flex relative w-8 h-8">
-            <Image alt="SE2 logo" className="cursor-pointer" fill src="/logo.svg" />
+          <div className="flex relative w-[200px] h-[48px]">
+            <Image alt="SE2 logo" className="cursor-pointer" fill src="/assets/bg.svg" />
           </div>
-          <div className="flex flex-col">
-            <span className="font-bold leading-tight">Token Splitter</span>
-            <span className="text-xs">Simple. Fast. Split!</span>
-          </div>
+          {/* <div className="flex flex-col">
+            <span className="font-bold leading-tight">Scaffold-ETH</span>
+            <span className="text-xs">Ethereum dev stack</span>
+          </div> */}
         </Link>
-        <ul className="hidden lg:flex lg:flex-nowrap menu menu-horizontal px-1 gap-2">{navLinks}</ul>
+        {/* <ul className="hidden lg:flex lg:flex-nowrap menu menu-horizontal px-1 gap-2">{navLinks}</ul> */}
       </div>
-      <div className="navbar-end flex-grow mr-4">
+      <div className="navbar-end flex-grow mr-4 ">
         <select
-          className="select select-sm sm:w-fit w-20 mr-2"
+          className="select select-sm sm:w-fit w-20 mr-2 bg-gray-600 text-white"
           style={{ borderWidth: 1, borderColor: chain && (chain as any).color }}
           onChange={event => {
             const [name, id] = event.target.value.split("|");

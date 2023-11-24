@@ -114,7 +114,7 @@ const TokenData = ({
               type="text"
               value={tokenContract}
               onChange={e => setTokenContract(e.target.value)}
-              className="input input-ghost focus:outline-none focus:bg-transparent focus:text-gray-400 h-[2.2rem] min-h-[2.2rem] border w-full font-medium placeholder:text-accent/50 text-gray-400"
+              className="input input-ghost focus:outline-none focus:bg-transparent focus:text-neutral h-[2.2rem] min-h-[2.2rem] border w-full font-medium placeholder:text-accent/50 text-gray-400"
             />
           </div>
           {errorMsg !== "" && tokenContract !== "" && <p className="ml-2 text-[0.75rem] text-red-400">{errorMsg}</p>}
@@ -142,7 +142,7 @@ const TokenData = ({
               value={approveAmount}
               readOnly
               // onChange={e => setApproveAmount(e.target.value)}
-              className="input input-ghost focus:outline-none focus:bg-transparent focus:text-gray-400 h-[2.2rem] min-h-[2.2rem] border w-3/5 font-medium placeholder:text-accent/50 text-gray-400"
+              className="input input-ghost focus:outline-none focus:bg-transparent focus:text-neutral h-[2.2rem] min-h-[2.2rem] border w-3/5 font-medium placeholder:text-accent/50 text-gray-400"
             />
             <button
               type="button"

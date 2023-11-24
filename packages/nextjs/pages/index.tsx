@@ -4,7 +4,8 @@ import type { NextPage } from "next";
 import { useAccount } from "wagmi";
 import EqualUi from "~~/components/splitter-ui/EqualUi";
 import UnEqualUi from "~~/components/splitter-ui/UnEqualUi";
-import { useDeployedContractInfo } from "~~/hooks/scaffold-eth";
+
+// import { useDeployedContractInfo } from "~~/hooks/scaffold-eth";
 
 const Home: NextPage = () => {
   const [activeItem, setActiveItem] = useState("split-eth");
@@ -16,12 +17,12 @@ const Home: NextPage = () => {
   }
 
   let splitterContract: any;
-  let splitterAbi: any;
+  // let splitterAbi: any;
 
-  const { data: deployedContractData, isLoading: deployedContractLoading } = useDeployedContractInfo("ETHSplitter");
-  if (deployedContractData) {
-    ({ address: splitterContract, abi: splitterAbi } = deployedContractData);
-  }
+  // const { data: deployedContractData, isLoading: deployedContractLoading } = useDeployedContractInfo("ETHSplitter");
+  // if (deployedContractData) {
+  //   ({ address: splitterContract, abi: splitterAbi } = deployedContractData);
+  // }
 
   return (
     <>
@@ -30,7 +31,7 @@ const Home: NextPage = () => {
         <meta name="description" content="Created with 🏗 scaffold-eth-2" />
       </Head>
 
-      <div className="flex items-center flex-col flex-grow pt-10 ">
+      <div className="flex items-center flex-col flex-grow pt-14">
         <div className="grid grid-cols-1 md:grid-cols-2 items-center gap-4">
           <ul className="flex bg-base-100 rounded-full p-[0.2rem] border border-base-300 shadow-md shadow-secondary">
             <li
@@ -67,7 +68,6 @@ const Home: NextPage = () => {
             <option value="unequal-splits">Unequal Splits</option>
           </select>
         </div>
-
         {splitType === "equal-splits" && (
           <EqualUi splitItem={activeItem} account={account} splitterContract={splitterContract} />
         )}

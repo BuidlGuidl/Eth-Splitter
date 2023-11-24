@@ -40,7 +40,7 @@ module.exports = {
           "secondary-content": "#F9FBFF",
           accent: "#4969A6",
           "accent-content": "#F9FBFF",
-          neutral: "#F9FBFF",
+          neutral: "#212638",
           "neutral-content": "#385183",
           "base-100": "#385183",
           "base-200": "#2A3655",
@@ -93,7 +93,7 @@ module.exports = {
           "secondary-content": "#3ACB98",
           accent: "#212638",
           "accent-content": "#F9FBFF",
-          neutral: "#141616",
+          neutral: "#F9FBFF",
           "neutral-content": "#385183",
           "base-100": "#101010",
           "base-200": "#101111",
@@ -143,6 +143,14 @@ module.exports = {
   theme: {
     // Extend Tailwind classes (e.g. font-bai-jamjuree, animate-grow)
     extend: {
+      colors: {
+        new_primary: "#293853",
+        new_secondary: "#3f5174",
+        new_tertiary: "#93bbfb",
+      },
+      backgroundColor: {
+        gradient: "linear-gradient(225deg, #293853 0%, #521f93 100%)",
+      },
       fontFamily: {
         "bai-jamjuree": ["Bai Jamjuree", "sans-serif"],
       },

@@ -127,7 +127,7 @@ const UnEqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
                     </span>
                     <span className="w-4/12 bg-base-200 border-2 border-base-300 rounded-full">
                       <input
-                        className="input input-ghost focus:outline-none focus:bg-transparent focus:text-gray-400 h-[2.2rem] min-h-[2.2rem] font-medium placeholder:text-accent/50 w-full text-gray-400 "
+                        className="input input-ghost focus:outline-none focus:bg-transparent focus:text-neutral h-[2.2rem] min-h-[2.2rem] font-medium placeholder:text-accent/50 w-full text-gray-400 "
                         type="number"
                         min={0}
                         onChange={val => updateAmounts(val.target.value, index)}
