@@ -106,25 +106,28 @@ const UnEqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
         />
       )}
       <div className="mx-auto mt-14">
-        <form className="md:w-[500px] w-[300px] lg:w-[800px] bg-base-100 rounded-3xl shadow-xl border-2 p-2">
-          <div className="flex flex-col space-y-1 w-full my-1">
+        <form className="md:w-[500px] w-[300px] lg:w-[800px] bg-base-100 rounded-3xl shadow-md shadow-secondary border border-base-300 p-4">
+          <div className="flex flex-col space-y-1 w-full my-1 gap-y-[0.75rem]">
             <p className="font-semibold  ml-1 my-0 break-words">Recipient Wallets</p>
 
             {wallets.map((wallet, index) => (
               <div key={index}>
-                <div className="flex gap-2 mt-1 w-full ">
-                  <div className="w-11/12 flex gap-2 items-center">
-                    <span className="w-11/12">
+                <div className="flex gap-2 mt-1 w-full">
+                  <div className="w-11/12 flex gap-4 items-center">
+                    <span className="w-11/12 relative">
                       <AddressInput
                         name={""}
                         placeholder={"Recipient's address"}
                         value={wallet}
                         onChange={val => updateWallet(val, index)}
                       />
+                      {!isAddress(wallet) && wallet !== "" && (
+                        <p className="text-[0.7rem] text-red-400 absolute left-1/2 bottom-0 transform -translate-x-1/2 m-0">address is invalid</p>
+                      )}
                     </span>
-                    <span className="w-4/12">
+                    <span className="w-4/12 bg-base-200 border-2 border-base-300 rounded-full">
                       <input
-                        className="input  input-ghost focus:outline-none focus:bg-transparent focus:text-gray-400 h-[2.2rem] min-h-[2.2rem] font-medium placeholder:text-accent/50 w-full text-gray-400 bg-base-200 border-2 border-base-300"
+                        className="input input-ghost focus:outline-none focus:bg-transparent focus:text-gray-400 h-[2.2rem] min-h-[2.2rem] font-medium placeholder:text-accent/50 w-full text-gray-400 "
                         type="number"
                         min={0}
                         onChange={val => updateAmounts(val.target.value, index)}
@@ -143,9 +146,6 @@ const UnEqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
                     </button>
                   )}
                 </div>
-                {!isAddress(wallet) && wallet !== "" && (
-                  <p className="ml-2 text-[0.75rem] text-red-400">address is invalid</p>
-                )}
               </div>
             ))}
             <button type="button" onClick={addWalletField} className="btn btn-primary font-black ">

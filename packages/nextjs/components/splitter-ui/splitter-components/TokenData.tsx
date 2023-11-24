@@ -104,7 +104,7 @@ const TokenData = ({
 
   return (
     <div className="mx-auto my-14 -mb-2">
-      <div className="md:w-[500px] w-[300px] lg:w-[800px] bg-base-100 rounded-3xl shadow-xl border-2 p-2">
+      <div className="flex flex-col gap-4 md:w-[500px] w-[300px] lg:w-[800px] bg-base-100 rounded-3xl shadow-md shadow-secondary border border-base-300 p-4 ">
         <div className="flex flex-col space-y-1 w-full my-1">
           <p className="font-semibold  ml-1 my-0 break-words">Enter Token Contract</p>
           <div
@@ -114,24 +114,26 @@ const TokenData = ({
               type="text"
               value={tokenContract}
               onChange={e => setTokenContract(e.target.value)}
-              className="input input-ghost focus:outline-none focus:bg-transparent focus:text-gray-400  border w-full font-medium placeholder:text-accent/50 text-gray-400"
+              className="input input-ghost focus:outline-none focus:bg-transparent focus:text-gray-400 h-[2.2rem] min-h-[2.2rem] border w-full font-medium placeholder:text-accent/50 text-gray-400"
             />
           </div>
           {errorMsg !== "" && tokenContract !== "" && <p className="ml-2 text-[0.75rem] text-red-400">{errorMsg}</p>}
         </div>
-        <div className="flex flex-col space-y-1 w-full my-1">
-          <div className="flex justify-around bg-base-200 w-full mx-auto m-1 rounded-full break-words md:text-base text-xs p-2">
-            <span className="flex flex-col items-center  ">
+        {tokenName && (
+          <div className="grid md:grid-cols-3 grid gap-4 sm:gap-0 p-0">
+            <span className="flex items-center justify-center border border-white sm:rounded-r-2xl rounded-full p-2 px-4 gap-2">
               <span>Token Name: </span> <span>{tokenName}</span> {dataLoading && <Spinner />}
             </span>
-            <span className="flex flex-col items-center">
+            <span className="flex items-center justify-center border sm:rounded-none rounded-full border-white p-2 px-4 gap-2">
               <span>Balance: </span> <span>{tokenBalance}</span> {dataLoading && <Spinner />}
             </span>
-            <span className=" flex flex-col items-center">
+            <span className="flex items-center justify-center border border-white sm:rounded-l-2xl rounded-full p-2 gap-2">
               <span>Allowance: </span> <span>{tokenAllowance}</span>
               {dataLoading && <Spinner />}
             </span>
           </div>
+        )}
+        {tokenAllowance && (
           <div
             className={`flex items-center justify-between border-2 border-base-300 bg-base-200 rounded-full text-accent w-full`}
           >
@@ -145,7 +147,7 @@ const TokenData = ({
             <button
               type="button"
               disabled={tokenContract == "" || tokenName == ""}
-              className={`btn btn-primary w-2/5 font-black `}
+              className={`btn btn-primary w-2/5 font-black h-[2.2rem] min-h-[2.2rem]`}
               onClick={async () => {
                 await approve();
                 getTokenData();
@@ -154,7 +156,7 @@ const TokenData = ({
               Approve
             </button>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
