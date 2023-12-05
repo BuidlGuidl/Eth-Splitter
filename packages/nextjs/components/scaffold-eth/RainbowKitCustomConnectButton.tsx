@@ -19,7 +19,11 @@ import { getBlockExplorerAddressLink, getTargetNetwork } from "~~/utils/scaffold
 /**
  * Custom Wagmi Connect Button (watch balance + custom design)
  */
-export const RainbowKitCustomConnectButton = () => {
+export const RainbowKitCustomConnectButton = ({
+  setNetworkConnected,
+}: {
+  setNetworkConnected: (connected: boolean) => void;
+}) => {
   useAutoConnect();
   const networkColor = useNetworkColor();
   const configuredNetwork = getTargetNetwork();
@@ -39,6 +43,7 @@ export const RainbowKitCustomConnectButton = () => {
           <>
             {(() => {
               if (!connected) {
+                setNetworkConnected(false);
                 return (
                   <button
                     className="bg-gray-600 text-white  btn btn-primary btn-sm"
@@ -51,6 +56,7 @@ export const RainbowKitCustomConnectButton = () => {
               }
 
               if (chain.unsupported || chain.id !== configuredNetwork.id) {
+                setNetworkConnected(true);
                 return (
                   <div className="dropdown dropdown-end ">
                     <label tabIndex={0} className="btn btn-error btn-sm dropdown-toggle gap-1">

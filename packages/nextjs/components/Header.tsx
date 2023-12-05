@@ -51,6 +51,8 @@ export const Header = () => {
 
   console.log(switchChains);
 
+  const [networkConnected, setNetworkConnected] = useState(false);
+
   useEffect(() => {
     if (switchChains.length > 0) {
       setChainData(switchChains.filter(item => [1, 11155111, 137, 10].includes(item.id)));
@@ -115,36 +117,38 @@ export const Header = () => {
         {/* <ul className="hidden lg:flex lg:flex-nowrap menu menu-horizontal px-1 gap-2">{navLinks}</ul> */}
       </div>
       <div className="navbar-end flex-grow mr-4 ">
-        <select
-          className="select select-sm sm:w-fit w-20 mr-2 bg-gray-600 text-white"
-          style={{ borderWidth: 1, borderColor: chain && (chain as any).color }}
-          onChange={event => {
-            const [name, id] = event.target.value.split("|");
-            switchNetwork?.(+id);
-            console.log(name);
-            name === "Ethereum"
-              ? changeTargetNetwork(chains["mainnet"])
-              : name === "Polygon Mumbai"
-              ? changeTargetNetwork(chains["polygonMumbai"])
-              : name === "OP Mainnet"
-              ? changeTargetNetwork(chains["optimism"])
-              : changeTargetNetwork(chains[name.toLowerCase() as keyof typeof chains]);
-          }}
-        >
-          <option disabled>Select network</option>
-          {chainData &&
-            chainData.map(data => (
-              <option
-                key={data.name}
-                value={`${data.name}|${data.id}`}
-                style={{ color: (data as any).color }}
-                selected={selectedNetwork === data.name}
-              >
-                {data.name}
-              </option>
-            ))}
-        </select>
-        <RainbowKitCustomConnectButton />
+        {networkConnected && (
+          <select
+            className="select select-sm sm:w-fit w-20 mr-2 bg-gray-600 text-white"
+            style={{ borderWidth: 1, borderColor: chain && (chain as any).color }}
+            onChange={event => {
+              const [name, id] = event.target.value.split("|");
+              switchNetwork?.(+id);
+              console.log(name);
+              name === "Ethereum"
+                ? changeTargetNetwork(chains["mainnet"])
+                : name === "Polygon Mumbai"
+                ? changeTargetNetwork(chains["polygonMumbai"])
+                : name === "OP Mainnet"
+                ? changeTargetNetwork(chains["optimism"])
+                : changeTargetNetwork(chains[name.toLowerCase() as keyof typeof chains]);
+            }}
+          >
+            <option disabled>Select network</option>
+            {chainData &&
+              chainData.map(data => (
+                <option
+                  key={data.name}
+                  value={`${data.name}|${data.id}`}
+                  style={{ color: (data as any).color }}
+                  selected={selectedNetwork === data.name}
+                >
+                  {data.name}
+                </option>
+              ))}
+          </select>
+        )}
+        <RainbowKitCustomConnectButton setNetworkConnected={setNetworkConnected} />
         <FaucetButton />
       </div>
     </div>
