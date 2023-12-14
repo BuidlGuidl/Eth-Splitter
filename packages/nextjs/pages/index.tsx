@@ -31,41 +31,43 @@ const Home: NextPage = () => {
         <meta name="description" content="Created with 🏗 scaffold-eth-2" />
       </Head>
 
-      <div className="flex items-center flex-col flex-grow pt-36 ">
-        <ul className="flex gap-2 px-4 py-2  rounded-full text-white bg-new_secondary">
-          <li
-            onClick={() => handleItemClick("split-eth")}
-            className={
-              activeItem === "split-eth"
-                ? "bg-accent py-2 px-3 rounded-full cursor-pointer"
-                : " p-2 rounded-full hover:scale-105 cursor-pointer"
-            }
-          >
-            <a>Split ETH</a>
-          </li>
-          <li
-            onClick={() => handleItemClick("split-tokens")}
-            className={
-              activeItem === "split-tokens"
-                ? "bg-accent py-2 px-3 rounded-full cursor-pointer"
-                : " p-2 rounded-full hover:scale-105 cursor-pointer"
-            }
-          >
-            <a>Split Tokens</a>
-          </li>
-        </ul>
+      <div className="flex items-center flex-col flex-grow pt-36">
+        <div className="flex flex-row items-center gap-4">
+          <ul className="flex p-[0.2rem] rounded-full text-white bg-new_secondary">
+            <li
+              onClick={() => handleItemClick("split-eth")}
+              className={`py-2 px-4 ${
+                activeItem === "split-eth"
+                  ? "bg-accent rounded-full cursor-pointer"
+                  : "rounded-full hover:scale-105 cursor-pointer"
+              }`}
+            >
+              <a>Split ETH</a>
+            </li>
+            <li
+              onClick={() => handleItemClick("split-tokens")}
+              className={`py-2 px-4 ${
+                activeItem === "split-tokens"
+                  ? "bg-accent rounded-full cursor-pointer"
+                  : "rounded-full hover:scale-105 cursor-pointer"
+              }`}
+            >
+              <a>Split Tokens</a>
+            </li>
+          </ul>
 
-        <select
-          defaultValue="select"
-          className="select select-bordered w-full max-w-xs border-gray-300 bg-new_secondary text-white focus:border-none mt-4 "
-          onChange={e => setSplitType(e.target.value)}
-        >
-          <option value="select" disabled>
-            Select Split Type
-          </option>
-          <option value="equal-splits">Equal Splits</option>
-          <option value="unequal-splits">Unequal Splits</option>
-        </select>
+          <select
+            defaultValue="select"
+            className="select select-bordered items-center max-w-xs border-gray-300 bg-new_secondary text-white focus:border-none"
+            onChange={e => setSplitType(e.target.value)}
+          >
+            <option value="select" disabled>
+              Select Split Type
+            </option>
+            <option value="equal-splits">Equal Splits</option>
+            <option value="unequal-splits">Unequal Splits</option>
+          </select>
+        </div>
         {splitType === "equal-splits" && (
           <EqualUi splitItem={activeItem} account={account} splitterContract={splitterContract} />
         )}
