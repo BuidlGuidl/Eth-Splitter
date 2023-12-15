@@ -8,12 +8,16 @@ import UnEqualUi from "~~/components/splitter-ui/UnEqualUi";
 // import { useDeployedContractInfo } from "~~/hooks/scaffold-eth";
 
 const Home: NextPage = () => {
-  const [activeItem, setActiveItem] = useState("split-eth");
-  const [splitType, setSplitType] = useState("");
+  const [activeSplitToken, setSplitToken] = useState("split-eth");
+  const [activeSplitType, setSplitType] = useState("equal-splits");
   const account = useAccount();
 
   function handleItemClick(itemId: string) {
-    setActiveItem(itemId);
+    if (itemId == "split-eth" || itemId == "split-tokens") {
+      setSplitToken(itemId);
+    } else {
+      setSplitType(itemId);
+    }
   }
 
   let splitterContract: any;
@@ -37,7 +41,7 @@ const Home: NextPage = () => {
             <li
               onClick={() => handleItemClick("split-eth")}
               className={`py-2 px-4 ${
-                activeItem === "split-eth"
+                activeSplitToken === "split-eth"
                   ? "bg-accent rounded-full cursor-pointer"
                   : "rounded-full hover:scale-105 cursor-pointer"
               }`}
@@ -47,7 +51,7 @@ const Home: NextPage = () => {
             <li
               onClick={() => handleItemClick("split-tokens")}
               className={`py-2 px-4 ${
-                activeItem === "split-tokens"
+                activeSplitToken === "split-tokens"
                   ? "bg-accent rounded-full cursor-pointer"
                   : "rounded-full hover:scale-105 cursor-pointer"
               }`}
@@ -56,23 +60,40 @@ const Home: NextPage = () => {
             </li>
           </ul>
 
-          <select
-            defaultValue="select"
-            className="select select-bordered items-center max-w-xs border-gray-300 bg-new_secondary text-white focus:border-none"
-            onChange={e => setSplitType(e.target.value)}
-          >
-            <option value="select" disabled>
-              Select Split Type
-            </option>
-            <option value="equal-splits">Equal Splits</option>
-            <option value="unequal-splits">Unequal Splits</option>
-          </select>
+          <ul className="flex p-[0.2rem] rounded-full text-white bg-new_secondary">
+            <li
+              onClick={() => {
+                setSplitType("equal-splits");
+                handleItemClick("equal-splits");
+              }}
+              className={`py-2 px-4 ${
+                activeSplitType === "equal-splits"
+                  ? "bg-accent rounded-full cursor-pointer"
+                  : "rounded-full hover:scale-105 cursor-pointer"
+              }`}
+            >
+              <a>Equal Splits</a>
+            </li>
+            <li
+              onClick={() => {
+                setSplitType("unequal-splits");
+                handleItemClick("unequal-splits");
+              }}
+              className={`py-2 px-4 ${
+                activeSplitType === "unequal-splits"
+                  ? "bg-accent rounded-full cursor-pointer"
+                  : "rounded-full hover:scale-105 cursor-pointer"
+              }`}
+            >
+              <a>Unequal Splits</a>
+            </li>
+          </ul>
         </div>
-        {splitType === "equal-splits" && (
-          <EqualUi splitItem={activeItem} account={account} splitterContract={splitterContract} />
+        {activeSplitType === "equal-splits" && (
+          <EqualUi splitItem={activeSplitToken} account={account} splitterContract={splitterContract} />
         )}
-        {splitType === "unequal-splits" && (
-          <UnEqualUi splitItem={activeItem} account={account} splitterContract={splitterContract} />
+        {activeSplitType === "unequal-splits" && (
+          <UnEqualUi splitItem={activeSplitToken} account={account} splitterContract={splitterContract} />
         )}
       </div>
     </>
