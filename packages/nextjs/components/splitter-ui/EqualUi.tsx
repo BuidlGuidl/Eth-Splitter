@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import TokenData from "./splitter-components/TokenData";
 import { parseEther } from "viem";
+import { Address } from "~~/components/scaffold-eth";
 import { useScaffoldContractWrite } from "~~/hooks/scaffold-eth";
 import { UiJsxProps } from "~~/types/splitterUiTypes/splitterUiTypes";
 
@@ -31,7 +32,6 @@ const EqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
     let uniqueAddresses = [...new Set([...addresses])];
 
     uniqueAddresses = uniqueAddresses.filter(validateAddress);
-
     setWallets(uniqueAddresses);
   }
   const { writeAsync: splitEqualETH } = useScaffoldContractWrite({
@@ -94,7 +94,13 @@ const EqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
               />
             </div>
           </div>
+          <p className="font-semibold  ml-1 my-2 break-words">Addresses</p>
           <div className="flex flex-col space-y-1 w-full my2 ">
+            {wallets.map((wallet, index) => (
+              <div className="flex px-2 py-2" key={index}>
+                <Address address={wallet} size="lg" />
+              </div>
+            ))}
             <p className="font-semibold  ml-1 my-2 break-words">Recipient Wallets</p>
             <div
               className={`flex items-center justify-between border-2 border-base-300 bg-base-200 rounded-xl text-accent w-full`}
