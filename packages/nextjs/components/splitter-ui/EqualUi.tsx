@@ -1,6 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { ChangeEvent, useEffect, useState } from "react";
 import TokenData from "./splitter-components/TokenData";
 import { parseEther } from "viem";
+import { createPublicClient, http } from "viem";
+import { mainnet } from "viem/chains";
+import { TrashIcon } from "@heroicons/react/24/outline";
 import { Address } from "~~/components/scaffold-eth";
 import { useScaffoldContractWrite } from "~~/hooks/scaffold-eth";
 import { UiJsxProps } from "~~/types/splitterUiTypes/splitterUiTypes";
@@ -13,10 +16,39 @@ const EqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
   const [totalTokenAmount, setTotalTokenAmount] = useState("");
   const [totalEthAmount, setTotalEthAmount] = useState("");
   const [tokenContract, setTokenContract] = useState("");
+  const [loadingAddresses, setLoadingAddresses] = useState(false);
 
-  function addMultipleAddress(value: string) {
-    const validateAddress = (address: string) => address.includes("0x") && address.length === 42;
+  async function getENSAddress(ensAdresses: string[]) {
+    const client = createPublicClient({ chain: mainnet, transport: http() });
+    const addresses = [];
+    for (const name of ensAdresses) {
+      try {
+        setLoadingAddresses(true);
+        const ensAddress = await client.getEnsAddress({
+          name: name,
+        });
+        if (ensAddress !== null) {
+          addresses.push({
+            ensName: name,
+            address: ensAddress,
+          });
+        }
+      } catch (error) {
+        console.error(`Error getting ENS address for ${name}`);
+      } finally {
+        setLoadingAddresses(false);
+      }
+    }
+    return addresses;
+  }
+
+  async function addMultipleAddress(value: string) {
+    const validateAddress = (address: string) => {
+      return (address.includes("0x") && address.length === 42) || address.includes(".eth");
+    };
+
     let addresses: string[];
+
     if (value.includes(",")) {
       addresses = value
         .trim()
@@ -28,12 +60,42 @@ const EqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
         .split(/\s+/)
         .map(str => str.replace(/\s/g, ""));
     }
+    const uniqueAddresses = [...new Set([...addresses])];
+    const validadeAddresses = uniqueAddresses.filter(validateAddress);
+    const ensAddresses = validadeAddresses.filter(address => address.includes(".eth"));
+    if (ensAddresses.length > 0) {
+      const ensResults = await getENSAddress(ensAddresses);
 
-    let uniqueAddresses = [...new Set([...addresses])];
-
-    uniqueAddresses = uniqueAddresses.filter(validateAddress);
-    setWallets(uniqueAddresses);
+      ensResults.forEach(ensResult => {
+        const index = validadeAddresses.findIndex(address => address === ensResult.ensName);
+        validadeAddresses[index] = ensResult.address;
+      });
+    }
+    setWallets(validadeAddresses);
   }
+
+  const removeWalletField = (index: number) => {
+    const newWallets = [...wallets];
+    newWallets.splice(index, 1);
+    setWallets(newWallets);
+  };
+
+  const [inputValue, setInputValue] = useState("");
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      addMultipleAddress(inputValue);
+    }, 500); // Adjust the delay as needed
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [inputValue]);
+
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setInputValue(e.target.value);
+  };
+
   const { writeAsync: splitEqualETH } = useScaffoldContractWrite({
     contractName: "ETHSplitter",
     functionName: "splitEqualETH",
@@ -95,10 +157,23 @@ const EqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
             </div>
           </div>
           <p className="font-semibold  ml-1 my-2 break-words">Addresses</p>
+          <div className="flex justify-center">
+            {loadingAddresses && <span className="loading loading-infinity loading-lg"></span>}
+          </div>
           <div className="flex flex-col space-y-1 w-full my2 ">
             {wallets.map((wallet, index) => (
-              <div className="flex px-2 py-2" key={index}>
+              <div className="flex px-2 py-2 justify-between" key={index}>
                 <Address address={wallet} size="lg" />
+                {index >= 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      removeWalletField(index);
+                    }}
+                  >
+                    <TrashIcon className="h-5" />
+                  </button>
+                )}
               </div>
             ))}
             <p className="font-semibold  ml-1 my-2 break-words">Recipient Wallets</p>
@@ -107,8 +182,8 @@ const EqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
             >
               <textarea
                 placeholder="Seperate each address with a comma, space or new line"
-                // value={wallets}
-                onChange={e => addMultipleAddress(e.target.value)}
+                //value={wallets}
+                onChange={handleInputChange}
                 className="textarea rounded-none textarea-ghost focus:outline-none focus:bg-transparent focus:text-black  min-h-[11.2rem] border w-full font-medium placeholder:text-accent text-black"
               />
             </div>
