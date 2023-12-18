@@ -1,4 +1,4 @@
-import React, { ChangeEvent, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import TokenData from "./splitter-components/TokenData";
 import { parseEther } from "viem";
 import { createPublicClient, http } from "viem";
@@ -17,6 +17,7 @@ const EqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
   const [totalEthAmount, setTotalEthAmount] = useState("");
   const [tokenContract, setTokenContract] = useState("");
   const [loadingAddresses, setLoadingAddresses] = useState(false);
+  const [inputValue, setInputValue] = useState("");
 
   async function getENSAddress(ensAdresses: string[]) {
     const client = createPublicClient({ chain: mainnet, transport: http() });
@@ -71,6 +72,10 @@ const EqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
         validadeAddresses[index] = ensResult.address;
       });
     }
+    setTimeout(() => {
+      setInputValue("");
+    }, 500);
+
     setWallets(validadeAddresses);
   }
 
@@ -78,22 +83,6 @@ const EqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
     const newWallets = [...wallets];
     newWallets.splice(index, 1);
     setWallets(newWallets);
-  };
-
-  const [inputValue, setInputValue] = useState("");
-
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      addMultipleAddress(inputValue);
-    }, 500); // Adjust the delay as needed
-
-    return () => {
-      clearTimeout(timeoutId);
-    };
-  }, [inputValue]);
-
-  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setInputValue(e.target.value);
   };
 
   const { writeAsync: splitEqualETH } = useScaffoldContractWrite({
@@ -182,8 +171,10 @@ const EqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
             >
               <textarea
                 placeholder="Seperate each address with a comma, space or new line"
-                //value={wallets}
-                onChange={handleInputChange}
+                value={inputValue}
+                onChange={e => {
+                  addMultipleAddress(e.target.value), setInputValue(e.target.value);
+                }}
                 className="textarea rounded-none textarea-ghost focus:outline-none focus:bg-transparent focus:text-black  min-h-[11.2rem] border w-full font-medium placeholder:text-accent text-black"
               />
             </div>
