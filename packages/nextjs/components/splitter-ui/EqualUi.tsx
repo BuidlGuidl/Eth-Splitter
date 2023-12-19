@@ -1,6 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { ChangeEvent, useEffect, useRef, useState } from "react";
+import { useReducer } from "react";
 import TokenData from "./splitter-components/TokenData";
-import { parseEther } from "viem";
+import { useDebounce } from "usehooks-ts";
+import { UnknownNodeError, parseEther } from "viem";
 import { createPublicClient, http } from "viem";
 import { mainnet } from "viem/chains";
 import { TrashIcon } from "@heroicons/react/24/outline";
@@ -10,14 +12,49 @@ import { UiJsxProps } from "~~/types/splitterUiTypes/splitterUiTypes";
 
 const EqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
   const [amount, setamount] = useState("");
-  const [wallets, setWallets] = useState<string[]>([]);
 
   const [totalAmount, setTotalAmount] = useState("");
   const [totalTokenAmount, setTotalTokenAmount] = useState("");
   const [totalEthAmount, setTotalEthAmount] = useState("");
   const [tokenContract, setTokenContract] = useState("");
   const [loadingAddresses, setLoadingAddresses] = useState(false);
-  const [inputValue, setInputValue] = useState("");
+  const [value, setValue] = useState("");
+  const debouncedValue = useDebounce<string>(value, 500);
+
+  const walletsReducer = (state: string[], action: any) => {
+    switch (action.type) {
+      case "addWallets":
+        if (state.length > 0 && action.payload > 0) {
+          const uniqueAddress = action.payload.filter((address: string) => !state.includes(address));
+          setValue("");
+          return [...state, ...uniqueAddress];
+        } else {
+          setValue("");
+          return [...action.payload];
+        }
+
+      case "removeWallets":
+        const newWallets = [...state];
+        newWallets.splice(action.payload, 1);
+        return newWallets;
+      default:
+        return state;
+    }
+  };
+
+  const [wallets, dispatch] = useReducer(walletsReducer, []);
+
+  function formatedAddresses(value: string): string[] {
+    const separator = value.includes(",") ? "," : /\s+/;
+    return value
+      .trim()
+      .split(separator)
+      .map(str => str.replace(/\n/g, "").replace(/\s/g, ""));
+  }
+
+  function validateAddresses(address: string): boolean {
+    return (address.startsWith("0x") && address.length === 42) || address.endsWith(".eth");
+  }
 
   async function getENSAddress(ensAdresses: string[]) {
     const client = createPublicClient({ chain: mainnet, transport: http() });
@@ -43,46 +80,32 @@ const EqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
     return addresses;
   }
 
-  async function addMultipleAddress(value: string) {
-    const validateAddress = (address: string) => {
-      return (address.includes("0x") && address.length === 42) || address.includes(".eth");
-    };
+  async function addMultipleAddress(inputValue: string) {
+    const addresses: string[] = formatedAddresses(inputValue);
 
-    let addresses: string[];
-
-    if (value.includes(",")) {
-      addresses = value
-        .trim()
-        .split(",")
-        .map(str => str.replace(/\n/g, "").replace(/\s/g, ""));
-    } else {
-      addresses = value
-        .trim()
-        .split(/\s+/)
-        .map(str => str.replace(/\s/g, ""));
-    }
     const uniqueAddresses = [...new Set([...addresses])];
-    const validadeAddresses = uniqueAddresses.filter(validateAddress);
-    const ensAddresses = validadeAddresses.filter(address => address.includes(".eth"));
-    if (ensAddresses.length > 0) {
-      const ensResults = await getENSAddress(ensAddresses);
+    const uniqueValidadeAddresses = uniqueAddresses.filter(validateAddresses);
+    const hasENS = uniqueValidadeAddresses.some(address => address.endsWith(".eth"));
+    const onlyENS = uniqueValidadeAddresses.filter(address => address.endsWith(".eth"));
 
-      ensResults.forEach(ensResult => {
-        const index = validadeAddresses.findIndex(address => address === ensResult.ensName);
-        validadeAddresses[index] = ensResult.address;
-      });
+    if (uniqueValidadeAddresses.length == 0) {
+      return;
     }
-    setTimeout(() => {
-      setInputValue("");
-    }, 500);
 
-    setWallets(validadeAddresses);
+    if (hasENS) {
+      const ensResults = await getENSAddress(onlyENS);
+      ensResults.forEach(ensResult => {
+        const index = uniqueValidadeAddresses.findIndex(address => address === ensResult.ensName);
+        uniqueValidadeAddresses[index] = ensResult.address;
+      });
+      dispatch({ type: "addWallets", payload: uniqueValidadeAddresses });
+    }
+    dispatch({ type: "addWallets", payload: uniqueValidadeAddresses });
   }
 
   const removeWalletField = (index: number) => {
-    const newWallets = [...wallets];
-    newWallets.splice(index, 1);
-    setWallets(newWallets);
+    dispatch({ type: "removeWallets", payload: index });
+    console.log(wallets);
   };
 
   const { writeAsync: splitEqualETH } = useScaffoldContractWrite({
@@ -97,6 +120,16 @@ const EqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
     functionName: "splitEqualERC20",
     args: [tokenContract, wallets, BigInt(totalTokenAmount)],
   });
+
+  const handleChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
+    setValue(event.target.value);
+  };
+
+  const addMultipleAddressRef = useRef<(inputValue: string) => void>(addMultipleAddress);
+
+  useEffect(() => {
+    addMultipleAddressRef.current(debouncedValue);
+  }, [debouncedValue]);
 
   useEffect(() => {
     let totalAmount: any = 0;
@@ -171,10 +204,8 @@ const EqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
             >
               <textarea
                 placeholder="Seperate each address with a comma, space or new line"
-                value={inputValue}
-                onChange={e => {
-                  addMultipleAddress(e.target.value), setInputValue(e.target.value);
-                }}
+                value={value}
+                onChange={handleChange}
                 className="textarea rounded-none textarea-ghost focus:outline-none focus:bg-transparent focus:text-black  min-h-[11.2rem] border w-full font-medium placeholder:text-accent text-black"
               />
             </div>
