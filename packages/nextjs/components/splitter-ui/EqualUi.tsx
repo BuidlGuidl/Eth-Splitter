@@ -2,7 +2,7 @@ import React, { ChangeEvent, useEffect, useRef, useState } from "react";
 import { useReducer } from "react";
 import TokenData from "./splitter-components/TokenData";
 import { useDebounce } from "usehooks-ts";
-import { UnknownNodeError, parseEther } from "viem";
+import { parseEther } from "viem";
 import { createPublicClient, http } from "viem";
 import { mainnet } from "viem/chains";
 import { TrashIcon } from "@heroicons/react/24/outline";
