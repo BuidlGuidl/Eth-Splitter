@@ -22,8 +22,6 @@ export const Header = () => {
     scaffoldConfig.targetNetwork = newNetwork;
   }
 
-  console.log(switchChains);
-
   const [networkConnected, setNetworkConnected] = useState(false);
 
   useEffect(() => {
@@ -60,7 +58,6 @@ export const Header = () => {
             onChange={event => {
               const [name, id] = event.target.value.split("|");
               switchNetwork?.(+id);
-              console.log(name);
               name === "Ethereum"
                 ? changeTargetNetwork(chains["mainnet"])
                 : name === "Polygon Mumbai"

@@ -21,6 +21,7 @@ const UnEqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
 
     let uniqueAddresses = [...new Set([...addresses])];
     uniqueAddresses = [...new Set([...wallets.filter(validateAddress), ...uniqueAddresses])];
+    console.log(value);
     setWallets(uniqueAddresses);
   }
 
@@ -44,7 +45,12 @@ const UnEqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
   const updateWallet = (value: string, index: number) => {
     if (value.length <= 42) {
       const newWallets = [...wallets];
-      newWallets[index] = value;
+      if (newWallets.length > 1 && newWallets.includes(value)) {
+        return;
+      } else {
+        newWallets[index] = value;
+        setWallets(newWallets);
+      }
       setWallets(newWallets);
     }
 
