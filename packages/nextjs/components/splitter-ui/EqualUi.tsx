@@ -27,8 +27,6 @@ const EqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
         if (state.length > 0 && action.payload > 0) {
           const uniqueAddress = action.payload.filter((address: string) => !state.includes(address));
           setValue("");
-          console.log(uniqueAddress);
-          console.log(state);
           return [...state, ...uniqueAddress];
         } else {
           setValue("");
@@ -94,10 +92,6 @@ const EqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
     return addresses;
   }
 
-  // function removeDuplicate() {
-
-  // }
-
   async function addMultipleAddress(inputValue: string) {
     const addresses: string[] = formatedAddresses(inputValue);
 
@@ -116,10 +110,8 @@ const EqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
         const index = uniqueValidadeAddresses.findIndex(address => address === ensResult.ensName);
         uniqueValidadeAddresses[index] = ensResult.address;
       });
-      console.log(uniqueAddresses, "Aqui");
       dispatch({ type: "addWallets", payload: uniqueValidadeAddresses });
     }
-    console.log(uniqueAddresses, "Here");
     dispatch({ type: "addWallets", payload: uniqueValidadeAddresses });
   }
 
