@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Chain, useNetwork, useSwitchNetwork } from "wagmi";
+import { Chain, useAccount, useNetwork, useSwitchNetwork } from "wagmi";
 import * as chains from "wagmi/chains";
 import { FaucetButton, RainbowKitCustomConnectButton } from "~~/components/scaffold-eth";
 import scaffoldConfig from "~~/scaffold.config";
@@ -13,6 +13,7 @@ import scaffoldConfig from "~~/scaffold.config";
 export const Header = () => {
   const { chains: switchChains, switchNetwork } = useSwitchNetwork();
   const { chain } = useNetwork();
+  const { isConnected } = useAccount();
 
   const [chainData, setChainData] = useState<Chain[]>();
 
@@ -24,11 +25,9 @@ export const Header = () => {
 
   console.log(switchChains);
 
-  const [networkConnected, setNetworkConnected] = useState(false);
-
   useEffect(() => {
     if (switchChains.length > 0) {
-      setChainData(switchChains.filter(item => [1, 11155111, 137, 10].includes(item.id)));
+      setChainData(switchChains.filter(item => [1, 137, 10, 11155111].includes(item.id)));
     }
   }, [switchChains]);
 
@@ -53,7 +52,7 @@ export const Header = () => {
         {/* <ul className="hidden lg:flex lg:flex-nowrap menu menu-horizontal px-1 gap-2">{navLinks}</ul> */}
       </div>
       <div className="navbar-end flex-grow mr-4 ">
-        {networkConnected && (
+        {isConnected && (
           <select
             className="select select-sm sm:w-fit w-20 mr-2 bg-gray-600 text-white"
             style={{ borderWidth: 1, borderColor: chain && (chain as any).color }}
@@ -84,7 +83,7 @@ export const Header = () => {
               ))}
           </select>
         )}
-        <RainbowKitCustomConnectButton setNetworkConnected={setNetworkConnected} />
+        <RainbowKitCustomConnectButton />
         <FaucetButton />
       </div>
     </div>
