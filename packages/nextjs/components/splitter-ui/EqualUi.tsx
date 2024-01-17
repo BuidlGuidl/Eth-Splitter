@@ -30,7 +30,8 @@ const EqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
           return [...state, ...uniqueAddress];
         } else {
           setValue("");
-          return [...action.payload];
+          const uniqueAddress = removeDuplicates(action.payload);
+          return [...uniqueAddress];
         }
 
       case "removeWallets":
@@ -41,6 +42,17 @@ const EqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
         return state;
     }
   };
+
+  function removeDuplicates(walletsArray: string[]) {
+    const uniqueAddresses: string[] = [];
+
+    for (const address of walletsArray) {
+      if (!uniqueAddresses.includes(address)) {
+        uniqueAddresses.push(address);
+      }
+    }
+    return uniqueAddresses;
+  }
 
   const [wallets, dispatch] = useReducer(walletsReducer, []);
 
@@ -105,7 +117,6 @@ const EqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
 
   const removeWalletField = (index: number) => {
     dispatch({ type: "removeWallets", payload: index });
-    console.log(wallets);
   };
 
   const { writeAsync: splitEqualETH } = useScaffoldContractWrite({
