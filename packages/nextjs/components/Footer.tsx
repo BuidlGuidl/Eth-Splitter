@@ -13,6 +13,8 @@ import { HeartIcon } from "@heroicons/react/24/outline";
 export const Footer = () => {
   // const nativeCurrencyPrice = useGlobalState(state => state.nativeCurrencyPrice);
 
+  const codeLink = "https://github.com/BuidlGuidl/Eth-Splitter";
+
   return (
     <div className="min-h-0 py-5 px-1 mb-11 lg:mb-0">
       {/* <div>
@@ -29,6 +31,16 @@ export const Footer = () => {
           <SwitchTheme className="pointer-events-auto" />
         </div>
       </div> */}
+      <div className="w-full py-3">
+        <ul className="menu menu-horizontal w-full">
+          <div className="flex justify-center items-center gap-2 text-sm w-full">
+            📝{" "}
+            <a href={codeLink} target="_blank" rel="noreferrer" className="underline underline-offset-2">
+              Code/Repo
+            </a>{" "}
+          </div>
+        </ul>
+      </div>
       <div className="w-full text-white">
         <ul className="menu menu-horizontal w-full">
           <div className="flex justify-center items-center gap-2 text-sm w-full">
