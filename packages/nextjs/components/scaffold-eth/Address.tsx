@@ -13,6 +13,7 @@ type TAddressProps = {
   disableAddressLink?: boolean;
   format?: "short" | "long";
   size?: "xs" | "sm" | "base" | "lg" | "xl" | "2xl" | "3xl";
+  hideBlockie?: boolean;
 };
 
 const blockieSizeMap = {
@@ -28,7 +29,7 @@ const blockieSizeMap = {
 /**
  * Displays an address (or ENS) with a Blockie image and option to copy address.
  */
-export const Address = ({ address, disableAddressLink, format, size = "base" }: TAddressProps) => {
+export const Address = ({ address, disableAddressLink, format, size = "base", hideBlockie = false }: TAddressProps) => {
   const [ens, setEns] = useState<string | null>();
   const [ensAvatar, setEnsAvatar] = useState<string | null>();
   const [addressCopied, setAddressCopied] = useState(false);
@@ -77,13 +78,15 @@ export const Address = ({ address, disableAddressLink, format, size = "base" }: 
 
   return (
     <div className="flex items-center">
-      <div className="flex-shrink-0">
-        <BlockieAvatar
-          address={address}
-          ensImage={ensAvatar}
-          size={(blockieSizeMap[size] * 24) / blockieSizeMap["base"]}
-        />
-      </div>
+      {!hideBlockie && (
+        <div className="flex-shrink-0">
+          <BlockieAvatar
+            address={address}
+            ensImage={ensAvatar}
+            size={(blockieSizeMap[size] * 24) / blockieSizeMap["base"]}
+          />
+        </div>
+      )}
       {disableAddressLink ? (
         <span className={`ml-1.5 text-${size} font-normal`}>{displayAddress}</span>
       ) : getTargetNetwork().id === hardhat.id ? (

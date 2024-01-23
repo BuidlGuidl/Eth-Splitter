@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Head from "next/head";
+import { useRouter } from "next/router";
 import type { NextPage } from "next";
 import { useAccount } from "wagmi";
 import EqualUi from "~~/components/splitter-ui/EqualUi";
@@ -8,7 +9,10 @@ import UnEqualUi from "~~/components/splitter-ui/UnEqualUi";
 // import { useDeployedContractInfo } from "~~/hooks/scaffold-eth";
 
 const Home: NextPage = () => {
-  const [activeSplitToken, setSplitToken] = useState("split-eth");
+  const router = useRouter();
+  const query = router.query;
+
+  const [activeSplitToken, setSplitToken] = useState<string>("split-eth");
   const [activeSplitType, setSplitType] = useState("equal-splits");
   const account = useAccount();
 
@@ -21,12 +25,16 @@ const Home: NextPage = () => {
   }
 
   let splitterContract: any;
-  // let splitterAbi: any;
 
-  // const { data: deployedContractData, isLoading: deployedContractLoading } = useDeployedContractInfo("ETHSplitter");
-  // if (deployedContractData) {
-  //   ({ address: splitterContract, abi: splitterAbi } = deployedContractData);
-  // }
+  useEffect(() => {
+    const { activeSplitToken, activeSplitType } = query;
+    if (activeSplitToken) {
+      setSplitToken(activeSplitToken.toString());
+    }
+    if (activeSplitType) {
+      setSplitType(activeSplitType.toString());
+    }
+  }, [query]);
 
   return (
     <>
@@ -35,9 +43,9 @@ const Home: NextPage = () => {
         <meta name="description" content="Created with 🏗 scaffold-eth-2" />
       </Head>
 
-      <div className="flex items-center flex-col flex-grow pt-36">
+      <div className="flex items-center flex-col flex-grow pt-24 ">
         <div className="flex flex-row items-center gap-4">
-          <ul className="flex p-[0.2rem] rounded-full text-white bg-new_secondary">
+          <ul className="flex p-[0.2rem] rounded-full ">
             <li
               onClick={() => handleItemClick("split-eth")}
               className={`py-2 px-4 ${
@@ -60,7 +68,7 @@ const Home: NextPage = () => {
             </li>
           </ul>
 
-          <ul className="flex p-[0.2rem] rounded-full text-white bg-new_secondary">
+          <ul className="flex p-[0.2rem] rounded-full">
             <li
               onClick={() => {
                 setSplitType("equal-splits");

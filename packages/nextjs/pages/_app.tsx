@@ -40,14 +40,9 @@ const ScaffoldEthApp = ({ Component, pageProps }: AppProps) => {
         avatar={BlockieAvatar}
         theme={isDarkTheme ? darkTheme() : lightTheme()}
       >
-        {/* <div className="flex flex-col min-h-screen bg-new_primary"> */}
-        <div
-          className="flex flex-col min-h-screen"
-          style={{ background: "linear-gradient(135deg, #293853 0%, #21365f 100%" }}
-        >
-          {/* background: radial-gradient(circle at top, #293853 , #593489) */}
+        <div className="flex flex-col min-h-screen overflow-hidden">
           <Header />
-          <main className="relative flex flex-col flex-1">
+          <main className="flex items-center mx-auto flex-col flex-grow pt-10 gap-4 xs:w-4/5 lg:max-w-5xl w-11/12">
             <Component {...pageProps} />
           </main>
           <Footer />

@@ -18,8 +18,8 @@ contract ETHSplitter is ReentrancyGuard {
   // Events
   event EthSplit(address indexed sender, uint256 totalAmount, address payable[] recipients, uint256[] amounts);
   event EthSplitEqual(address indexed sender, uint256 totalAmount, address payable[] recipients);
-  event Erc20Split(address indexed sender, address payable[] recipients, uint256[] amounts);
-  event Erc20SplitEqual(address indexed sender, uint256 totalAmount, address payable[] recipients);
+  event Erc20Split(address indexed sender, address payable[] recipients, uint256[] amounts, IERC20 token);
+  event Erc20SplitEqual(address indexed sender, uint256 totalAmount, address payable[] recipients, IERC20 token);
 
   //*********************************************************************//
   // --------------------------- custom errors ------------------------- //
@@ -125,7 +125,7 @@ contract ETHSplitter is ReentrancyGuard {
     uint256[] calldata amounts
   ) external nonReentrant checkForDuplicates(recipients) {
     _transferTokensFromSenderToRecipients(token, recipients, amounts);
-    emit Erc20Split(msg.sender, recipients, amounts);
+    emit Erc20Split(msg.sender, recipients, amounts, token);
   }
 
   /**
@@ -159,7 +159,7 @@ contract ETHSplitter is ReentrancyGuard {
       }
     }
 
-    emit Erc20SplitEqual(msg.sender, totalAmount, recipients);
+    emit Erc20SplitEqual(msg.sender, totalAmount, recipients, token);
   }
 
   /**

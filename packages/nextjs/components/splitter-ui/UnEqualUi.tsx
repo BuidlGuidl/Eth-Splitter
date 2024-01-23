@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
+import { useRouter } from "next/router";
 import { AddressInput } from "../scaffold-eth";
+import ExportList from "./splitter-components/ExportList";
 import TokenData from "./splitter-components/TokenData";
 import { isAddress, parseUnits } from "viem";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
@@ -7,17 +9,22 @@ import { useScaffoldContractWrite } from "~~/hooks/scaffold-eth";
 import { UiJsxProps } from "~~/types/splitterUiTypes/splitterUiTypes";
 
 const UnEqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
+  const router = useRouter();
+  const query = router.query;
+
   const [wallets, setWallets] = useState<string[]>([""]);
   const [amounts, setAmounts] = useState<string[]>([""]);
   const [amountsInWei, setAmountsInWei] = useState<any[]>([]);
   const [totalAmount, setTotalAmount] = useState("");
-
   const [tokenContract, setTokenContract] = useState("");
 
   function addMultipleAddress(value: string) {
     const validateAddress = (address: string) => address.includes("0x") && address.length === 42;
 
-    const addresses: string[] = value.trim().split(",");
+    const addresses: string[] = value
+      .trim()
+      .split(",")
+      .map(str => str.replace(/\n/g, "").replace(/\s/g, ""));
 
     let uniqueAddresses = [...new Set([...addresses])];
     uniqueAddresses = [...new Set([...wallets.filter(validateAddress), ...uniqueAddresses])];
@@ -99,6 +106,27 @@ const UnEqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
     }
   }, [amounts, wallets]);
 
+  useEffect(() => {
+    const { wallets, amounts, tokenAddress } = query;
+    if (wallets) {
+      setWallets(wallets as string[]);
+    }
+    if (amounts) {
+      console.log(amounts);
+      setAmounts(amounts as string[]);
+    }
+    if (tokenAddress) {
+      setTokenContract(tokenAddress as string);
+    }
+    if (Object.keys(query).length > 0) {
+      router.replace({
+        pathname: router.pathname,
+        query: {},
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query]);
+
   return (
     <>
       {splitItem === "split-tokens" && (
@@ -111,7 +139,7 @@ const UnEqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
         />
       )}
       <div className="mx-auto mt-14">
-        <form className="md:w-[500px] w-[300px] lg:w-[800px] bg-base-100 rounded-3xl shadow-xl border-2 p-2">
+        <form className="md:w-[500px] w-[300px] lg:w-[700px]  rounded-3xl shadow-xl border-2 p-4">
           <div className="flex flex-col space-y-1 w-full my-1">
             <p className="font-semibold  ml-1 my-0 break-words">Recipient Wallets</p>
 
@@ -132,6 +160,7 @@ const UnEqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
                         className="input  input-ghost focus:outline-none focus:bg-transparent focus:text-gray-400 h-[2.2rem] min-h-[2.2rem] font-medium placeholder:text-accent/50 w-full text-gray-400 bg-base-200 border-2 border-base-300"
                         type="number"
                         min={0}
+                        value={amounts[index]}
                         onChange={val => updateAmounts(val.target.value, index)}
                         placeholder="Amount"
                       />
@@ -153,6 +182,7 @@ const UnEqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
                 )}
               </div>
             ))}
+            {wallets.length > 1 && <ExportList wallets={wallets} />}
             <button type="button" onClick={addWalletField} className="btn btn-primary font-black ">
               <PlusIcon className="h-1/2" />
             </button>
