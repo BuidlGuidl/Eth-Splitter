@@ -82,10 +82,6 @@ const EqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
             });
           }
           resolvedAddresses.push(resolvedAddress);
-          setWalletsFilter(prevState => {
-            const newAddresses = [...new Set([...prevState, address])];
-            return newAddresses;
-          });
         } else {
           resolvedAddresses.push(address);
         }
