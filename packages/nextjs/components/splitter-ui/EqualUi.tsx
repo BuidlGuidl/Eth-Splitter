@@ -17,6 +17,7 @@ const EqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
 
   const [amount, setAmount] = useState("");
   const [wallets, setWallets] = useState<string[]>([]);
+  const [walletsFilter, setWalletsFilter] = useState<string[]>([]);
 
   const [totalAmount, setTotalAmount] = useState("");
   const [totalTokenAmount, setTotalTokenAmount] = useState("");
@@ -44,19 +45,23 @@ const EqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
       addresses = value
         .trim()
         .split(",")
-        .map(str => str.replace(/\n/g, "").replace(/\s/g, ""));
+        .map(str => str.replace(/\n/g, "").replace(/\s/g, ""))
+        .filter(address => !wallets.includes(address));
+      addresses = addresses.filter(address => !walletsFilter.includes(address));
     } else {
       addresses = value
         .trim()
         .split(/\s+/)
-        .map(str => str.replace(/\s/g, ""));
+        .map(str => str.replace(/\s/g, ""))
+        .filter(address => !wallets.includes(address));
+      addresses = addresses.filter(address => !walletsFilter.includes(address));
     }
 
     const resolvedAddresses: string[] = [];
     setInvalidAddresses([]);
 
     if (
-      (addresses[addresses.length - 1].endsWith(".eth") || addresses[addresses.length - 1].startsWith("0x")) &&
+      (addresses[addresses.length - 1]?.endsWith(".eth") || addresses[addresses.length - 1]?.startsWith("0x")) &&
       addresses[addresses.length - 1] !== wallets[wallets.length - 1]
     ) {
       setLoadingAddresses(true);
@@ -65,6 +70,10 @@ const EqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
     await Promise.all(
       addresses.map(async address => {
         if (address.endsWith(".eth")) {
+          setWalletsFilter(prevState => {
+            const newAddresses = [...new Set([...prevState, address])];
+            return newAddresses;
+          });
           const resolvedAddress = await resolveEns(address);
           if (resolvedAddress === "null") {
             setInvalidAddresses(prevState => {
@@ -76,11 +85,18 @@ const EqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
         } else {
           resolvedAddresses.push(address);
         }
-        if (address.startsWith("0x") && validateAddress(address) == false) {
-          setInvalidAddresses(prevState => {
-            const newAddresses = [...new Set([...prevState, address])];
-            return newAddresses;
-          });
+        if (address.startsWith("0x")) {
+          if (validateAddress(address) === false) {
+            setInvalidAddresses(prevState => {
+              const newAddresses = [...new Set([...prevState, address])];
+              return newAddresses;
+            });
+          } else {
+            setWalletsFilter(prevState => {
+              const newAddresses = [...new Set([...prevState, address])];
+              return newAddresses;
+            });
+          }
         }
       }),
     );
