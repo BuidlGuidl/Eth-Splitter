@@ -40,11 +40,7 @@ export const RainbowKitCustomConnectButton = () => {
             {(() => {
               if (!connected) {
                 return (
-                  <button
-                    className="bg-gray-600 text-white  btn btn-primary btn-sm"
-                    onClick={openConnectModal}
-                    type="button"
-                  >
+                  <button className=" btn btn-primary btn-sm" onClick={openConnectModal} type="button">
                     Connect Wallet
                   </button>
                 );
@@ -89,14 +85,14 @@ export const RainbowKitCustomConnectButton = () => {
 
               return (
                 <div className="px-2 flex justify-end items-center">
-                  <div className="flex flex-col items-center mr-1 text-white">
+                  <div className="flex flex-col items-center mr-1 ">
                     <Balance address={account.address} className="min-h-0 h-auto" />
-                    <span className="text-xs text-white">{chain.name}</span>
+                    <span className="text-xs">{chain.name}</span>
                   </div>
                   <div className="dropdown dropdown-end leading-3 ">
                     <label
                       tabIndex={0}
-                      className="btn bg-gray-600 text-white  btn-sm pl-0 pr-2  shadow-md dropdown-toggle gap-0 !h-auto"
+                      className="btn bg-primary btn-sm pl-0 pr-2  shadow-md dropdown-toggle gap-0 !h-auto"
                     >
                       <BlockieAvatar address={account.address} size={30} ensImage={account.ensAvatar} />
                       <span className="ml-2 mr-1">{account.displayName}</span>

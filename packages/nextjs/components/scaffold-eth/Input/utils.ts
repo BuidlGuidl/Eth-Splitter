@@ -4,6 +4,7 @@ export interface CommonInputProps<T = string> {
   name?: string;
   placeholder?: string;
   disabled?: boolean;
+  ref?: HTMLInputElement | null;
 }
 
 export enum IntegerVariant {

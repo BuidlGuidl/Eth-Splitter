@@ -1,20 +1,44 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/router";
+import ExportList from "./splitter-components/ExportList";
 import TokenData from "./splitter-components/TokenData";
-import { parseEther } from "viem";
+import { createPublicClient, http, isAddress, parseEther } from "viem";
+import { mainnet } from "viem/chains";
+import { normalize } from "viem/ens";
+import { TrashIcon } from "@heroicons/react/24/outline";
+import { Address } from "~~/components/scaffold-eth";
 import { useScaffoldContractWrite } from "~~/hooks/scaffold-eth";
 import { UiJsxProps } from "~~/types/splitterUiTypes/splitterUiTypes";
 
 const EqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
-  const [amount, setamount] = useState("");
+  const router = useRouter();
+  const query = router.query;
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  const [amount, setAmount] = useState("");
   const [wallets, setWallets] = useState<string[]>([]);
 
   const [totalAmount, setTotalAmount] = useState("");
   const [totalTokenAmount, setTotalTokenAmount] = useState("");
   const [totalEthAmount, setTotalEthAmount] = useState("");
   const [tokenContract, setTokenContract] = useState("");
+  const [invalidAddresses, setInvalidAddresses] = useState<string[]>([]);
+  const [loadingAddresses, setLoadingAddresses] = useState(false);
 
-  function addMultipleAddress(value: string) {
-    const validateAddress = (address: string) => address.includes("0x") && address.length === 42;
+  const publicClient = createPublicClient({
+    chain: mainnet,
+    transport: http(),
+  });
+
+  async function addMultipleAddress(value: string) {
+    const validateAddress = (address: string) => isAddress(address);
+    const resolveEns = async (address: string) => {
+      const ensAddress = await publicClient.getEnsAddress({
+        name: normalize(address),
+      });
+      return String(ensAddress);
+    };
+
     let addresses: string[];
     if (value.includes(",")) {
       addresses = value
@@ -28,12 +52,55 @@ const EqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
         .map(str => str.replace(/\s/g, ""));
     }
 
-    let uniqueAddresses = [...new Set([...addresses])];
+    const resolvedAddresses: string[] = [];
+    setInvalidAddresses([]);
+
+    if (
+      (addresses[addresses.length - 1].endsWith(".eth") || addresses[addresses.length - 1].startsWith("0x")) &&
+      addresses[addresses.length - 1] !== wallets[wallets.length - 1]
+    ) {
+      setLoadingAddresses(true);
+    }
+
+    await Promise.all(
+      addresses.map(async address => {
+        if (address.endsWith(".eth")) {
+          const resolvedAddress = await resolveEns(address);
+          if (resolvedAddress === "null") {
+            setInvalidAddresses(prevState => {
+              const newAddresses = [...new Set([...prevState, address])];
+              return newAddresses;
+            });
+          }
+          resolvedAddresses.push(resolvedAddress);
+        } else {
+          resolvedAddresses.push(address);
+        }
+        if (address.startsWith("0x") && validateAddress(address) == false) {
+          setInvalidAddresses(prevState => {
+            const newAddresses = [...new Set([...prevState, address])];
+            return newAddresses;
+          });
+        }
+      }),
+    );
+    let uniqueAddresses = [...new Set([...resolvedAddresses])];
 
     uniqueAddresses = uniqueAddresses.filter(validateAddress);
 
-    setWallets(uniqueAddresses);
+    setWallets(prevState => {
+      const newAddresses = [...new Set([...prevState, ...uniqueAddresses])];
+      return newAddresses;
+    });
+    setLoadingAddresses(false);
   }
+
+  const removeWalletField = (index: number) => {
+    const newWallets = [...wallets];
+    newWallets.splice(index, 1);
+    setWallets(newWallets);
+  };
+
   const { writeAsync: splitEqualETH } = useScaffoldContractWrite({
     contractName: "ETHSplitter",
     functionName: "splitEqualETH",
@@ -65,6 +132,32 @@ const EqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
     setTotalAmount(totalAmount);
   }, [amount, wallets, splitItem]);
 
+  useEffect(() => {
+    const { wallets, amount, tokenAddress } = query;
+    if (wallets) {
+      setWallets(wallets as string[]);
+    }
+    if (amount) {
+      setAmount(amount as string);
+    }
+    if (tokenAddress) {
+      setTokenContract(tokenAddress as string);
+    }
+    if (Object.keys(query).length > 0) {
+      router.replace({
+        pathname: router.pathname,
+        query: {},
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query]);
+
+  useEffect(() => {
+    if (inputRef.current && splitItem == "split-eth") {
+      inputRef.current.focus();
+    }
+  }, [splitItem]);
+
   return (
     <>
       {splitItem === "split-tokens" && (
@@ -77,7 +170,7 @@ const EqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
         />
       )}
       <div className="mx-auto my-14">
-        <form className="md:w-[500px] w-[300px] lg:w-[800px] bg-new_secondary  rounded-3xl shadow-xl border-2 p-4 text-white">
+        <form className="md:w-[500px] w-[300px] lg:w-[700px]  rounded-3xl shadow-xl border-2 p-4">
           <div className="flex flex-col space-y-1 w-full my-1">
             <p className="font-semibold  ml-1 my-2 break-words">
               {splitItem === "split-eth" ? "ETH Amount Each" : "Token Amount Each"}
@@ -87,13 +180,15 @@ const EqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
             >
               <input
                 type="number"
+                ref={inputRef}
                 value={amount}
                 min={0}
-                onChange={e => setamount(e.target.value)}
-                className="input input-ghost focus:outline-none focus:bg-transparent focus:text-black  border w-full font-medium placeholder:text-accent/50 text-black"
+                onChange={e => setAmount(e.target.value)}
+                className="input input-ghost focus:outline-none focus:bg-transparent focus:text-gray-400  border w-full font-medium placeholder:text-accent/50 text-gray-400"
               />
             </div>
           </div>
+
           <div className="flex flex-col space-y-1 w-full my2 ">
             <p className="font-semibold  ml-1 my-2 break-words">Recipient Wallets</p>
             <div
@@ -101,13 +196,45 @@ const EqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
             >
               <textarea
                 placeholder="Seperate each address with a comma, space or new line"
-                // value={wallets}
                 onChange={e => addMultipleAddress(e.target.value)}
-                className="textarea rounded-none textarea-ghost focus:outline-none focus:bg-transparent focus:text-black  min-h-[11.2rem] border w-full font-medium placeholder:text-accent text-black"
+                className="textarea rounded-none textarea-ghost focus:outline-none focus:bg-transparent focus:text-gray-400  min-h-[8rem] border w-full font-medium placeholder:text-accent text-gray-400 md:focus:text-lg md:text-lg"
               />
             </div>
           </div>
-          <p className="ml-2 -mt-1">valid unique addresses: {wallets.length}</p>
+          {wallets.length > 0 && (
+            <div>
+              <p className="font-semibold  ml-1 my-2 break-words">Valid Addresses: {wallets.length}</p>{" "}
+              <div className="flex justify-center">
+                {loadingAddresses && <span className="loading loading-infinity loading-lg"></span>}
+              </div>
+              {wallets.map((wallet, index) => (
+                <div className="flex px-2 py-2 justify-between" key={index}>
+                  <Address address={wallet} size="lg" />
+                  {index >= 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        removeWalletField(index);
+                      }}
+                    >
+                      <TrashIcon className="h-5" />
+                    </button>
+                  )}
+                </div>
+              ))}
+              <ExportList wallets={wallets} />
+            </div>
+          )}
+          {invalidAddresses.length > 0 && (
+            <div className="my-3 px-1 ">
+              <h1 className="font-semibold text-red-700">Invalid Addresses/Ens: {invalidAddresses.length}</h1>
+              {invalidAddresses.map((address, index) => (
+                <div key={index} className="px-2 mt-1">
+                  {index + 1}. {address}
+                </div>
+              ))}
+            </div>
+          )}
           <div className="my-[10px] w-full space-y-4">
             <button
               type="button"
