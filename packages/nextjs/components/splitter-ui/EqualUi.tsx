@@ -32,10 +32,14 @@ const EqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
   });
 
   const resolveEns = async (name: string) => {
-    const ensAddress = await publicClient.getEnsAddress({
-      name: normalize(name),
-    });
-    return String(ensAddress);
+    try {
+      const ensAddress = await publicClient.getEnsAddress({
+        name: normalize(name),
+      });
+      return String(ensAddress);
+    } catch (error) {
+      return "null";
+    }
   };
 
   const getEnsName = async (address: string) => {
