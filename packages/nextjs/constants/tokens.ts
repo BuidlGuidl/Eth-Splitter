@@ -25,10 +25,6 @@ export const tokens: TokensType = {
         name: "ENS",
         address: "0xC18360217D8F7Ab5e7c516566761Ea12Ce7F9D72",
       },
-      {
-        name: "USDT",
-        address: "0xdac17f958d2ee523a2206206994597c13d831ec7",
-      },
     ],
   },
   10: {
