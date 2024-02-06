@@ -19,8 +19,6 @@ const ExportList = ({ wallets, splitType }: { wallets: string[]; splitType?: str
   const walletsUri = compressToEncodedURIComponent(JSON.stringify(wallets));
   const splitUrl = `${window.location.origin}${router.pathname}?walletsUri=${walletsUri}&activeSplitType=${splitType}`;
 
-  console.log(splitUrl);
-
   return (
     <div>
       <details className="dropdown my-1">

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { AddressInput } from "../scaffold-eth";
+import { EtherInput } from "../scaffold-eth";
 import ExportList from "./splitter-components/ExportList";
 import TokenData from "./splitter-components/TokenData";
 import { decompressFromEncodedURIComponent } from "lz-string";
@@ -161,14 +162,18 @@ const UnEqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
                       />
                     </span>
                     <span className="w-4/12">
-                      <input
-                        className="input  input-ghost focus:outline-none focus:bg-transparent focus:text-gray-400 h-[2.2rem] min-h-[2.2rem] font-medium placeholder:text-accent/50 w-full text-gray-400 bg-base-200 border-2 border-base-300"
-                        type="number"
-                        min={0}
-                        value={amounts[index]}
-                        onChange={val => updateAmounts(val.target.value, index)}
-                        placeholder="Amount"
-                      />
+                      {splitItem === "split-tokens" ? (
+                        <input
+                          className="input  input-ghost focus:outline-none focus:bg-transparent focus:text-gray-400 h-[2.2rem] min-h-[2.2rem] font-medium placeholder:text-accent/50 w-full text-gray-400 bg-base-200 border-2 border-base-300"
+                          type="number"
+                          min={0}
+                          value={amounts[index]}
+                          onChange={val => updateAmounts(val.target.value, index)}
+                          placeholder="Amount"
+                        />
+                      ) : (
+                        <EtherInput value={amounts[index]} onChange={val => updateAmounts(val, index)} />
+                      )}
                     </span>
                   </div>
                   {index > 0 && (

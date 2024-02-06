@@ -7,7 +7,7 @@ import { createPublicClient, http, isAddress, parseEther } from "viem";
 import { mainnet } from "viem/chains";
 import { normalize } from "viem/ens";
 import { TrashIcon } from "@heroicons/react/24/outline";
-import { Address } from "~~/components/scaffold-eth";
+import { Address, EtherInput } from "~~/components/scaffold-eth";
 import { useScaffoldContractWrite } from "~~/hooks/scaffold-eth";
 import { UiJsxProps } from "~~/types/splitterUiTypes/splitterUiTypes";
 
@@ -189,17 +189,19 @@ const EqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
             <p className="font-semibold  ml-1 my-2 break-words">
               {splitItem === "split-eth" ? "ETH Amount Each" : "Token Amount Each"}
             </p>
-            <div
-              className={`flex items-center justify-between border-2 border-base-300 bg-base-200 rounded-full text-accent w-full`}
-            >
-              <input
-                type="number"
-                ref={inputRef}
-                value={amount}
-                min={0}
-                onChange={e => setAmount(e.target.value)}
-                className="input input-ghost focus:outline-none focus:bg-transparent focus:text-gray-400  border w-full font-medium placeholder:text-accent/50 text-gray-400"
-              />
+            <div>
+              {splitItem === "split-tokens" ? (
+                <input
+                  type="number"
+                  ref={inputRef}
+                  value={amount}
+                  min={0}
+                  onChange={e => setAmount(e.target.value)}
+                  className="input  input-ghost focus:outline-none focus:bg-transparent focus:text-gray-400  border-2 border-base-300 w-full font-medium placeholder:text-accent/50 text-gray-400"
+                />
+              ) : (
+                <EtherInput value={amount} onChange={value => setAmount(value)} />
+              )}
             </div>
           </div>
 
