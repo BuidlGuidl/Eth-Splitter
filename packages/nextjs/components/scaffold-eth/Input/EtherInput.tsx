@@ -103,6 +103,7 @@ export const EtherInput = ({ value, name, placeholder, onChange, disabled }: Com
           className={`btn btn-primary h-[2.2rem] min-h-[2.2rem] ${nativeCurrencyPrice > 0 ? "" : "hidden"}`}
           onClick={toggleMode}
           disabled={!usdMode && !nativeCurrencyPrice}
+          type="button"
         >
           <ArrowsRightLeftIcon className="h-3 w-3 cursor-pointer" aria-hidden="true" />
         </button>
