@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import ExportList from "./splitter-components/ExportList";
 import TokenData from "./splitter-components/TokenData";
+import { decompressFromEncodedURIComponent } from "lz-string";
 import { createPublicClient, http, isAddress, parseEther } from "viem";
 import { mainnet } from "viem/chains";
 import { normalize } from "viem/ens";
@@ -142,7 +143,7 @@ const EqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
   }, [amount, wallets, splitItem]);
 
   useEffect(() => {
-    const { wallets, amount, tokenAddress } = query;
+    const { wallets, amount, tokenAddress, walletsUri } = query;
     if (wallets) {
       if (typeof wallets == "string") {
         setWallets(wallets.split(","));
@@ -155,6 +156,10 @@ const EqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
     }
     if (tokenAddress) {
       setTokenContract(tokenAddress as string);
+    }
+    if (walletsUri) {
+      const wallets = JSON.parse(decompressFromEncodedURIComponent(walletsUri as string));
+      setWallets(wallets);
     }
     if (Object.keys(query).length > 0) {
       router.replace({

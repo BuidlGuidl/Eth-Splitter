@@ -4,6 +4,7 @@ import { AddressInput } from "../scaffold-eth";
 import { EtherInput } from "../scaffold-eth";
 import ExportList from "./splitter-components/ExportList";
 import TokenData from "./splitter-components/TokenData";
+import { decompressFromEncodedURIComponent } from "lz-string";
 import { isAddress, parseUnits } from "viem";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { useScaffoldContractWrite } from "~~/hooks/scaffold-eth";
@@ -108,7 +109,7 @@ const UnEqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
   }, [amounts, wallets]);
 
   useEffect(() => {
-    const { wallets, amounts, tokenAddress } = query;
+    const { wallets, amounts, tokenAddress, walletsUri } = query;
     if (wallets) {
       if (typeof wallets == "string") {
         setWallets(wallets.split(","));
@@ -122,6 +123,10 @@ const UnEqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
     }
     if (tokenAddress) {
       setTokenContract(tokenAddress as string);
+    }
+    if (walletsUri) {
+      const wallets = JSON.parse(decompressFromEncodedURIComponent(walletsUri as string));
+      setWallets(wallets);
     }
     if (Object.keys(query).length > 0) {
       router.replace({
