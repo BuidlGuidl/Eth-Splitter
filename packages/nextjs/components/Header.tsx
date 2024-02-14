@@ -44,7 +44,9 @@ export const Header = () => {
   const [chainData, setChainData] = useState<Chain[]>();
 
   function changeTargetNetwork(newNetwork: any): void {
-    scaffoldConfig.targetNetwork = newNetwork;
+    if (newNetwork != scaffoldConfig.targetNetwork && newNetwork) {
+      scaffoldConfig.targetNetwork = newNetwork;
+    }
   }
 
   useEffect(() => {
@@ -52,6 +54,20 @@ export const Header = () => {
       setChainData(switchChains.filter(item => [1, 137, 10, 11155111].includes(item.id)));
     }
   }, [switchChains]);
+
+  useEffect(() => {
+    if (chain) {
+      let chainName;
+      chain.name == "Ethereum"
+        ? (chainName = "mainnet")
+        : chain.name == "OP Mainnet"
+        ? (chainName = "optimism")
+        : (chainName = chain.name);
+      // switchNetwork?.(chain?.id);
+      changeTargetNetwork(chains[chainName.toLowerCase() as keyof typeof chains]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chain]);
 
   const navLinks = (
     <>
@@ -100,9 +116,11 @@ export const Header = () => {
         <ul className="hidden lg:flex lg:flex-nowrap menu menu-horizontal px-1 gap-2">{navLinks}</ul>
       </div>
       <div className="navbar-end flex-grow mr-4 ">
-        {isConnected && (
+        {isConnected && chain && (
           <select
             className="select select-sm sm:w-fit w-20 mr-2"
+            // defaultValue={chain.name}
+            value={`${chain.name}|${chain.id}`}
             style={{ borderWidth: 1, borderColor: chain && (chain as any).color }}
             onChange={event => {
               const [name, id] = event.target.value.split("|");

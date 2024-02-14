@@ -35,8 +35,6 @@ const Home: NextPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query]);
 
-  console.log(activeSplitType);
-
   return (
     <>
       <Head>
