@@ -36,8 +36,8 @@ const EqualEthSplitsHistory = () => {
     router.push({
       pathname: `/`,
       query: {
-        activeSplitToken: "split-eth",
-        activeSplitType: "equal-splits",
+        token: "split-eth",
+        splitType: "equal-splits",
         wallets: wallets,
         amount: amount,
       },

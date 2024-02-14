@@ -43,8 +43,6 @@ export const Header = () => {
 
   const [chainData, setChainData] = useState<Chain[]>();
 
-  const [selectedNetwork, setSelectedNetwork] = useState<string>("");
-
   function changeTargetNetwork(newNetwork: any): void {
     scaffoldConfig.targetNetwork = newNetwork;
   }
@@ -54,12 +52,6 @@ export const Header = () => {
       setChainData(switchChains.filter(item => [1, 137, 10, 11155111].includes(item.id)));
     }
   }, [switchChains]);
-
-  useEffect(() => {
-    if (chain) {
-      setSelectedNetwork(chain.name);
-    }
-  }, [chain]);
 
   const navLinks = (
     <>
@@ -115,7 +107,6 @@ export const Header = () => {
             onChange={event => {
               const [name, id] = event.target.value.split("|");
               switchNetwork?.(+id);
-              console.log(name);
               name === "Ethereum"
                 ? changeTargetNetwork(chains["mainnet"])
                 : name === "Polygon Mumbai"
@@ -128,12 +119,7 @@ export const Header = () => {
             <option disabled>Select network</option>
             {chainData &&
               chainData.map(data => (
-                <option
-                  key={data.name}
-                  value={`${data.name}|${data.id}`}
-                  style={{ color: (data as any).color }}
-                  selected={selectedNetwork === data.name}
-                >
+                <option key={data.name} value={`${data.name}|${data.id}`} style={{ color: (data as any).color }}>
                   {data.name}
                 </option>
               ))}

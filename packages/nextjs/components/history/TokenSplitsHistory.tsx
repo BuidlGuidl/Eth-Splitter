@@ -30,8 +30,8 @@ const TokenSplitsHistory = () => {
     router.push({
       pathname: `/`,
       query: {
-        activeSplitToken: "split-tokens",
-        activeSplitType: "unequal-splits",
+        token: "split-tokens",
+        splitType: "unequal-splits",
         wallets: wallets,
         amounts: amounts,
         tokenAddress: tokenAddress,

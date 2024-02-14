@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { useRouter } from "next/router";
-import { compressToEncodedURIComponent } from "lz-string";
 import CopyToClipboard from "react-copy-to-clipboard";
 import { ArrowDownTrayIcon, CheckCircleIcon, DocumentDuplicateIcon } from "@heroicons/react/24/outline";
 
@@ -16,8 +15,7 @@ const ExportList = ({ wallets, splitType }: { wallets: string[]; splitType?: str
     link.click();
   };
 
-  const walletsUri = compressToEncodedURIComponent(JSON.stringify(wallets));
-  const splitUrl = `${window.location.origin}${router.pathname}?walletsUri=${walletsUri}&activeSplitType=${splitType}`;
+  const splitUrl = `${window.location.origin}${router.pathname}?wallets=${wallets}&splitType=${splitType}`;
 
   return (
     <div>

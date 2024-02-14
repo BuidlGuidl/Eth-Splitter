@@ -25,14 +25,17 @@ const Home: NextPage = () => {
   let splitterContract: any;
 
   useEffect(() => {
-    const { activeSplitToken, activeSplitType } = query;
-    if (activeSplitToken) {
-      setSplitToken(activeSplitToken.toString());
+    const { token, splitType } = query;
+    if (token) {
+      setSplitToken(token.toString());
     }
-    if (activeSplitType) {
-      setSplitType(activeSplitType.toString());
+    if (splitType) {
+      setSplitType(splitType.toString());
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query]);
+
+  console.log(activeSplitType);
 
   return (
     <>
