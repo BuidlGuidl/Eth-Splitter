@@ -187,8 +187,8 @@ const EqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
           tokenContract={tokenContract}
         />
       )}
-      <div className="mx-auto my-14">
-        <form className="md:w-[500px] w-[300px] lg:w-[700px]  rounded-3xl shadow-xl border-2 p-4">
+      <div className=" my-14 w-full">
+        <form className="md:w-[500px] w-[95%] mx-auto lg:w-[700px] rounded-3xl shadow-xl border p-4">
           <div className="flex flex-col space-y-1 w-full my-1">
             <p className="font-semibold  ml-1 my-2 break-words">
               {splitItem === "split-eth" ? "ETH Amount Each" : "Token Amount Each"}

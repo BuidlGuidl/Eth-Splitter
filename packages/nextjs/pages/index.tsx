@@ -42,8 +42,8 @@ const Home: NextPage = () => {
         <meta name="description" content="Created with 🏗 scaffold-eth-2" />
       </Head>
 
-      <div className="flex items-center flex-col flex-grow pt-16 ">
-        <div className="flex flex-row items-center gap-4">
+      <div className="flex items-center flex-col w-full pt-5 ">
+        <div className="flex md:flex-row flex-col  items-center gap-4">
           <ul className="flex p-[0.2rem] rounded-full ">
             <li
               onClick={() => handleItemClick("split-eth")}

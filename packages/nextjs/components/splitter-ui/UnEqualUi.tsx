@@ -148,8 +148,8 @@ const UnEqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
           tokenContract={tokenContract}
         />
       )}
-      <div className="mx-auto mt-14">
-        <form className="md:w-[500px] w-[300px] lg:w-[700px]  rounded-3xl shadow-xl border-2 p-4">
+      <div className=" my-14 w-full">
+        <form className="md:w-[500px] w-[95%] lg:w-[700px] mx-auto  rounded-3xl shadow-xl border p-4">
           <div className="flex flex-col space-y-1 w-full my-1">
             <p className="font-semibold  ml-1 my-0 break-words">Recipient Wallets</p>
 

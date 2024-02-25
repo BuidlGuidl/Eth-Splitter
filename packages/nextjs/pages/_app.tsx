@@ -42,7 +42,7 @@ const ScaffoldEthApp = ({ Component, pageProps }: AppProps) => {
       >
         <div className="flex flex-col min-h-screen overflow-hidden">
           <Header />
-          <main className="flex items-center mx-auto flex-col flex-grow pt-10 gap-4 xs:w-4/5 lg:max-w-5xl w-11/12">
+          <main className="flex items-center mx-auto flex-col flex-grow pt-10 gap-4 xs:w-4/5 lg:max-w-5xl w-full">
             <Component {...pageProps} />
           </main>
           <Footer />
