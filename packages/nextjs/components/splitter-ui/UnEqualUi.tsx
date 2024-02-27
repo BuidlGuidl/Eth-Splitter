@@ -19,6 +19,7 @@ const UnEqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
   const [amountsInWei, setAmountsInWei] = useState<any[]>([]);
   const [totalAmount, setTotalAmount] = useState("");
   const [tokenContract, setTokenContract] = useState("");
+  const [usdGenMode, setUSDGenMode] = useState(false);
 
   function addMultipleAddress(value: string) {
     const validateAddress = (address: string) => address.includes("0x") && address.length === 42;
@@ -176,7 +177,12 @@ const UnEqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
                           placeholder="Amount"
                         />
                       ) : (
-                        <EtherInput value={amounts[index]} onChange={val => updateAmounts(val, index)} />
+                        <EtherInput
+                          value={amounts[index]}
+                          onChange={val => updateAmounts(val, index)}
+                          usdGenMode={usdGenMode}
+                          setUsdGenMode={setUSDGenMode}
+                        />
                       )}
                     </span>
                   </div>
@@ -192,7 +198,7 @@ const UnEqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
                   )}
                 </div>
                 {!isAddress(wallet) && wallet !== "" && (
-                  <p className="ml-2 text-[0.75rem] text-red-400">address is invalid</p>
+                  <h1 className="ml-2 text-[0.75rem] text-red-400 mt-1">address is invalid</h1>
                 )}
               </div>
             ))}

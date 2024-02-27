@@ -1,7 +1,12 @@
-import { useMemo, useState } from "react";
+import { Dispatch, SetStateAction, useMemo, useState } from "react";
 import { ArrowsRightLeftIcon } from "@heroicons/react/24/outline";
 import { CommonInputProps, InputBase, SIGNED_NUMBER_REGEX } from "~~/components/scaffold-eth";
 import { useGlobalState } from "~~/services/store/store";
+
+interface EtherInputProps extends CommonInputProps {
+  usdGenMode?: boolean;
+  setUsdGenMode?: Dispatch<SetStateAction<boolean>>;
+}
 
 const MAX_DECIMALS_USD = 2;
 
@@ -43,22 +48,36 @@ function displayValueToEtherValue(usdMode: boolean, displayValue: string, native
  *
  * onChange will always be called with the value in ETH
  */
-export const EtherInput = ({ value, name, placeholder, onChange, disabled }: CommonInputProps) => {
+export const EtherInput = ({
+  value,
+  name,
+  placeholder,
+  onChange,
+  disabled,
+  usdGenMode,
+  setUsdGenMode,
+}: EtherInputProps) => {
   const [transitoryDisplayValue, setTransitoryDisplayValue] = useState<string>();
   const nativeCurrencyPrice = useGlobalState(state => state.nativeCurrencyPrice);
   const [usdMode, setUSDMode] = useState(false);
 
+  console.log(usdGenMode);
+
   // The displayValue is derived from the ether value that is controlled outside of the component
   // In usdMode, it is converted to its usd value, in regular mode it is unaltered
   const displayValue = useMemo(() => {
-    const newDisplayValue = etherValueToDisplayValue(usdMode, value, nativeCurrencyPrice);
+    const newDisplayValue = etherValueToDisplayValue(
+      usdGenMode == undefined ? usdMode : usdGenMode,
+      value,
+      nativeCurrencyPrice,
+    );
     if (transitoryDisplayValue && parseFloat(newDisplayValue) === parseFloat(transitoryDisplayValue)) {
       return transitoryDisplayValue;
     }
     // Clear any transitory display values that might be set
     setTransitoryDisplayValue(undefined);
     return newDisplayValue;
-  }, [nativeCurrencyPrice, transitoryDisplayValue, usdMode, value]);
+  }, [nativeCurrencyPrice, transitoryDisplayValue, usdMode, usdGenMode, value]);
 
   const handleChangeNumber = (newValue: string) => {
     if (newValue && !SIGNED_NUMBER_REGEX.test(newValue)) {
@@ -87,7 +106,7 @@ export const EtherInput = ({ value, name, placeholder, onChange, disabled }: Com
   };
 
   const toggleMode = () => {
-    setUSDMode(!usdMode);
+    usdGenMode != undefined && setUsdGenMode != undefined ? setUsdGenMode(!usdGenMode) : setUSDMode(!usdMode);
   };
 
   return (
