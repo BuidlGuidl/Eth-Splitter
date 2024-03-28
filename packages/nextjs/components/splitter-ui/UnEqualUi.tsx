@@ -69,6 +69,9 @@ const UnEqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
   };
 
   const updateAmounts = async (value: string, index: number) => {
+    if (value.startsWith(".")) {
+      value = `0${value}`;
+    }
     const newAmounts = [...amounts];
     newAmounts[index] = value;
     setAmounts(newAmounts);

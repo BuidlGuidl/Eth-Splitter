@@ -111,6 +111,14 @@ const EqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
     setLoadingAddresses(false);
   };
 
+  const handleInputChange = (e: string) => {
+    let value = e;
+    if (value.startsWith(".")) {
+      value = `0${value}`;
+    }
+    setAmount(value);
+  };
+
   const { writeAsync: splitEqualETH } = useScaffoldContractWrite({
     contractName: "ETHSplitter",
     functionName: "splitEqualETH",
@@ -200,7 +208,7 @@ const EqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
                   ref={inputRef}
                   value={amount}
                   min={0}
-                  onChange={e => setAmount(e.target.value)}
+                  onChange={e => handleInputChange(e.target.value)}
                   className="input  input-ghost focus:outline-none focus:bg-transparent focus:text-gray-400  border-2 border-base-300 w-full font-medium placeholder:text-accent/50 text-gray-400"
                 />
               ) : (

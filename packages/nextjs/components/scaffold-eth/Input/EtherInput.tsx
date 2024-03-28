@@ -61,8 +61,6 @@ export const EtherInput = ({
   const nativeCurrencyPrice = useGlobalState(state => state.nativeCurrencyPrice);
   const [usdMode, setUSDMode] = useState(false);
 
-  console.log(usdGenMode);
-
   // The displayValue is derived from the ether value that is controlled outside of the component
   // In usdMode, it is converted to its usd value, in regular mode it is unaltered
   const displayValue = useMemo(() => {
@@ -80,10 +78,12 @@ export const EtherInput = ({
   }, [nativeCurrencyPrice, transitoryDisplayValue, usdMode, usdGenMode, value]);
 
   const handleChangeNumber = (newValue: string) => {
+    if (newValue.startsWith(".")) {
+      newValue = `0${newValue}`;
+    }
     if (newValue && !SIGNED_NUMBER_REGEX.test(newValue)) {
       return;
     }
-
     // Following condition is a fix to prevent usdMode from experiencing different display values
     // than what the user entered. This can happen due to floating point rounding errors that are introduced in the back and forth conversion
     if (usdMode) {
