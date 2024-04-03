@@ -9,6 +9,7 @@ import { Bars3Icon, BugAntIcon } from "@heroicons/react/24/outline";
 import { FaucetButton, RainbowKitCustomConnectButton } from "~~/components/scaffold-eth";
 import { useOutsideClick } from "~~/hooks/scaffold-eth";
 import scaffoldConfig from "~~/scaffold.config";
+import { useDarkMode} from "usehooks-ts";
 
 const NavLink = ({ href, children }: { href: string; children: React.ReactNode }) => {
   const router = useRouter();
@@ -92,7 +93,6 @@ export const Header = () => {
     const newLogoSrc = isDarkMode ? '/assets/bg.svg' : '/assets/bg-lm.svg';
     setLogoSrc(newLogoSrc);
   }, [isDarkMode]); 
-
 
   return (
     <div className="sticky lg:static top-0 navbar  min-h-0 flex-shrink-0 justify-between z-20 shadow-md px-0 sm:px-2">
