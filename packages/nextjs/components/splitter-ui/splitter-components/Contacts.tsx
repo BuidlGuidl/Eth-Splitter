@@ -14,13 +14,14 @@ const Contacts = ({ setWallets, wallets }: { setWallets: Dispatch<SetStateAction
 
   return (
     <div className="dropdown dropdown-end">
-      <div tabIndex={0} role="button" className="btn m-1 btn-primary">
+      <div tabIndex={0} role="button" className="btn m-1 btn-primary btn-sm">
         Contacts
       </div>
-      {contacts?.length > 0 && (
-        <ul tabIndex={0} className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52 max-h-72 ">
-          <div className="overflow-y-scroll">
-            {contacts?.map((contact: string) => (
+
+      <ul tabIndex={0} className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52 max-h-72 ">
+        <div className="overflow-y-scroll">
+          {contacts?.length > 0 ? (
+            contacts?.map((contact: string) => (
               <li key={contact}>
                 <a
                   className="flex justify-between flex-row tooltip"
@@ -36,10 +37,12 @@ const Contacts = ({ setWallets, wallets }: { setWallets: Dispatch<SetStateAction
                   <PlusIcon className="w-1/6" />
                 </a>
               </li>
-            ))}
-          </div>
-        </ul>
-      )}
+            ))
+          ) : (
+            <div className="p-2">Empty List</div>
+          )}
+        </div>
+      </ul>
     </div>
   );
 };
