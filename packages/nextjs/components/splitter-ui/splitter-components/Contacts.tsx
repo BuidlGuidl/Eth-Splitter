@@ -40,6 +40,7 @@ const Contacts = ({ setWallets, wallets }: { setWallets: Dispatch<SetStateAction
           </div>
         </ul>
       )}
+      {contacts?.length === 0 && <div className="p-2">Empty List</div>}
     </div>
   );
 };
