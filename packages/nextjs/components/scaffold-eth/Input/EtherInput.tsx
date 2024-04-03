@@ -61,6 +61,8 @@ export const EtherInput = ({
   const nativeCurrencyPrice = useGlobalState(state => state.nativeCurrencyPrice);
   const [usdMode, setUSDMode] = useState(false);
 
+  console.log(usdGenMode);
+
   // The displayValue is derived from the ether value that is controlled outside of the component
   // In usdMode, it is converted to its usd value, in regular mode it is unaltered
   const displayValue = useMemo(() => {
