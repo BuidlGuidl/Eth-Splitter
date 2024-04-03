@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
+import Contacts from "./splitter-components/Contacts";
 import ExportList from "./splitter-components/ExportList";
 import TokenData from "./splitter-components/TokenData";
 import { decompressFromEncodedURIComponent } from "lz-string";
@@ -10,6 +11,7 @@ import { TrashIcon } from "@heroicons/react/24/outline";
 import { Address, EtherInput } from "~~/components/scaffold-eth";
 import { useScaffoldContractWrite } from "~~/hooks/scaffold-eth";
 import { UiJsxProps } from "~~/types/splitterUiTypes/splitterUiTypes";
+import { saveContacts } from "~~/utils/ethSplitter";
 
 const EqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
   const router = useRouter();
@@ -210,7 +212,10 @@ const EqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
           </div>
 
           <div className="flex flex-col space-y-1 w-full my2 ">
-            <p className="font-semibold  ml-1 my-2 break-words">Recipient Wallets</p>
+            <div className="flex justify-between items-center">
+              <p className="font-semibold  ml-1 my-2 break-words">Recipient Wallets</p>
+              <Contacts setWallets={setWallets} wallets={wallets} />
+            </div>
             <div
               className={`flex items-center justify-between border-2 border-base-300 bg-base-200 rounded-xl text-accent w-full`}
             >
@@ -261,6 +266,7 @@ const EqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
               disabled={wallets.length <= 1 || totalAmount === "0"}
               onClick={async () => {
                 splitItem === "split-eth" ? await splitEqualETH() : await splitEqualERC20();
+                saveContacts(wallets);
               }}
               className={`btn bg-new_tertiary w-full text-white capitalize text-lg `}
             >
