@@ -10,7 +10,6 @@ import { FaucetButton, RainbowKitCustomConnectButton } from "~~/components/scaff
 import { useOutsideClick } from "~~/hooks/scaffold-eth";
 import scaffoldConfig from "~~/scaffold.config";
 
-
 const NavLink = ({ href, children }: { href: string; children: React.ReactNode }) => {
   const router = useRouter();
   const isActive = router.pathname === href;
@@ -32,7 +31,6 @@ const NavLink = ({ href, children }: { href: string; children: React.ReactNode }
  * Site header
  */
 export const Header = () => {
-  
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const burgerMenuRef = useRef<HTMLDivElement>(null);
   useOutsideClick(
@@ -87,12 +85,12 @@ export const Header = () => {
   );
 
   const { isDarkMode } = useDarkMode();
-  const [logoSrc, setLogoSrc] = useState('/assets/bg-lm.svg');
+  const [logoSrc, setLogoSrc] = useState("/assets/bg-lm.svg");
 
   useEffect(() => {
-    const newLogoSrc = isDarkMode ? '/assets/bg.svg' : '/assets/bg-lm.svg';
+    const newLogoSrc = isDarkMode ? "/assets/bg.svg" : "/assets/bg-lm.svg";
     setLogoSrc(newLogoSrc);
-  }, [isDarkMode]); 
+  }, [isDarkMode]);
 
   return (
     <div className="sticky lg:static top-0 navbar  min-h-0 flex-shrink-0 justify-between z-20 shadow-md px-0 sm:px-2">
@@ -121,12 +119,7 @@ export const Header = () => {
         </div>
         <Link href="/" passHref className="hidden lg:flex items-center gap-2 ml-4 mr-6 shrink-0">
           <div className="flex relative w-[200px] h-[48px] ">
-          <Image
-            alt="SE2 logo"
-            className="cursor-pointer"
-            fill
-            src={logoSrc} 
-          />
+            <Image alt="SE2 logo" className="cursor-pointer" fill src={logoSrc} />
           </div>
         </Link>
         <ul className="hidden lg:flex lg:flex-nowrap menu menu-horizontal px-1 gap-2">{navLinks}</ul>
