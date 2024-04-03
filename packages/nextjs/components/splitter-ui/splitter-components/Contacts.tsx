@@ -13,7 +13,7 @@ const Contacts = ({ setWallets, wallets }: { setWallets: Dispatch<SetStateAction
   }, [wallets]);
 
   return (
-    <div className="dropdown">
+    <div className="dropdown dropdown-end">
       <div tabIndex={0} role="button" className="btn m-1 btn-primary">
         Contacts
       </div>
