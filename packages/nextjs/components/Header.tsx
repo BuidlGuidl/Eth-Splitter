@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
+import { useDarkMode } from "usehooks-ts";
 import { Chain, useAccount, useNetwork, useSwitchNetwork } from "wagmi";
 import * as chains from "wagmi/chains";
 import { Bars3Icon, BugAntIcon } from "@heroicons/react/24/outline";
@@ -83,6 +84,14 @@ export const Header = () => {
     </>
   );
 
+  const { isDarkMode } = useDarkMode();
+  const [logoSrc, setLogoSrc] = useState("/assets/bg-lm.svg");
+
+  useEffect(() => {
+    const newLogoSrc = isDarkMode ? "/assets/bg.svg" : "/assets/bg-lm.svg";
+    setLogoSrc(newLogoSrc);
+  }, [isDarkMode]);
+
   return (
     <div className="sticky lg:static top-0 navbar  min-h-0 flex-shrink-0 justify-between z-20 shadow-md px-0 sm:px-2">
       <div className="navbar-start w-auto lg:w-1/2">
@@ -110,7 +119,7 @@ export const Header = () => {
         </div>
         <Link href="/" passHref className="hidden lg:flex items-center gap-2 ml-4 mr-6 shrink-0">
           <div className="flex relative w-[200px] h-[48px] ">
-            <Image alt="SE2 logo" className="cursor-pointer" fill src="/assets/bg.svg" />
+            <Image alt="SE2 logo" className="cursor-pointer" fill src={logoSrc} />
           </div>
         </Link>
         <ul className="hidden lg:flex lg:flex-nowrap menu menu-horizontal px-1 gap-2">{navLinks}</ul>
