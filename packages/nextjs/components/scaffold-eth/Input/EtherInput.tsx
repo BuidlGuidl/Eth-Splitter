@@ -28,8 +28,13 @@ function etherValueToDisplayValue(usdMode: boolean, etherValue: string, nativeCu
   }
 }
 
-function displayValueToEtherValue(usdMode: boolean, displayValue: string, nativeCurrencyPrice: number) {
-  if (usdMode && nativeCurrencyPrice) {
+function displayValueToEtherValue(
+  usdMode: boolean,
+  displayValue: string,
+  nativeCurrencyPrice: number,
+  usdGenMode?: boolean,
+) {
+  if ((usdMode || usdGenMode) && nativeCurrencyPrice) {
     const parsedDisplayValue = parseFloat(displayValue);
     if (Number.isNaN(parsedDisplayValue)) {
       // Invalid number.
@@ -84,7 +89,7 @@ export const EtherInput = ({
 
     // Following condition is a fix to prevent usdMode from experiencing different display values
     // than what the user entered. This can happen due to floating point rounding errors that are introduced in the back and forth conversion
-    if (usdMode) {
+    if (usdMode || usdGenMode) {
       const decimals = newValue.split(".")[1];
       if (decimals && decimals.length > MAX_DECIMALS_USD) {
         return;
@@ -99,7 +104,7 @@ export const EtherInput = ({
       setTransitoryDisplayValue(undefined);
     }
 
-    const newEthValue = displayValueToEtherValue(usdMode, newValue, nativeCurrencyPrice);
+    const newEthValue = displayValueToEtherValue(usdMode, newValue, nativeCurrencyPrice, usdGenMode);
     onChange(newEthValue);
   };
 
@@ -114,7 +119,7 @@ export const EtherInput = ({
       placeholder={placeholder}
       onChange={handleChangeNumber}
       disabled={disabled}
-      prefix={<span className="pl-4 -mr-2 text-accent self-center">{usdMode ? "$" : "Ξ"}</span>}
+      prefix={<span className="pl-4 -mr-2 text-accent self-center">{usdMode || usdGenMode ? "$" : "Ξ"}</span>}
       suffix={
         <button
           className={`btn btn-primary h-[2.2rem] min-h-[2.2rem] ${nativeCurrencyPrice > 0 ? "" : "hidden"}`}
