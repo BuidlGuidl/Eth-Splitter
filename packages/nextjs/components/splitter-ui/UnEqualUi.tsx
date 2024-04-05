@@ -10,7 +10,7 @@ import { isAddress, parseUnits } from "viem";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { useScaffoldContractWrite } from "~~/hooks/scaffold-eth";
 import { UiJsxProps } from "~~/types/splitterUiTypes/splitterUiTypes";
-import { saveContacts } from "~~/utils/ethSplitter";
+import { loadCache, saveContacts, updateCacheAmounts, updateCacheWallets } from "~~/utils/ethSplitter";
 
 const UnEqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
   const router = useRouter();
@@ -88,6 +88,30 @@ const UnEqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
     functionName: "splitERC20",
     args: [tokenContract, wallets, amountsInWei],
   });
+
+  useEffect(() => {
+    const cache = loadCache();
+    if (cache) {
+      if (cache.wallets.length > 0) {
+        setWallets(cache.wallets);
+      }
+      if (cache.amounts.length > 0) {
+        setAmounts(cache.amounts);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (wallets.length > 0 && !wallets.includes("")) {
+      updateCacheWallets(wallets);
+    }
+  }, [wallets]);
+
+  useEffect(() => {
+    if (amounts.length > 0 && !amounts.includes("")) {
+      updateCacheAmounts(amounts);
+    }
+  }, [amounts]);
 
   useEffect(() => {
     let totalETH = 0;

@@ -11,7 +11,7 @@ import { TrashIcon } from "@heroicons/react/24/outline";
 import { Address, EtherInput } from "~~/components/scaffold-eth";
 import { useScaffoldContractWrite } from "~~/hooks/scaffold-eth";
 import { UiJsxProps } from "~~/types/splitterUiTypes/splitterUiTypes";
-import { saveContacts } from "~~/utils/ethSplitter";
+import { loadCache, saveContacts, updateCacheAmount, updateCacheWallets } from "~~/utils/ethSplitter";
 
 const EqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
   const router = useRouter();
@@ -45,10 +45,14 @@ const EqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
   };
 
   const getEnsName = async (address: string) => {
-    const ensName = await publicClient.getEnsName({
-      address: normalize(address),
-    });
-    return String(ensName);
+    try {
+      const ensName = await publicClient.getEnsName({
+        address: normalize(address),
+      });
+      return String(ensName);
+    } catch (error) {
+      return "null";
+    }
   };
 
   async function addMultipleAddress(value: string) {
@@ -127,6 +131,26 @@ const EqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
   });
 
   useEffect(() => {
+    const cache = loadCache();
+    if (cache) {
+      setWallets(cache.wallets);
+      setAmount(cache.amount);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (wallets.length > 0) {
+      updateCacheWallets(wallets);
+    }
+  }, [wallets]);
+
+  useEffect(() => {
+    if (amount != "") {
+      updateCacheAmount(amount);
+    }
+  }, [amount]);
+
+  useEffect(() => {
     let totalAmount: any = 0;
     for (let index = 0; index < wallets.length; index++) {
       if (wallets[index] === "" || amount === "") {
@@ -138,7 +162,7 @@ const EqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
       totalAmount = parseEther(totalAmount.toFixed(18));
       setTotalTokenAmount(totalAmount);
     } else {
-      totalAmount = totalAmount.toFixed(18);
+      totalAmount = totalAmount.toString();
       setTotalEthAmount(totalAmount);
     }
     setTotalAmount(totalAmount);
