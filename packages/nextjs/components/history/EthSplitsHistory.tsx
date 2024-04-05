@@ -62,7 +62,7 @@ const EthSplitsHistory = () => {
             <div className=" px-4 py-6 grid md:grid-cols-5 gap-2 text-sm grid-cols-2 ">
               <div>
                 <span>recipients (address[]):</span>
-                <ExportList wallets={event.args.recipients} />
+                <ExportList wallets={event.args.recipients} splitType="unequal-splits" />
               </div>
               <div className="flex flex-col">
                 [
