@@ -3,7 +3,17 @@ import { useRouter } from "next/router";
 import CopyToClipboard from "react-copy-to-clipboard";
 import { ArrowDownTrayIcon, CheckCircleIcon, DocumentDuplicateIcon } from "@heroicons/react/24/outline";
 
-const ExportList = ({ wallets, splitType }: { wallets: string[]; splitType?: string }) => {
+const ExportList = ({
+  wallets,
+  splitType,
+  amounts,
+  amount,
+}: {
+  wallets: string[];
+  splitType?: string;
+  amounts?: string[];
+  amount?: string;
+}) => {
   const router = useRouter();
   const [listCopied, setListCopied] = useState(false);
   const [listUrlCopied, setListUrlCopied] = useState(false);
@@ -15,7 +25,15 @@ const ExportList = ({ wallets, splitType }: { wallets: string[]; splitType?: str
     link.click();
   };
 
-  const splitUrl = `${window.location.origin}${router.pathname}?wallets=${wallets}&splitType=${splitType}`;
+  let splitUrl = `${window.location.origin}${router.pathname}?wallets=${wallets}&splitType=${splitType}`;
+
+  if (amounts) {
+    splitUrl += `&amounts=${amounts}`;
+  }
+
+  if (amount) {
+    splitUrl += `&amount=${amount}`;
+  }
 
   return (
     <div>

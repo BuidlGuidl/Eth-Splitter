@@ -247,7 +247,7 @@ const EqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
                   )}
                 </div>
               ))}
-              <ExportList wallets={wallets} splitType="equal-splits" />
+              <ExportList wallets={wallets} splitType="equal-splits" amount={amount} />
             </div>
           )}
           {invalidAddresses.length > 0 && (
