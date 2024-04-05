@@ -18,7 +18,7 @@ const Contacts = ({ setWallets, wallets }: { setWallets: Dispatch<SetStateAction
         Contacts
       </div>
 
-      <ul tabIndex={0} className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52 max-h-72 ">
+      <ul tabIndex={0} className="dropdown-content menu p-2 shadow bg-base-100 rounded-box max-h-72 ">
         <div className="overflow-y-scroll">
           {contacts?.length > 0 ? (
             contacts?.map((contact: string) => (
