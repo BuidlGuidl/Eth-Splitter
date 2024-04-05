@@ -41,7 +41,7 @@ function displayValueToEtherValue(
       return displayValue;
     } else {
       // Compute the ETH value if a valid number.
-      return (parsedDisplayValue / nativeCurrencyPrice).toString();
+      return (parsedDisplayValue / nativeCurrencyPrice).toFixed(18);
     }
   } else {
     return displayValue;

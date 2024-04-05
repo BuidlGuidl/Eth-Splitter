@@ -100,7 +100,7 @@ const UnEqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
       newAmountsInWei.push(parseUnits(amounts[index].toString(), 18));
     }
     setAmountsInWei(newAmountsInWei);
-    setTotalAmount(totalETH.toFixed(18));
+    setTotalAmount(totalETH.toString());
   }, [amounts]);
 
   useEffect(() => {
@@ -121,8 +121,11 @@ const UnEqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
       }
     }
     if (amounts) {
-      console.log(amounts);
-      setAmounts(amounts as string[]);
+      if (typeof amounts == "string") {
+        setAmounts(amounts.split(","));
+      } else {
+        setAmounts(amounts as string[]);
+      }
     }
     if (tokenAddress) {
       setTokenContract(tokenAddress as string);
@@ -206,7 +209,7 @@ const UnEqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
                 )}
               </div>
             ))}
-            {wallets.length > 1 && <ExportList wallets={wallets} splitType="unequal-splits" />}
+            {wallets.length > 1 && <ExportList wallets={wallets} splitType="unequal-splits" amounts={amounts} />}
             <button type="button" onClick={addWalletField} className="btn btn-primary font-black ">
               <PlusIcon className="h-1/2" />
             </button>
