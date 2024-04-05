@@ -55,7 +55,7 @@ const EqualTokenSplitsHistory = () => {
             <div className=" px-4 py-6 grid lg:grid-cols-6 gap-2 text-sm grid-cols-3 ">
               <div>
                 <span>recipients (address[]):</span>
-                <ExportList wallets={event.args.recipients} />
+                <ExportList wallets={event.args.recipients} splitType="equal-splits" />
               </div>
               <div className="flex flex-col">
                 [
