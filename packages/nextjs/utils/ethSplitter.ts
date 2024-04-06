@@ -28,19 +28,19 @@ export const loadCache = () => {
   if (typeof window != "undefined" && window != null) {
     const cachedString = localStorage.getItem(CACHE_STORAGE_KEY);
     const now = new Date().getTime();
+    const item = {
+      wallets: [],
+      amounts: [],
+      amount: "",
+      expiry: now + 30 * 60 * 1000,
+    };
     if (!cachedString) {
-      const item = {
-        wallets: [],
-        amounts: [],
-        amount: "",
-        expiry: now + 30 * 60 * 1000,
-      };
       localStorage.setItem(CACHE_STORAGE_KEY, JSON.stringify(item));
       return null;
     }
     const cacheData = JSON.parse(cachedString);
     if (now > cacheData.expiry) {
-      localStorage.removeItem(CACHE_STORAGE_KEY);
+      localStorage.setItem(CACHE_STORAGE_KEY, JSON.stringify(item));
       return null;
     }
     return { wallets: cacheData.wallets, amounts: cacheData.amounts, amount: cacheData.amount };
