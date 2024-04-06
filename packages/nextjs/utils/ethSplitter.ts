@@ -40,7 +40,7 @@ export const loadCache = () => {
     }
     const cacheData = JSON.parse(cachedString);
     if (now > cacheData.expiry) {
-      localStorage.removeItem(cacheData);
+      localStorage.removeItem(CACHE_STORAGE_KEY);
       return null;
     }
     return { wallets: cacheData.wallets, amounts: cacheData.amounts, amount: cacheData.amount };
@@ -50,9 +50,11 @@ export const loadCache = () => {
 export const updateCacheWallets = (wallets: string[]) => {
   if (typeof window != "undefined" && window != null) {
     const cachedString = localStorage.getItem(CACHE_STORAGE_KEY);
+    const now = new Date().getTime();
     if (cachedString) {
       const cacheData = JSON.parse(cachedString);
       cacheData.wallets = wallets;
+      cacheData.expiry = now + 30 * 60 * 1000;
       localStorage.setItem(CACHE_STORAGE_KEY, JSON.stringify(cacheData));
     }
   }
@@ -61,9 +63,11 @@ export const updateCacheWallets = (wallets: string[]) => {
 export const updateCacheAmounts = (amounts: string[]) => {
   if (typeof window != "undefined" && window != null) {
     const cachedString = localStorage.getItem(CACHE_STORAGE_KEY);
+    const now = new Date().getTime();
     if (cachedString) {
       const cacheData = JSON.parse(cachedString);
       cacheData.amounts = amounts;
+      cacheData.expiry = now + 30 * 60 * 1000;
       localStorage.setItem(CACHE_STORAGE_KEY, JSON.stringify(cacheData));
     }
   }
@@ -72,9 +76,11 @@ export const updateCacheAmounts = (amounts: string[]) => {
 export const updateCacheAmount = (amount: string) => {
   if (typeof window != "undefined" && window != null) {
     const cachedString = localStorage.getItem(CACHE_STORAGE_KEY);
+    const now = new Date().getTime();
     if (cachedString) {
       const cacheData = JSON.parse(cachedString);
       cacheData.amount = amount;
+      cacheData.expiry = now + 30 * 60 * 1000;
       localStorage.setItem(CACHE_STORAGE_KEY, JSON.stringify(cacheData));
     }
   }
