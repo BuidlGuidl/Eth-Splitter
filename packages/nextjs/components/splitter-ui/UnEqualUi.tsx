@@ -187,8 +187,8 @@ const UnEqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
             </div>
             {wallets.map((wallet, index) => (
               <div key={index}>
-                <div className="flex gap-2 mt-1 w-full ">
-                  <div className="w-11/12 flex gap-2 items-center">
+                <div className="flex mt-1 w-full md:gap-1">
+                  <div className="w-11/12 flex gap-2 items-center md:flex-row flex-col">
                     <span className="w-11/12">
                       <AddressInput
                         name={""}
@@ -197,7 +197,7 @@ const UnEqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
                         onChange={val => updateWallet(val, index)}
                       />
                     </span>
-                    <span className="w-4/12">
+                    <span className="md:w-4/12 w-11/12">
                       {splitItem === "split-tokens" ? (
                         <input
                           className="input  input-ghost focus:outline-none focus:bg-transparent focus:text-gray-400 h-[2.2rem] min-h-[2.2rem] font-medium placeholder:text-accent/50 w-full text-gray-400 bg-base-200 border-2 border-base-300"
@@ -219,6 +219,7 @@ const UnEqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
                   </div>
                   {index > 0 && (
                     <button
+                      className="w-1/12 mt-auto p-1 md:p-0 md:btn md:btn-ghost"
                       type="button"
                       onClick={() => {
                         removeWalletField(index);
