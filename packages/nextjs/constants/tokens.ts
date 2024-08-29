@@ -67,6 +67,50 @@ export const tokens: TokensType = {
       },
     ],
   },
+  42161: {
+    chainId: "42161",
+    name: "arbitrum",
+    contracts: [
+      {
+        name: "ARB",
+        address: "0x912CE59144191C1204E64559FE8253a0e49E6548",
+      },
+      {
+        name: "USDC",
+        address: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+      },
+      {
+        name: "DAI",
+        address: "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1",
+      },
+      {
+        name: "USDT",
+        address: "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+      },
+    ],
+  },
+  8453: {
+    chainId: "8453",
+    name: "base",
+    contracts: [
+      {
+        name: "BASE",
+        address: "0xd07379a755a8f11b57610154861d694b2a0f615a",
+      },
+      {
+        name: "USDC",
+        address: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      },
+      {
+        name: "DAI",
+        address: "0x50c5725949A6F0c72E6C4a641F24049A917DB0Cb",
+      },
+      {
+        name: "USDT",
+        address: "0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2",
+      },
+    ],
+  },
 };
 
 export default tokens;

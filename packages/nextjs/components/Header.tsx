@@ -52,7 +52,7 @@ export const Header = () => {
 
   useEffect(() => {
     if (switchChains.length > 0) {
-      setChainData(switchChains.filter(item => [1, 137, 10, 11155111].includes(item.id)));
+      setChainData(switchChains.filter(item => [1, 137, 10, 11155111, 42161, 8453].includes(item.id)));
     }
   }, [switchChains]);
 
@@ -63,6 +63,8 @@ export const Header = () => {
         ? (chainName = "mainnet")
         : chain.name == "OP Mainnet"
         ? (chainName = "optimism")
+        : chain.name == "Arbitrum One"
+        ? (chainName = "arbitrum")
         : (chainName = chain.name);
       // switchNetwork?.(chain?.id);
       changeTargetNetwork(chains[chainName.toLowerCase() as keyof typeof chains]);
