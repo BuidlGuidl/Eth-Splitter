@@ -213,7 +213,7 @@ const EqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
           tokenContract={tokenContract}
         />
       )}
-      <div className=" my-14 w-full">
+      <div className="w-full">
         <form className="md:w-[500px] w-[95%] mx-auto lg:w-[700px] rounded-3xl shadow-xl border p-4">
           <div className="flex flex-col space-y-1 w-full my-1">
             <p className="font-semibold  ml-1 my-2 break-words">
@@ -244,9 +244,9 @@ const EqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
               className={`flex items-center justify-between border-2 border-base-300 bg-base-200 rounded-xl text-accent w-full`}
             >
               <textarea
-                placeholder="Seperate each address with a comma, space or new line"
+                placeholder="Separate each address with a comma, space or new line"
                 onChange={e => addMultipleAddress(e.target.value)}
-                className="textarea rounded-none textarea-ghost focus:outline-none focus:bg-transparent focus:text-gray-400  min-h-[8rem] border w-full font-medium placeholder:text-accent text-gray-400 md:focus:text-lg md:text-lg"
+                className="textarea rounded-none textarea-ghost focus:outline-none focus:bg-transparent focus:text-gray-400  min-h-[8rem] border w-full font-medium placeholder:text-accent text-gray-400 md:focus:text-sm"
               />
             </div>
           </div>
@@ -258,7 +258,7 @@ const EqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
               </div>
               {wallets.map((wallet, index) => (
                 <div className="flex px-2 py-2 justify-between" key={index}>
-                  <Address address={wallet} size="lg" />
+                  <Address address={wallet} size="base" />
                   {index >= 0 && (
                     <button
                       type="button"
@@ -292,9 +292,9 @@ const EqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
                 splitItem === "split-eth" ? await splitEqualETH() : await splitEqualERC20();
                 saveContacts(wallets);
               }}
-              className={`btn bg-new_tertiary w-full text-white capitalize text-lg `}
+              className={`btn bg-new_tertiary w-full text-white capitalize `}
             >
-              {splitItem === "split-eth" ? "Split  ETH" : "Split Tokens"}
+              {splitItem === "split-eth" ? "SPLIT  ETH" : "SPLIT TOKENS"}
             </button>
           </div>
         </form>

@@ -72,7 +72,7 @@ const TokenSplitsHistory = () => {
                 ]
               </div>
               <span>amounts (uint256[]):</span>
-              <div className="flex flex-col text-base">
+              <div className="flex flex-col text-sm">
                 [
                 {event.args.amounts.map((amount: string, index: number) => (
                   <span key={index}>{Number(amount)}</span>

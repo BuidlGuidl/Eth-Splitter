@@ -42,12 +42,12 @@ const Home: NextPage = () => {
         <meta name="description" content="Created with 🏗 scaffold-eth-2" />
       </Head>
 
-      <div className="flex items-center flex-col w-full pt-5 ">
-        <div className="flex md:flex-row flex-col  items-center gap-4">
+      <div className="flex items-center flex-col w-full mt-2 text-sm ">
+        <div className="flex items-center gap-1 mb-6 text-xs md:text-sm ">
           <ul className="flex p-[0.2rem] rounded-full ">
             <li
               onClick={() => handleItemClick("split-eth")}
-              className={`py-2 px-4 ${
+              className={`p-2 ${
                 activeSplitToken === "split-eth"
                   ? "bg-accent rounded-full cursor-pointer"
                   : "rounded-full hover:scale-105 cursor-pointer"
@@ -57,7 +57,7 @@ const Home: NextPage = () => {
             </li>
             <li
               onClick={() => handleItemClick("split-tokens")}
-              className={`py-2 px-4 ${
+              className={`p-2 ${
                 activeSplitToken === "split-tokens"
                   ? "bg-accent rounded-full cursor-pointer"
                   : "rounded-full hover:scale-105 cursor-pointer"
@@ -73,7 +73,7 @@ const Home: NextPage = () => {
                 setSplitType("equal-splits");
                 handleItemClick("equal-splits");
               }}
-              className={`py-2 px-4 ${
+              className={`p-2 ${
                 activeSplitType === "equal-splits"
                   ? "bg-accent rounded-full cursor-pointer"
                   : "rounded-full hover:scale-105 cursor-pointer"
@@ -86,7 +86,7 @@ const Home: NextPage = () => {
                 setSplitType("unequal-splits");
                 handleItemClick("unequal-splits");
               }}
-              className={`py-2 px-4 ${
+              className={`p-2 ${
                 activeSplitType === "unequal-splits"
                   ? "bg-accent rounded-full cursor-pointer"
                   : "rounded-full hover:scale-105 cursor-pointer"
