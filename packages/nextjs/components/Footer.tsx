@@ -38,7 +38,8 @@ export const Footer = () => {
                 <a href={codeLink} target="_blank" rel="noreferrer" className="underline underline-offset-2">
                   Code/Repo
                 </a>{" "}
-                📝 Built with <HeartIcon className="inline-block h-4 w-4" /> at 🏰{" "}
+                📝 {"  "}
+                Built with <HeartIcon className="inline-block h-4 w-4" /> at 🏰{" "}
                 <a
                   href="https://buidlguidl.com/"
                   target="_blank"
