@@ -178,7 +178,7 @@ const UnEqualUi = ({ splitItem, account, splitterContract }: UiJsxProps) => {
           tokenContract={tokenContract}
         />
       )}
-      <div className=" my-14 w-full">
+      <div className="w-full">
         <form className="md:w-[500px] w-[95%] lg:w-[700px] mx-auto  rounded-3xl shadow-xl border p-4">
           <div className="flex flex-col space-y-1 w-full my-1">
             <div className="flex justify-between items-center">

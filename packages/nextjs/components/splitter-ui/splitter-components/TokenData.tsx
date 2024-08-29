@@ -31,7 +31,7 @@ const TokenData = ({ splitErc20Loading, setTokenContract, tokenContract }: Token
   }, []);
 
   return (
-    <div className="w-full my-14 -mb-2">
+    <div className="w-full mb-6">
       <div className="md:w-[500px] w-[95%] lg:w-[700px] mx-auto rounded-3xl shadow-xl border p-2 px-4">
         <div className="flex flex-col space-y-1 w-full my-1">
           <p className="font-semibold  ml-1 my-0 break-words">Enter Token Contract</p>
@@ -61,7 +61,7 @@ const TokenData = ({ splitErc20Loading, setTokenContract, tokenContract }: Token
           </div>
         </div>
         <div className="flex flex-col space-y-1 w-full my-1">
-          <div className="flex justify-around bg-base-200 w-full mx-auto m-1 rounded-full break-words md:text-base text-xs p-2">
+          <div className="flex justify-around bg-base-200 w-full mx-auto m-1 rounded-full break-words md:text-sm text-xs p-2">
             <span className="flex flex-col items-center  w-1/3 ">
               <span>Token: </span> <span>{tokenSymbol}</span> {dataLoading && <Spinner />}
             </span>
