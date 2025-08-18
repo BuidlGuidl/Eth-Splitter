@@ -1,27 +1,92 @@
 const CONTACTS_STORAGE_KEY = "ES_CONTACTS_SK";
 const CACHE_STORAGE_KEY = "ES_CACHE_SK";
 
-export const saveContacts = (contacts: string[]) => {
+export interface Contact {
+  address: string;
+  label: string;
+}
+
+export const saveContacts = (contacts: Contact[]) => {
   if (typeof window != "undefined" && window != null) {
     const savedContacts = window.localStorage.getItem(CONTACTS_STORAGE_KEY);
 
     if (savedContacts) {
-      const contactsObj = JSON.parse(savedContacts);
+      const contactsObj: Contact[] = JSON.parse(savedContacts);
       contacts.forEach(contact => {
-        if (!contactsObj.includes(contact)) {
+        // Check if contact with same address already exists
+        const existingContactIndex = contactsObj.findIndex(c => c.address === contact.address);
+        if (existingContactIndex >= 0) {
+          // Update existing contact's label
+          contactsObj[existingContactIndex] = contact;
+        } else {
+          // Add new contact
           contactsObj.push(contact);
         }
       });
       window.localStorage.setItem(CONTACTS_STORAGE_KEY, JSON.stringify(contactsObj));
-    } else window.localStorage.setItem(CONTACTS_STORAGE_KEY, JSON.stringify(contacts));
+    } else {
+      window.localStorage.setItem(CONTACTS_STORAGE_KEY, JSON.stringify(contacts));
+    }
   }
 };
 
-export const loadContacts = () => {
+export const loadContacts = (): Contact[] => {
   if (typeof window != "undefined" && window != null) {
     const contacts = window.localStorage.getItem(CONTACTS_STORAGE_KEY);
     if (contacts) return JSON.parse(contacts);
-  } else return null;
+  }
+  return [];
+};
+
+export const saveContact = (address: string, label: string) => {
+  saveContacts([{ address, label }]);
+};
+
+export const getContactByAddress = (address: string): Contact | null => {
+  const contacts = loadContacts();
+  if (contacts) {
+    return contacts.find(contact => contact.address === address) || null;
+  }
+  return null;
+};
+
+export const updateContact = (address: string, newLabel: string) => {
+  if (typeof window != "undefined" && window != null) {
+    const contacts = loadContacts();
+    const contactIndex = contacts.findIndex(contact => contact.address === address);
+    if (contactIndex >= 0) {
+      contacts[contactIndex].label = newLabel;
+      window.localStorage.setItem(CONTACTS_STORAGE_KEY, JSON.stringify(contacts));
+    }
+  }
+};
+
+export const getContactLabel = (address: string): string | null => {
+  const contact = getContactByAddress(address);
+  return contact ? contact.label : null;
+};
+
+export const removeContact = (address: string) => {
+  if (typeof window != "undefined" && window != null) {
+    const contacts = loadContacts();
+    if (contacts) {
+      const updatedContacts = contacts.filter(contact => contact.address !== address);
+      window.localStorage.setItem(CONTACTS_STORAGE_KEY, JSON.stringify(updatedContacts));
+    }
+  }
+};
+
+export const updateContactLabel = (address: string, newLabel: string) => {
+  if (typeof window != "undefined" && window != null) {
+    const contacts = loadContacts();
+    if (contacts) {
+      const contactIndex = contacts.findIndex(contact => contact.address === address);
+      if (contactIndex >= 0) {
+        contacts[contactIndex].label = newLabel;
+        window.localStorage.setItem(CONTACTS_STORAGE_KEY, JSON.stringify(contacts));
+      }
+    }
+  }
 };
 
 export const loadCache = () => {

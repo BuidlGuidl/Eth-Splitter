@@ -114,7 +114,7 @@ export const EtherInput = ({
           data-tip={isNativeCurrencyPriceFetching ? "Fetching price" : "Unable to fetch price"}
         >
           <button
-            className="btn btn-primary h-[2.2rem] min-h-[2.2rem]"
+            className="btn btn-primary h-[2.2rem] min-h-[2.2rem] rounded-md"
             onClick={toggleDisplayUsdMode}
             disabled={!displayUsdMode && !nativeCurrencyPrice}
             type="button"
