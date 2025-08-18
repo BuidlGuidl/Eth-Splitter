@@ -3905,6 +3905,7 @@ __metadata:
     "@tanstack/react-query": ^5.59.15
     "@trivago/prettier-plugin-sort-imports": ^4.3.0
     "@types/node": ^18.19.50
+    "@types/papaparse": ^5
     "@types/react": ^19.0.7
     "@uniswap/sdk-core": ^5.8.2
     "@uniswap/v2-sdk": ^4.6.1
@@ -3917,10 +3918,13 @@ __metadata:
     eslint-config-next: ^15.2.3
     eslint-config-prettier: ^10.1.1
     eslint-plugin-prettier: ^5.2.4
+    framer-motion: ^12.23.12
     kubo-rpc-client: ^5.0.2
+    lucide-react: ^0.539.0
     next: ^15.2.3
     next-nprogress-bar: ^2.3.13
     next-themes: ^0.3.0
+    papaparse: ^5.5.3
     postcss: ^8.4.45
     prettier: ^3.5.3
     qrcode.react: ^4.0.1
@@ -5229,6 +5233,15 @@ __metadata:
   dependencies:
     undici-types: ~6.19.2
   checksum: 4eb29628e293d47494c1fe8eaacbaf9f1317cc2ada176a74753d0ea6e3ff6cb5f3e97ba3baa1435d9934950f0fec5693272f2805387f2e70c119038ee7608c20
+  languageName: node
+  linkType: hard
+
+"@types/papaparse@npm:^5":
+  version: 5.3.16
+  resolution: "@types/papaparse@npm:5.3.16"
+  dependencies:
+    "@types/node": "*"
+  checksum: 2e0ce0b8da264215eaba013645d4539292bb71e9cccc74004219d3e1b575bbbda9529264a7c1f1e6e19cba1fdbf4634021ed47f4126b11651f60c8573422d548
   languageName: node
   linkType: hard
 
@@ -10184,6 +10197,28 @@ __metadata:
   languageName: node
   linkType: hard
 
+"framer-motion@npm:^12.23.12":
+  version: 12.23.12
+  resolution: "framer-motion@npm:12.23.12"
+  dependencies:
+    motion-dom: ^12.23.12
+    motion-utils: ^12.23.6
+    tslib: ^2.4.0
+  peerDependencies:
+    "@emotion/is-prop-valid": "*"
+    react: ^18.0.0 || ^19.0.0
+    react-dom: ^18.0.0 || ^19.0.0
+  peerDependenciesMeta:
+    "@emotion/is-prop-valid":
+      optional: true
+    react:
+      optional: true
+    react-dom:
+      optional: true
+  checksum: 85c2a64c12cd7d3dcaeed44ec11843b5c6955da97a82895f89355fe58bfbd8f876c6272585fff54ba661d7a54218efd44b8ca072c6988d414ab4577f4d28a135
+  languageName: node
+  linkType: hard
+
 "fs-extra@npm:11.1.0":
   version: 11.1.0
   resolution: "fs-extra@npm:11.1.0"
@@ -13007,6 +13042,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"lucide-react@npm:^0.539.0":
+  version: 0.539.0
+  resolution: "lucide-react@npm:0.539.0"
+  peerDependencies:
+    react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
+  checksum: eb7862279afd86b2af383b6ed9f6bafcfc5bb789e43282ad6edcb36afddd19e4bb2efa5efef757eb64800ce2c505a5a290f4b0f6af16cec63776f52d0c7a0199
+  languageName: node
+  linkType: hard
+
 "make-dir@npm:^3.1.0":
   version: 3.1.0
   resolution: "make-dir@npm:3.1.0"
@@ -13556,6 +13600,22 @@ __metadata:
   version: 1.0.1
   resolution: "modern-ahocorasick@npm:1.0.1"
   checksum: ec83479f406511f37a966d66ce1c2b1701bb4a2cc2aabbbc257001178c9fbc48ce748c88eb10dfe72ba8b7f991a0bc7f1fa14683f444685edd1a9eeb32ecbc1e
+  languageName: node
+  linkType: hard
+
+"motion-dom@npm:^12.23.12":
+  version: 12.23.12
+  resolution: "motion-dom@npm:12.23.12"
+  dependencies:
+    motion-utils: ^12.23.6
+  checksum: 3fb9450a9a3312ff11a9d0f7e6d44474c2bc66409cd7a2b4a29fc0e2e641414a4e1f869c0110d92bbaf5b4663bb49edccc745fad077d03169d96c2a361f7dc73
+  languageName: node
+  linkType: hard
+
+"motion-utils@npm:^12.23.6":
+  version: 12.23.6
+  resolution: "motion-utils@npm:12.23.6"
+  checksum: e7c0b1d7a893c5979eab529f2bd269031f71f8d23cbf8be2ec8785558544ee45b9ba7b23390f9a46f2f0a493903b6adc0666229de3b05e977a0bfc3c5fb13d8b
   languageName: node
   linkType: hard
 
@@ -14774,6 +14834,13 @@ __metadata:
   bin:
     pacote: bin/index.js
   checksum: 6fc395b579799da4bafa1d1b309df03a0b2540dfb29c312ee17e60afdec872d4da11398fc2be081184c0b73def935bb5ebf57b193623926ec2e502e4b98fe6ea
+  languageName: node
+  linkType: hard
+
+"papaparse@npm:^5.5.3":
+  version: 5.5.3
+  resolution: "papaparse@npm:5.5.3"
+  checksum: 369d68a16340e5fad95d411a0efca34bedbf93550744e6374fa9b60aaf6bc655e29a6d1a39a56afea0cf7dbc4454fd190f50a9ad76db80987b43d6c6c319f018
   languageName: node
   linkType: hard
 
