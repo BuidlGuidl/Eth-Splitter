@@ -1,217 +1,88 @@
-# ETHSplitter
+# 🏗 Scaffold-ETH 2
 
-![Screenshot_658](https://github.com/Avelous/Eth-Splitter/assets/86206128/38ab22cf-5ad4-475d-bf74-1df80affc81a)
+<h4 align="center">
+  <a href="https://docs.scaffoldeth.io">Documentation</a> |
+  <a href="https://scaffoldeth.io">Website</a>
+</h4>
 
-[ethsplitter.vercel.app](https://ethsplitter.vercel.app/) 
+🧪 An open-source, up-to-date toolkit for building decentralized applications (dapps) on the Ethereum blockchain. It's designed to make it easier for developers to create and deploy smart contracts and build user interfaces that interact with those contracts.
 
-<br></br> 
-ETHSplitter is a
-smart contract and a NextJs App built with
-[Scaffold ETH](https://github.com/scaffold-eth/scaffold-eth-2) to split Ethereum
-(ETH) or ERC20 tokens between multiple recipients. It provides functionality to
-distribute ETH or ERC20 tokens according to specified amounts or equally among
-recipients.
+⚙️ Built using NextJS, RainbowKit, Foundry/Hardhat, Wagmi, Viem, and Typescript.
 
-**Disclaimer:** This contract is a prototype and intended for research and
-development purposes only. Use it at your own discretion.
+- ✅ **Contract Hot Reload**: Your frontend auto-adapts to your smart contract as you edit it.
+- 🪝 **[Custom hooks](https://docs.scaffoldeth.io/hooks/)**: Collection of React hooks wrapper around [wagmi](https://wagmi.sh/) to simplify interactions with smart contracts with typescript autocompletion.
+- 🧱 [**Components**](https://docs.scaffoldeth.io/components/): Collection of common web3 components to quickly build your frontend.
+- 🔥 **Burner Wallet & Local Faucet**: Quickly test your application with a burner wallet and local faucet.
+- 🔐 **Integration with Wallet Providers**: Connect to different wallet providers and interact with the Ethereum network.
 
-## Content
+![Debug Contracts tab](https://github.com/scaffold-eth/scaffold-eth-2/assets/55535804/b237af0c-5027-4849-a5c1-2e31495cccb1)
 
-- [Quickstart](#quickstart)
-- [Features](#features)
-- [Usage](#usage)
-- [Functions](#functions)
-  - [`splitETH`](#spliteth)
-  - [`splitEqualETH`](#splitequaleth)
-  - [`splitERC20`](#spliterc20)
-  - [`splitEqualERC20`](#splitequalerc20)
-  - [`withdraw`](#withdraw)
-- [Events](#events)
-- [Modifiers](#modifiers)
-- [Frontend](#frontend)
-- [Contributing](#contributing)
+## Requirements
+
+Before you begin, you need to install the following tools:
+
+- [Node (>= v20.18.3)](https://nodejs.org/en/download/)
+- Yarn ([v1](https://classic.yarnpkg.com/en/docs/install/) or [v2+](https://yarnpkg.com/getting-started/install))
+- [Git](https://git-scm.com/downloads)
 
 ## Quickstart
 
-To get started with ETH Splitter, follow the steps below:
+To get started with Scaffold-ETH 2, follow the steps below:
 
-Clone this repo & install dependencies
+1. Install the latest version of Scaffold-ETH 2
 
 ```
-git clone https://github.com/Avelous/Eth-Splitter.git
-cd ETH-Splitter
-yarn install
+npx create-eth@latest
 ```
 
-Run a local network in the first terminal:
+This command will install all the necessary packages and dependencies, so it might take a while.
+
+> [!NOTE]
+> You can also initialize your project with one of our extensions to add specific features or starter-kits. Learn more in our [extensions documentation](https://docs.scaffoldeth.io/extensions/).
+
+2. Run a local network in the first terminal:
 
 ```
 yarn chain
 ```
 
-This command starts a local Ethereum network using Hardhat. The network runs on
-your local machine and can be used for testing and development. You can
-customize the network configuration in hardhat.config.ts.
+This command starts a local Ethereum network that runs on your local machine and can be used for testing and development. Learn how to [customize your network configuration](https://docs.scaffoldeth.io/quick-start/environment#1-initialize-a-local-blockchain).
 
-On a second terminal, deploy the test contract:
+3. On a second terminal, deploy the test contract:
 
 ```
 yarn deploy
 ```
 
-This command deploys a test smart contract to the local network. The contract is
-located in packages/hardhat/contracts and can be modified to suit your needs.
-The yarn deploy command uses the deploy script located in
-packages/hardhat/deploy to deploy the contract to the network. You can also
-customize the deploy script.
+This command deploys a test smart contract to the local network. You can find more information about how to customize your contract and deployment script in our [documentation](https://docs.scaffoldeth.io/quick-start/environment#2-deploy-your-smart-contract).
 
-On a third terminal, start your NextJS app:
+4. On a third terminal, start your NextJS app:
 
 ```
 yarn start
 ```
 
-## Features
+Visit your app on: `http://localhost:3000`. You can interact with your smart contract using the `Debug Contracts` page. You can tweak the app config in `packages/nextjs/scaffold.config.ts`.
 
-- Split ETH among multiple recipients based on specified amounts.
-- Split ETH equally among multiple recipients.
-- Split ERC20 tokens among multiple recipients based on specified amounts.
-- Split ERC20 tokens equally among multiple recipients.
-- Withdraw remaining ETH or ERC20 tokens to the contract owner.
+**What's next**:
 
-## Usage
+Visit the [What's next section of our docs](https://docs.scaffoldeth.io/quick-start/environment#whats-next) to learn how to:
 
-1. Deploy the ETHSplitter contract.
-2. Call the appropriate function to split ETH or ERC20 tokens among recipients.
-3. Recipients will receive their allocated amounts.
-4. The contract owner can withdraw any remaining ETH or ERC20 tokens.
+- Edit your smart contracts
+- Edit your deployment scripts
+- Customize your frontend
+- Edit the app config
+- Writing and running tests
+- [Setting up external services and API keys](https://docs.scaffoldeth.io/deploying/deploy-smart-contracts#configuration-of-third-party-services-for-production-grade-apps)
 
-## Functions
+## Documentation
 
-### `splitETH`
+Visit our [docs](https://docs.scaffoldeth.io) to learn all the technical details and guides of Scaffold-ETH 2.
 
-```solidity
-function splitETH(address payable[] calldata recipients, uint256[] calldata amounts) external payable nonReentrant
-```
+To know more about its features, check out our [website](https://scaffoldeth.io).
 
-This function splits the provided ETH among the given recipients according to
-the specified amounts.
+## Contributing to Scaffold-ETH 2
 
-- `recipients`: An array of payable addresses representing the recipients of the
-  ETH.
-- `amounts`: An array of uint256 values specifying the amounts each recipient
-  shall receive.
+We welcome contributions to Scaffold-ETH 2!
 
-### `splitEqualETH`
-
-```solidity
-function splitEqualETH(address payable[] calldata recipients) external payable nonReentrant
-```
-
-This function splits the provided ETH equally among the given recipients.
-
-- `recipients`: An array of payable addresses representing the recipients of the
-  ETH.
-
-### `splitERC20`
-
-```solidity
-function splitERC20(IERC20 token, address[] calldata recipients, uint256[] calldata amounts) external nonReentrant
-```
-
-This function splits the provided ERC20 tokens among the given recipients
-according to the specified amounts.
-
-- `token`: The ERC20 token contract address.
-- `recipients`: An array of addresses representing the recipients of the ERC20
-  tokens.
-- `amounts`: An array of uint256 values specifying the amounts each recipient
-  shall receive.
-
-### `splitEqualERC20`
-
-```solidity
-function splitEqualERC20(IERC20 token, address[] calldata recipients, uint256 totalAmount) external nonReentrant
-```
-
-This function splits the provided ERC20 tokens equally among the given
-recipients.
-
-- `token`: The ERC20 token contract address.
-- `recipients`: An array of addresses representing the recipients of the ERC20
-  tokens.
-- `totalAmount`: The total amount of ERC20 tokens to be distributed equally.
-
-### `withdraw`
-
-```solidity
-function withdraw(IERC20 token) external onlyOwner
-```
-
-This function allows the contract owner to withdraw any remaining ETH or ERC20
-tokens from the contract.
-
-## Events
-
-The contract emits the following events:
-
-- `EthSplit`: Indicates the successful splitting of ETH among recipients.
-- `EthSplitEqual`: Indicates the successful equal splitting of ETH among
-  recipients.
-- `Erc20Split`: Indicates the successful splitting of ERC20 tokens among
-  recipients.
-- `Erc20SplitEqual`: Indicates the successful equal splitting of ERC20 tokens
-  among recipients.
-
-## Modifiers
-
-- `onlyOwner`: Ensures that only the contract owner can perform certain actions.
-
-## Frontend
-
-The frontend of the ETHSplitter contract is built using Next.js, providing a
-user interface to interact with the smart contract. It offers options to split
-ETH and ERC20 tokens equally or unequally among recipients. The frontend is
-bulit as a safe app to work with multisigs.
-
-### Features
-
-- Split ETH among recipients:
-  - Specify individual amounts for each recipient.
-  - Split ETH equally among recipients.
-- Split ERC20 tokens among recipients:
-  - Specify individual amounts for each recipient.
-  - Split ERC20 tokens equally among recipients.
-
-### Usage
-
-1. Connect your Ethereum wallet to the application.
-2. Select the desired operation:
-   - **Split ETH**: Splitting Ether (ETH) among recipients.
-   - **Split TOKEN**: Splitting ERC20 tokens among recipients.
-3. Choose the split type:
-   - **Unequal**: Specify individual amounts for each recipient.
-   - **Equal**: Split the amount equally among recipients.
-4. Provide the required inputs:
-   - **Recipients**: Enter the addresses of the recipients, separated by commas.
-   - **Amounts**: Enter the corresponding amounts to be split among the
-     recipients, separated by commas.
-   - **Token Address (for ERC20)**: Enter the contract address of the ERC20
-     token (if applicable).
-5. Click the "Split" button to execute the transaction.
-6. Confirm the transaction using your connected wallet.
-
-### Contributing
-
-If you would like to contribute to the development of the ETHSplitter frontend,
-please follow these steps:
-
-1. Fork the repository and create a new branch for your feature or bug fix.
-2. Make the necessary changes and ensure the code follows the project's style
-   guidelines.
-3. Write tests for any new functionality.
-4. Commit your changes and push them to your forked repository.
-5. Submit a pull request, describing your changes in detail and referencing any
-   relevant issues.
-
-Built with [Scaffold ETH](https://github.com/scaffold-eth/scaffold-eth-2)
+Please see [CONTRIBUTING.MD](https://github.com/scaffold-eth/scaffold-eth-2/blob/main/CONTRIBUTING.md) for more information and guidelines for contributing to Scaffold-ETH 2.
