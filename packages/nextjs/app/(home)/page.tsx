@@ -7,7 +7,7 @@ import { Sparkles } from "lucide-react";
 import { SavedContacts } from "~~/components/SavedContacts";
 import { Contact, loadContacts, removeContact } from "~~/utils/splitter";
 
-export default function Home() {
+export default  function Home() {
   const [contacts, setContacts] = useState<Contact[]>([]);
 
   useEffect(() => {
