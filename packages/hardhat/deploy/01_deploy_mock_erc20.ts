@@ -14,7 +14,7 @@ const deployerc20: DeployFunction = async function (hre: HardhatRuntimeEnvironme
     */
   const { deployer } = await hre.getNamedAccounts();
   const { deploy } = hre.deployments;
-  const { parseEther } = hre.ethers.utils;
+  const { parseEther } = hre.ethers;
 
   await deploy("ERC20Mock", {
     from: deployer,
@@ -25,9 +25,6 @@ const deployerc20: DeployFunction = async function (hre: HardhatRuntimeEnvironme
     // automatically mining the contract deployment transaction. There is no effect on live networks.
     autoMine: true,
   });
-
-  // Get the deployed contract
-  const erc20mock = await hre.ethers.getContract("ERC20Mock", deployer);
 };
 
 export default deployerc20;
