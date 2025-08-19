@@ -37,11 +37,6 @@ export const ContactManagement: React.FC<ContactManagementProps> = ({
   };
 
   const handleSaveEdit = (address: string) => {
-    if (!editLabel.trim()) {
-      notification.error("Label cannot be empty");
-      return;
-    }
-
     const updatedContacts = contacts.map(contact =>
       contact.address === address ? { ...contact, label: editLabel } : contact,
     );

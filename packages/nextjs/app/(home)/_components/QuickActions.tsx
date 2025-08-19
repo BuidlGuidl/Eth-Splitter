@@ -24,7 +24,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({ className = "" }) =>
   const quickActions: QuickAction[] = [
     {
       title: "Create New Split",
-      description: "Initiate a new transaction to split your ETH or other tokens among multiple recipients.",
+      description: "Initiate a new transaction to split ETH or other tokens among multiple recipients.",
       icon: <ArrowUpDown className="w-6 h-6" />,
       action: () => router.push("/split"),
       buttonText: "Start Split",
@@ -32,7 +32,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({ className = "" }) =>
     },
     {
       title: "Add New Address",
-      description: "Manually add a new cryptocurrency wallet address to your contact list.",
+      description: "Add a new wallet address to your contact list.",
       icon: <Plus className="w-6 h-6" />,
       action: () => router.push("/contacts"),
       buttonText: "Add Contact",

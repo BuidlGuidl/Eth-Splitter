@@ -240,8 +240,8 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
           <p className="font-medium">Format for Equal Split:</p>
           <p>• One address/ENS per line</p>
           <p>• Optional: Add label after address (comma or space separated)</p>
-          <p className="mt-2 text-gray-600">Examples:</p>
-          <code className="block bg-base-300 p-2 rounded mt-1">
+          <p className="mt-2 ">Examples:</p>
+          <code className="block bg-base-300 p-2 rounded mt-1 md:text-xs  text-[0.6rem]">
             0x742d35Cc6634C0532925a3b844Bc9e7595f0fA7B, Alice
             <br />
             vitalik.eth, Vitalik
@@ -256,8 +256,8 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
           <p className="font-medium">Format for Custom Split:</p>
           <p>• Address/ENS, Amount, Label (optional)</p>
           <p>• Amount is required for each recipient</p>
-          <p className="mt-2 text-gray-600">Examples:</p>
-          <code className="block bg-base-300 p-2 rounded mt-1">
+          <p className="mt-2">Examples:</p>
+          <code className="block bg-base-300 p-2 rounded mt-1 md:text-xs text-[0.6rem]">
             0x742d35Cc6634C0532925a3b844Bc9e7595f0fA7B, 1.5, Alice
             <br />
             vitalik.eth, 2.0, Vitalik
@@ -284,12 +284,12 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
-          className="bg-base-100 rounded-2xl shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden"
+          className="bg-base-200 rounded-2xl shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden"
           onClick={e => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b">
-            <h2 className="text-xl font-semibold">Bulk Import Recipients</h2>
+          <div className="flex items-center justify-between p-6 border-b border-base-100 ">
+            <h2 className="text-xl font-semibold">Bulk Add Recipients</h2>
             <button onClick={onClose} className="btn btn-ghost btn-sm btn-circle">
               <X className="w-5 h-5" />
             </button>
@@ -297,7 +297,7 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
 
           {/* Content */}
           <div className="p-6 space-y-4 overflow-y-auto max-h-[60vh]">
-            <div className="bg-info/10 border border-info/30 rounded-lg p-4">
+            <div className="bg-info/10 border  border-base-100 rounded-lg p-4">
               <div className="flex items-start gap-2">
                 <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
                 <div className="flex-1">{getInstructions()}</div>
@@ -313,7 +313,7 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
                     ? "0x742d35Cc6634C0532925a3b844Bc9e7595f0fA7B, Alice\nvitalik.eth\n0x123...abc, Bob"
                     : "0x742d35Cc6634C0532925a3b844Bc9e7595f0fA7B, 1.5, Alice\nvitalik.eth, 2.0\n0x123...abc, 0.5, Bob"
                 }
-                className="textarea textarea-bordered w-full h-40 font-mono text-sm rounded-md "
+                className="textarea textarea-bordered w-full h-40 font-mono text-sm rounded-md bg-base-200 "
                 disabled={isResolving}
               />
             </div>
@@ -353,7 +353,7 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
                   Resolving...
                 </>
               ) : (
-                "Import Recipients"
+                "Add Recipients"
               )}
             </button>
           </div>

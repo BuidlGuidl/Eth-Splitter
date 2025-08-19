@@ -33,7 +33,6 @@ export const RecipientRow: React.FC<RecipientRowProps> = ({
   splitMode,
   selectedToken,
   equalAmount,
-  savedContacts,
   errors,
   onUpdate,
   onRemove,

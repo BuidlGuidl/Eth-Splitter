@@ -33,9 +33,6 @@ export const AddressImport: React.FC<AddressImportProps> = ({
   };
 
   const validateLabel = (label: string): { isValid: boolean; message?: string } => {
-    if (!label.trim()) {
-      return { isValid: false, message: "Label cannot be empty" };
-    }
     if (label.length > MAX_LABEL_LENGTH) {
       return { isValid: false, message: `Label must be ${MAX_LABEL_LENGTH} characters or less` };
     }
@@ -216,7 +213,7 @@ export const AddressImport: React.FC<AddressImportProps> = ({
             saveContacts(newContacts);
             notification.success(`Imported ${newContacts.length} addresses from JSON`);
           }
-        } catch (error) {
+        } catch {
           notification.error("Failed to parse JSON file");
         }
       };
@@ -239,7 +236,7 @@ export const AddressImport: React.FC<AddressImportProps> = ({
           onClick={() => setImportMode("bulk")}
           className={`btn btn-md rounded-md ${importMode === "bulk" ? "btn-active" : "btn-ghost"}`}
         >
-          Bulk Import
+          Bulk Add
         </button>
       </div>
 

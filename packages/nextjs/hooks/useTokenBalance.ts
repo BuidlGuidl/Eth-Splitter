@@ -1,8 +1,10 @@
+import { useDeployedContractInfo } from "./scaffold-eth";
 import { erc20Abi } from "viem";
-import { useAccount, useBalance, useReadContract } from "wagmi";
+import { useAccount, useBalance, useReadContract, useWriteContract } from "wagmi";
 
 export const useTokenBalance = (tokenAddress?: string) => {
   const { address } = useAccount();
+  const { data: deployedContractInfo } = useDeployedContractInfo("ETHSplitter");
 
   const { data: ethBalance, isLoading: ethLoading } = useBalance({
     address,
@@ -45,7 +47,7 @@ export const useTokenBalance = (tokenAddress?: string) => {
     },
   });
 
-  const SPLITTER_ADDRESS = process.env.NEXT_PUBLIC_SPLITTER_ADDRESS as `0x${string}`;
+  const SPLITTER_ADDRESS = deployedContractInfo?.address as `0x${string}`;
 
   const { data: allowance } = useReadContract({
     address: tokenAddress as `0x${string}`,
@@ -57,6 +59,18 @@ export const useTokenBalance = (tokenAddress?: string) => {
     },
   });
 
+  const { writeContract: approveWrite, isPending: isApproving } = useWriteContract();
+
+  const approve = (amount: bigint) => {
+    if (!tokenAddress || tokenAddress === "ETH" || !SPLITTER_ADDRESS) return;
+    approveWrite({
+      address: tokenAddress as `0x${string}`,
+      abi: erc20Abi,
+      functionName: "approve",
+      args: [SPLITTER_ADDRESS, amount],
+    });
+  };
+
   if (tokenAddress === "ETH" || !tokenAddress) {
     return {
       balance: ethBalance,
@@ -65,6 +79,8 @@ export const useTokenBalance = (tokenAddress?: string) => {
       name: "Ethereum",
       allowance: undefined,
       isLoading: ethLoading,
+      approve: undefined,
+      isApproving: false,
     };
   }
 
@@ -75,5 +91,7 @@ export const useTokenBalance = (tokenAddress?: string) => {
     name: name || "Unknown Token",
     allowance,
     isLoading: tokenLoading,
+    approve,
+    isApproving,
   };
 };

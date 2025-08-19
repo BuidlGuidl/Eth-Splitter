@@ -162,14 +162,14 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
   const tokenInfo = displayTokenInfo();
 
   return (
-    <div className="rounded-2xl p-6 mb-6 border shadow-lg">
+    <div className="rounded-2xl p-6 mb-6 border border-base-100 shadow-lg">
       <h2 className="text-xl font-semibold mb-4">Select Asset</h2>
-      <p className="mb-4">Choose the cryptocurrency you wish to split.</p>
+      <p className="mb-4">Choose the asset you wish to split.</p>
 
       <div className="relative">
         <button
           onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-          className="w-full px-4 py-3 rounded-xl focus:ring-2 focus:ring-primary transition-all flex items-center justify-between border hover:border-primary"
+          className="w-full px-4 py-3 rounded-xl focus:ring-2 focus:ring-primary transition-all flex items-center justify-between border border-base-100 hover:border-primary"
         >
           <div className="flex items-center">
             <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold mr-3 bg-primary">
@@ -195,13 +195,13 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="absolute z-10 w-full mt-2 bg-base-100 border rounded-xl shadow-lg overflow-hidden"
+              className="absolute z-10 w-full mt-2 bg-base-200 border border-base-300 rounded-xl shadow-lg overflow-hidden"
             >
               {tokenList.map(token => (
                 <button
                   key={token.address}
                   onClick={() => handleTokenSelect(token)}
-                  className="w-full px-4 py-3 hover:bg-base-200 transition-colors flex items-center justify-between"
+                  className="w-full px-4 py-3 hover:bg-base-300 cursor-pointer transition-colors flex items-center justify-between"
                 >
                   <div className="flex items-center">
                     <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center font-bold mr-3">
@@ -216,11 +216,11 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
                 </button>
               ))}
 
-              <div className="border-t p-3">
+              <div className="border-t p-3 border-base-100">
                 {!showCustomInput ? (
                   <button
                     onClick={() => setShowCustomInput(true)}
-                    className="w-full text-sm text-primary hover:underline"
+                    className="w-full text-sm text-primary font-bold hover:underline"
                   >
                     + Add Custom Token
                   </button>
@@ -271,7 +271,7 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
             {formatUnits(tokenBalance.allowance, tokenBalance.decimals || 18)} {tokenInfo.symbol}
           </p>
           {tokenBalance.allowance === 0n && (
-            <p className="text-xs mt-1 text-warning">You'll need to approve tokens before splitting</p>
+            <p className="text-xs mt-1 text-warning">You&apos;ll need to approve tokens before splitting</p>
           )}
         </div>
       )}

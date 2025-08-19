@@ -7,7 +7,7 @@ import { Sparkles } from "lucide-react";
 import { SavedContacts } from "~~/components/SavedContacts";
 import { Contact, loadContacts, removeContact } from "~~/utils/splitter";
 
-export default  function Home() {
+export default function Home() {
   const [contacts, setContacts] = useState<Contact[]>([]);
 
   useEffect(() => {
@@ -27,11 +27,11 @@ export default  function Home() {
         <div className="bg-gradient-to-r from-primary  to-secondary rounded-3xl p-8 shadow-md">
           <div className="flex items-center mb-4">
             <Sparkles className="w-8 h-8 mr-3 animate-pulse" />
-            <h1 className="text-4xl font-bold">Welcome to SplitETH: Your Decentralized Crypto Splitter</h1>
+            <h1 className="text-4xl font-bold">Welcome to SplitETH</h1>
           </div>
           <p className="text-lg opacity-95 max-w-3xl">
-            Effortlessly manage your digital assets and distribute funds with precision and transparency. Get started by
-            configuring your splits or organizing your contacts.
+            Effortlessly manage and distribute funds with precision and transparency. Get started by configuring your
+            splits or organizing your contacts.
           </p>
         </div>
       </motion.div>

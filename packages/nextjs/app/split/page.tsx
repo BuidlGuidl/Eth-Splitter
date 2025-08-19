@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AssetSelector } from "./_components/AssetSelector";
 import { BulkImportModal } from "./_components/BulkImportModal";
@@ -36,7 +36,6 @@ export type SplitMode = "EQUAL" | "UNEQUAL";
 
 export default function Split() {
   const router = useRouter();
-  const { address: userAddress } = useAccount();
   const chainId = useChainId();
 
   const [selectedToken, setSelectedToken] = useState<Token | null>(null);
@@ -354,7 +353,7 @@ export default function Split() {
             />
 
             {splitMode === "EQUAL" && (
-              <div className="rounded-2xl shadow-lg p-6 mb-6 border">
+              <div className="rounded-2xl shadow-lg p-6 mb-6 border border-base-100">
                 <h2 className="text-xl font-semibold mb-4">Amount Per Recipient</h2>
                 <p className="mb-4">Enter the amount each recipient will receive.</p>
 
@@ -376,16 +375,16 @@ export default function Split() {
           </div>
 
           <div className="md:w-[60%]">
-            <div className="rounded-2xl shadow-lg p-6 border">
+            <div className="rounded-2xl shadow-lg p-6 border border-base-100">
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h2 className="text-xl font-semibold">Recipients</h2>
-                  <p className="text-sm mt-1">Add wallet addresses to split funds.</p>
+                  <p className="text-sm mt-1">Add addresses</p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 md:flex-row flex-col items-end">
                   <button onClick={() => setShowBulkImport(true)} className="btn btn-sm btn-ghost rounded-md">
                     <Upload className="w-4 h-4 mr-1" />
-                    Bulk Import
+                    Bulk Add
                   </button>
                   <button onClick={handleImportFromStorage} className="btn btn-sm btn-ghost rounded-md">
                     <Download className="w-4 h-4 mr-1" />
@@ -458,12 +457,26 @@ export default function Split() {
           <motion.div
             initial={{ scale: 0.9 }}
             animate={{ scale: 1 }}
-            className="bg-base-100 rounded-2xl shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden"
+            className="bg-base-200 rounded-2xl shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden"
             onClick={e => e.stopPropagation()}
           >
-            <div className="p-6 border-b">
+            <div className="p-6 border-b border-base-100">
               <h2 className="text-xl font-semibold">Select Contacts</h2>
               <p className="text-sm mt-1">Choose which contacts to import</p>
+            </div>
+
+            <div className="px-6 pt-4 flex gap-3">
+              <button
+                onClick={() => {
+                  setSelectedContacts(new Set(savedContacts.map(c => c.address)));
+                }}
+                className="btn btn-sm btn-ghost"
+              >
+                Select All
+              </button>
+              <button onClick={() => setSelectedContacts(new Set())} className="btn btn-sm btn-ghost">
+                Clear All
+              </button>
             </div>
 
             <div className="p-6 max-h-[60vh] overflow-y-auto">
@@ -471,7 +484,7 @@ export default function Split() {
                 {savedContacts.map(contact => (
                   <label
                     key={contact.address}
-                    className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-base-200"
+                    className="flex items-center p-3 border border-base-100 rounded-lg cursor-pointer hover:bg-base-300"
                   >
                     <input
                       type="checkbox"
@@ -496,18 +509,7 @@ export default function Split() {
               </div>
             </div>
 
-            <div className="p-6 border-t flex gap-3">
-              <button
-                onClick={() => {
-                  setSelectedContacts(new Set(savedContacts.map(c => c.address)));
-                }}
-                className="btn btn-sm btn-ghost"
-              >
-                Select All
-              </button>
-              <button onClick={() => setSelectedContacts(new Set())} className="btn btn-sm btn-ghost">
-                Clear All
-              </button>
+            <div className="p-6 border-t border-base-100 flex gap-3">
               <div className="flex-1" />
               <button
                 onClick={() => {

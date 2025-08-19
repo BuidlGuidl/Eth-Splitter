@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { AlertCircle, ChevronRight, Edit, Search, Trash2, Users } from "lucide-react";
+import { AlertCircle, ChevronRight, Edit, Trash2, Users } from "lucide-react";
 import { Address } from "~~/components/scaffold-eth";
 import { notification } from "~~/utils/scaffold-eth";
 import { Contact } from "~~/utils/splitter";
@@ -26,13 +26,6 @@ export const SavedContacts: React.FC<SavedContactsnotificationProps> = ({
   className = "",
 }) => {
   const router = useRouter();
-  const [searchQuery, setSearchQuery] = useState("");
-
-  const filteredContacts = contacts.filter(
-    contact =>
-      contact.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      contact.label?.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
 
   const handleDeleteContact = (address: string) => {
     if (onDeleteContact) {
@@ -53,19 +46,6 @@ export const SavedContacts: React.FC<SavedContactsnotificationProps> = ({
         )}
       </div>
 
-      <div className="mb-6">
-        <div className="relative">
-          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-          <input
-            type="text"
-            placeholder="Search contacts by name, address, or label..."
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
-          />
-        </div>
-      </div>
-
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -82,8 +62,8 @@ export const SavedContacts: React.FC<SavedContactsnotificationProps> = ({
             </thead>
             <tbody className="divide-y divide-base-100">
               <AnimatePresence>
-                {filteredContacts.length > 0 ? (
-                  filteredContacts.map((contact, index) => (
+                {contacts.length > 0 ? (
+                  contacts.map((contact, index) => (
                     <motion.tr
                       key={contact.address}
                       initial={{ opacity: 0, x: -20 }}

@@ -6,7 +6,7 @@ import { ContactManagement } from "./_components/ContactManagement";
 import { motion } from "framer-motion";
 import Papa from "papaparse";
 import { notification } from "~~/utils/scaffold-eth";
-import { Contact, loadContacts, removeContact, saveContacts } from "~~/utils/splitter";
+import { Contact, loadContacts, removeContact } from "~~/utils/splitter";
 
 export default function Contacts() {
   const [addresses, setAddresses] = useState<Contact[]>([]);
