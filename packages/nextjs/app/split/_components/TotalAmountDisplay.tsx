@@ -2,7 +2,7 @@
 
 import React from "react";
 import { AlertCircle } from "lucide-react";
-import { formatUnits } from "viem";
+import { formatUnits, parseUnits } from "viem";
 
 interface TotalAmountDisplayProps {
   totalAmount: string;
@@ -24,7 +24,7 @@ export const TotalAmountDisplay: React.FC<TotalAmountDisplayProps> = ({ totalAmo
   const hasInsufficientBalance = total > balance;
 
   return (
-    <div className="mt-6 p-4 border border-base-100 rounded-xl">
+    <div className="mt-6 p-4 border border-base-300 rounded-xl">
       <div className="flex items-center justify-between">
         <span className="text-sm font-medium">Total Amount to Split:</span>
         <span className="text-lg font-bold">

@@ -10,7 +10,7 @@ import { TotalAmountDisplay } from "./_components/TotalAmountDisplay";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Download, Plus, Upload } from "lucide-react";
 import { isAddress } from "viem";
-import { useAccount, useChainId } from "wagmi";
+import { useChainId } from "wagmi";
 import { Address, EtherInput, InputBase } from "~~/components/scaffold-eth";
 import { useTokenBalance } from "~~/hooks/useTokenBalance";
 import { notification } from "~~/utils/scaffold-eth";
@@ -52,6 +52,9 @@ export default function Split() {
   const [selectedContacts, setSelectedContacts] = useState<Set<string>>(new Set());
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [savedContacts, setSavedContacts] = useState<Contact[]>([]);
+  const [usdMode, setUsdMode] = useState(false);
+
+  const toggleUsdMode = () => setUsdMode(prev => !prev);
 
   const tokenBalance = useTokenBalance(selectedToken?.address);
   const isCalculatingRef = useRef(false);
@@ -402,6 +405,8 @@ export default function Split() {
                       onUpdate={updateRecipient}
                       onRemove={removeRecipient}
                       canRemove={recipients.length > 2}
+                      usdMode={usdMode}
+                      onToggleUsdMode={toggleUsdMode}
                     />
                   ))}
                 </AnimatePresence>

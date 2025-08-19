@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { on } from "events";
 import { ArrowsRightLeftIcon } from "@heroicons/react/24/outline";
 import { CommonInputProps, InputBase, SIGNED_NUMBER_REGEX } from "~~/components/scaffold-eth";
 import { useDisplayUsdMode } from "~~/hooks/scaffold-eth/useDisplayUsdMode";
@@ -51,7 +52,8 @@ export const EtherInput = ({
   onChange,
   disabled,
   usdMode,
-}: CommonInputProps & { usdMode?: boolean }) => {
+  onToggleUsdMode,
+}: CommonInputProps & { usdMode?: boolean; onToggleUsdMode?: () => void }) => {
   const [transitoryDisplayValue, setTransitoryDisplayValue] = useState<string>();
   const nativeCurrencyPrice = useGlobalState(state => state.nativeCurrency.price);
   const isNativeCurrencyPriceFetching = useGlobalState(state => state.nativeCurrency.isFetching);
@@ -115,7 +117,7 @@ export const EtherInput = ({
         >
           <button
             className="btn btn-primary h-[2.2rem] min-h-[2.2rem] rounded-md"
-            onClick={toggleDisplayUsdMode}
+            onClick={onToggleUsdMode || toggleDisplayUsdMode}
             disabled={!displayUsdMode && !nativeCurrencyPrice}
             type="button"
           >

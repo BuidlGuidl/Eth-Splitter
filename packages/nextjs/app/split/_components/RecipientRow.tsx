@@ -25,6 +25,8 @@ interface RecipientRowProps {
   onUpdate: (id: string, field: string, value: string) => void;
   onRemove: (id: string) => void;
   canRemove: boolean;
+  usdMode: boolean;
+  onToggleUsdMode: () => void;
 }
 
 export const RecipientRow: React.FC<RecipientRowProps> = ({
@@ -37,6 +39,8 @@ export const RecipientRow: React.FC<RecipientRowProps> = ({
   onUpdate,
   onRemove,
   canRemove,
+  usdMode,
+  onToggleUsdMode,
 }) => {
   return (
     <motion.div
@@ -71,6 +75,8 @@ export const RecipientRow: React.FC<RecipientRowProps> = ({
                 value={recipient.amount}
                 onChange={value => onUpdate(recipient.id, "amount", value)}
                 placeholder="0.0"
+                usdMode={usdMode}
+                onToggleUsdMode={onToggleUsdMode}
               />
             ) : (
               <InputBase
