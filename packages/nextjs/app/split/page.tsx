@@ -11,7 +11,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Download, Plus, Upload } from "lucide-react";
 import { isAddress } from "viem";
 import { useAccount, useChainId } from "wagmi";
-import { EtherInput, InputBase } from "~~/components/scaffold-eth";
+import { Address, EtherInput, InputBase } from "~~/components/scaffold-eth";
 import { useTokenBalance } from "~~/hooks/useTokenBalance";
 import { notification } from "~~/utils/scaffold-eth";
 import { Contact, loadCache, loadContacts, updateCacheAmounts, updateCacheWallets } from "~~/utils/splitter";
@@ -148,7 +148,7 @@ export default function Split() {
   );
 
   const handleBulkImport = (importedRecipients: Recipient[]) => {
-    setRecipients(importedRecipients);
+    setRecipients(prevRecipients => [...prevRecipients, ...importedRecipients]);
     setShowBulkImport(false);
     notification.success(`Imported ${importedRecipients.length} recipients`);
   };
@@ -169,7 +169,22 @@ export default function Split() {
       return;
     }
 
-    const newRecipients = Array.from(selectedContacts).map((address, index) => {
+    // Get existing addresses (case-insensitive)
+    const existingAddresses = new Set(recipients.map(r => r.address.toLowerCase()).filter(Boolean));
+
+    // Filter out contacts that are already in the recipients list
+    const contactsToImport = Array.from(selectedContacts).filter(
+      address => !existingAddresses.has(address.toLowerCase()),
+    );
+
+    if (contactsToImport.length === 0) {
+      notification.warning("All selected contacts are already in the recipients list");
+      setShowContactSelector(false);
+      setSelectedContacts(new Set());
+      return;
+    }
+
+    const newRecipients = contactsToImport.map((address, index) => {
       const contact = savedContacts.find(c => c.address === address);
       return {
         id: Date.now().toString() + index,
@@ -179,10 +194,17 @@ export default function Split() {
       };
     });
 
-    setRecipients(newRecipients);
+    // Append to existing recipients instead of replacing
+    setRecipients(prevRecipients => [...prevRecipients, ...newRecipients]);
     setShowContactSelector(false);
     setSelectedContacts(new Set());
-    notification.success(`Imported ${newRecipients.length} contacts`);
+
+    const skippedCount = selectedContacts.size - contactsToImport.length;
+    if (skippedCount > 0) {
+      notification.success(`Imported ${newRecipients.length} contacts (${skippedCount} duplicates skipped)`);
+    } else {
+      notification.success(`Imported ${newRecipients.length} contacts`);
+    }
   };
 
   const calculateDistribution = useCallback(() => {
@@ -422,6 +444,7 @@ export default function Split() {
         onImport={handleBulkImport}
         splitMode={splitMode}
         savedContacts={savedContacts}
+        existingRecipients={recipients}
       />
 
       {/* Contact Selector Modal */}
@@ -464,9 +487,9 @@ export default function Split() {
                         setSelectedContacts(newSelected);
                       }}
                     />
-                    <div className="flex-1">
-                      <div className="font-medium">{contact.label}</div>
-                      <div className="text-xs opacity-70">{contact.address}</div>
+                    <div className="flex md:flex-row flex-col justify-between w-full">
+                      <Address address={contact.address} />
+                      <div className="font-medium text-xs ">{contact.label}</div>
                     </div>
                   </label>
                 ))}

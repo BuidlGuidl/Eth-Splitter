@@ -4,7 +4,9 @@ import React, { useState } from "react";
 import { SplitMode } from "../page";
 import { AnimatePresence, motion } from "framer-motion";
 import { FileText, Info, Upload, X } from "lucide-react";
-import { isAddress } from "viem";
+import { getAddress, isAddress } from "viem";
+import { normalize } from "viem/ens";
+import { usePublicClient } from "wagmi";
 import { notification } from "~~/utils/scaffold-eth";
 import { Contact } from "~~/utils/splitter";
 
@@ -23,6 +25,7 @@ interface BulkImportModalProps {
   onImport: (recipients: Recipient[]) => void;
   splitMode: SplitMode;
   savedContacts: Contact[];
+  existingRecipients?: Recipient[];
 }
 
 export const BulkImportModal: React.FC<BulkImportModalProps> = ({
@@ -31,39 +34,30 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
   onImport,
   splitMode,
   savedContacts,
+  existingRecipients = [],
 }) => {
   const [bulkText, setBulkText] = useState("");
   const [isResolving, setIsResolving] = useState(false);
+  const publicClient = usePublicClient({ chainId: 1 });
 
-  const resolveENSNames = async (addresses: string[]): Promise<Map<string, string>> => {
-    const ensMap = new Map<string, string>();
+  const resolveENSName = async (ensName: string): Promise<string | null> => {
+    if (!publicClient) return null;
 
-    // This is a simplified version - in production you'd batch these requests
-    for (const address of addresses) {
-      if (address.includes(".")) {
-        try {
-          // In a real implementation, you'd use the ENS resolver here
-          // For now, we'll just validate if it looks like an ENS name
-          if (address.endsWith(".eth") || address.endsWith(".xyz")) {
-            // Placeholder - would resolve to actual address
-            console.log(`Would resolve ENS: ${address}`);
-          }
-        } catch (error) {
-          console.error(`Failed to resolve ${address}:`, error);
-        }
-      }
+    try {
+      const normalizedName = normalize(ensName);
+      const address = await publicClient.getEnsAddress({ name: normalizedName });
+      return address ? getAddress(address) : null;
+    } catch (error) {
+      console.error(`Failed to resolve ENS name ${ensName}:`, error);
+      return null;
     }
-
-    return ensMap;
   };
 
   const detectSplitType = (lines: string[]): SplitMode => {
-    // Check if any line has a numeric value that could be an amount
     for (const line of lines) {
       const parts = line.split(/[,\s:]+/).filter(Boolean);
       if (parts.length >= 2) {
         const secondPart = parts[1];
-        // Check if second part is a number (amount)
         if (/^\d+\.?\d*$/.test(secondPart)) {
           return "UNEQUAL";
         }
@@ -81,13 +75,11 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
     setIsResolving(true);
 
     try {
-      // Parse the input text
       const lines = bulkText
         .split(/[\n;]+/)
         .map(line => line.trim())
         .filter(Boolean);
 
-      // Detect the type of split based on the data format
       const detectedMode = detectSplitType(lines);
 
       if (detectedMode !== splitMode) {
@@ -99,13 +91,14 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
       }
 
       const recipients: Recipient[] = [];
-      const ensNamesToResolve: string[] = [];
       const errors: string[] = [];
+      const validatedAddresses = new Set<string>();
 
-      // Parse each line based on the split mode
+      // Get existing addresses (case-insensitive)
+      const existingAddresses = new Set(existingRecipients.map(r => r.address.toLowerCase()).filter(Boolean));
+
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
-        // Split by comma, space, or colon
         const parts = line.split(/[,\s:]+/).filter(Boolean);
 
         if (parts.length === 0) continue;
@@ -115,94 +108,82 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
         let label = "";
 
         if (splitMode === "UNEQUAL") {
-          // For unequal split: address, amount, label (optional)
           amount = parts[1] || "";
           label = parts.slice(2).join(" ") || "";
 
-          // Validate amount for unequal split
           if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
             errors.push(`Line ${i + 1}: Invalid or missing amount for address ${addressOrEns}`);
             continue;
           }
         } else {
-          // For equal split: address, label (optional)
           label = parts.slice(1).join(" ") || "";
         }
 
+        let resolvedAddress = "";
+        let ensName = "";
+
         // Check if it's an ENS name
         if (addressOrEns.includes(".")) {
-          ensNamesToResolve.push(addressOrEns);
-          recipients.push({
-            id: Date.now().toString() + i,
-            address: "", // Will be resolved
-            amount: amount,
-            label: label || addressOrEns,
-            ensName: addressOrEns,
-          });
+          const resolved = await resolveENSName(addressOrEns);
+          if (resolved) {
+            resolvedAddress = resolved;
+            ensName = addressOrEns;
+          } else {
+            errors.push(`Line ${i + 1}: Could not resolve ENS name: ${addressOrEns}`);
+            continue;
+          }
         } else if (isAddress(addressOrEns)) {
-          // Check if this address has a saved label
-          const savedContact = savedContacts.find(c => c.address.toLowerCase() === addressOrEns.toLowerCase());
-
-          recipients.push({
-            id: Date.now().toString() + i,
-            address: addressOrEns,
-            amount: amount,
-            label: label || savedContact?.label || "",
-          });
+          resolvedAddress = getAddress(addressOrEns);
         } else {
           errors.push(`Line ${i + 1}: Invalid address format: ${addressOrEns}`);
+          continue;
         }
-      }
 
-      // Resolve ENS names if any
-      if (ensNamesToResolve.length > 0) {
-        const ensResolutions = await resolveENSNames(ensNamesToResolve);
+        // Check for duplicates within the import
+        const addressLower = resolvedAddress.toLowerCase();
+        if (validatedAddresses.has(addressLower)) {
+          errors.push(`Line ${i + 1}: Duplicate address ${addressOrEns} (already in import list)`);
+          continue;
+        }
 
-        recipients.forEach(recipient => {
-          if (recipient.ensName && ensResolutions.has(recipient.ensName)) {
-            recipient.address = ensResolutions.get(recipient.ensName) || "";
-          } else if (recipient.ensName) {
-            // If ENS couldn't be resolved, mark as error
-            errors.push(`Could not resolve ENS: ${recipient.ensName}`);
-          }
+        // Check for duplicates with existing recipients
+        if (existingAddresses.has(addressLower)) {
+          errors.push(`Line ${i + 1}: Address ${addressOrEns} already exists in recipients list`);
+          continue;
+        }
+
+        validatedAddresses.add(addressLower);
+
+        // Check if this address has a saved label
+        const savedContact = savedContacts.find(c => c.address.toLowerCase() === resolvedAddress.toLowerCase());
+
+        recipients.push({
+          id: Date.now().toString() + i,
+          address: resolvedAddress,
+          amount: amount,
+          label: label || savedContact?.label || (ensName ? ensName : ""),
+          ensName: ensName,
         });
       }
 
-      // Filter out recipients with unresolved ENS names
-      const validRecipients = recipients.filter(r => isAddress(r.address));
-
       if (errors.length > 0) {
-        notification.warning(
-          `Import completed with warnings: ${errors.slice(0, 3).join(", ")}${errors.length > 3 ? "..." : ""}`,
-        );
+        const errorMessage =
+          errors.length > 3
+            ? `Import completed with ${errors.length} warnings:\n${errors.slice(0, 3).join("\n")}...`
+            : `Import completed with warnings:\n${errors.join("\n")}`;
+        notification.warning(errorMessage);
       }
 
-      if (validRecipients.length === 0) {
-        notification.error("No valid addresses found");
+      if (recipients.length === 0) {
+        notification.error("No valid addresses found to import");
+        setIsResolving(false);
         return;
       }
 
-      // Check for duplicates
-      const uniqueAddresses = new Set(validRecipients.map(r => r.address.toLowerCase()));
-      if (uniqueAddresses.size < validRecipients.length) {
-        notification.warning("Duplicate addresses were removed");
-      }
-
-      // Create final list with unique addresses
-      const finalRecipients: Recipient[] = [];
-      const seenAddresses = new Set<string>();
-
-      for (const recipient of validRecipients) {
-        const addressLower = recipient.address.toLowerCase();
-        if (!seenAddresses.has(addressLower)) {
-          seenAddresses.add(addressLower);
-          finalRecipients.push(recipient);
-        }
-      }
-
-      onImport(finalRecipients);
+      onImport(recipients);
       setBulkText("");
-      notification.success(`Successfully imported ${finalRecipients.length} recipients`);
+      notification.success(`Successfully imported ${recipients.length} recipients`);
+      onClose();
     } catch (error) {
       console.error("Import error:", error);
       notification.error("Failed to import recipients");
@@ -225,6 +206,31 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
       notification.error("Failed to read file");
     };
     reader.readAsText(file);
+  };
+
+  const handleImportFromContacts = () => {
+    // Filter out contacts that are already in the recipients list
+    const existingAddresses = new Set(existingRecipients.map(r => r.address.toLowerCase()).filter(Boolean));
+
+    const availableContacts = savedContacts.filter(contact => !existingAddresses.has(contact.address.toLowerCase()));
+
+    if (availableContacts.length === 0) {
+      notification.warning("All saved contacts are already in the recipients list");
+      return;
+    }
+
+    const contactsText = availableContacts
+      .map(contact => {
+        if (splitMode === "EQUAL") {
+          return `${contact.address}, ${contact.label}`;
+        } else {
+          return `${contact.address}, , ${contact.label}`;
+        }
+      })
+      .join("\n");
+
+    setBulkText(contactsText);
+    notification.success(`Loaded ${availableContacts.length} contacts (excluding duplicates)`);
   };
 
   const getInstructions = () => {
@@ -299,56 +305,57 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Paste Recipients Data</label>
               <textarea
                 value={bulkText}
                 onChange={e => setBulkText(e.target.value)}
                 placeholder={
                   splitMode === "EQUAL"
-                    ? "0x742d35Cc6634C0532925a3b844Bc9e7595f0fA7B, Alice\nvitalik.eth, Vitalik\n0x123...abc"
-                    : "0x742d35Cc6634C0532925a3b844Bc9e7595f0fA7B, 1.5, Alice\nvitalik.eth, 2.0, Vitalik\n0x123...abc, 0.5"
+                    ? "0x742d35Cc6634C0532925a3b844Bc9e7595f0fA7B, Alice\nvitalik.eth\n0x123...abc, Bob"
+                    : "0x742d35Cc6634C0532925a3b844Bc9e7595f0fA7B, 1.5, Alice\nvitalik.eth, 2.0\n0x123...abc, 0.5, Bob"
                 }
-                className="textarea textarea-bordered w-full h-48 font-mono text-sm rounded-md mt-2"
+                className="textarea textarea-bordered w-full h-40 font-mono text-sm rounded-md "
+                disabled={isResolving}
               />
             </div>
 
-            <div className="flex items-center gap-4">
+            {/* Action Buttons */}
+            <div className="flex flex-wrap gap-2">
               <label className="btn btn-sm btn-ghost">
-                <FileText className="w-4 h-4 mr-2" />
-                Upload File
-                <input type="file" accept=".txt,.csv" onChange={handleFileImport} className="hidden" />
+                <Upload className="w-4 h-4 mr-2" />
+                Import File
+                <input
+                  type="file"
+                  accept=".txt,.csv"
+                  onChange={handleFileImport}
+                  className="hidden"
+                  disabled={isResolving}
+                />
               </label>
-              <span className="text-xs opacity-70">Supports .txt and .csv files</span>
+
+              {savedContacts.length > 0 && (
+                <button onClick={handleImportFromContacts} className="btn btn-sm btn-ghost" disabled={isResolving}>
+                  <FileText className="w-4 h-4 mr-2" />
+                  Import from Contacts
+                </button>
+              )}
             </div>
           </div>
 
           {/* Footer */}
-          <div className="flex items-center justify-between p-6 border-t">
-            <div className="text-sm opacity-70">
-              {bulkText && `${bulkText.split(/[\n;]+/).filter(Boolean).length} lines detected`}
-            </div>
-            <div className="flex gap-3">
-              <button onClick={onClose} className="btn btn-sm btn-ghost">
-                Cancel
-              </button>
-              <button
-                onClick={handleImport}
-                disabled={!bulkText.trim() || isResolving}
-                className="btn btn-sm btn-primary"
-              >
-                {isResolving ? (
-                  <>
-                    <span className="loading loading-spinner loading-xs"></span>
-                    Resolving...
-                  </>
-                ) : (
-                  <>
-                    <Upload className="w-4 h-4 mr-2" />
-                    Import
-                  </>
-                )}
-              </button>
-            </div>
+          <div className="p-6 border-t flex justify-end gap-3">
+            <button onClick={onClose} className="btn btn-ghost" disabled={isResolving}>
+              Cancel
+            </button>
+            <button onClick={handleImport} className="btn btn-primary" disabled={!bulkText.trim() || isResolving}>
+              {isResolving ? (
+                <>
+                  <span className="loading loading-spinner loading-sm mr-2"></span>
+                  Resolving...
+                </>
+              ) : (
+                "Import Recipients"
+              )}
+            </button>
           </div>
         </motion.div>
       </motion.div>
