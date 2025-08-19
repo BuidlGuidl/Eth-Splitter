@@ -2,8 +2,10 @@
 
 import React, { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown, Coins, X } from "lucide-react";
+import { ChevronDown, Coins } from "lucide-react";
 import { formatUnits } from "viem";
+import { erc20Abi } from "viem";
+import { useReadContract } from "wagmi";
 import { AddressInput } from "~~/components/scaffold-eth";
 import { tokens } from "~~/constants/tokens";
 
@@ -30,6 +32,35 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [customTokenAddress, setCustomTokenAddress] = useState("");
+  const [fetchingCustomToken, setFetchingCustomToken] = useState(false);
+
+  // Fetch custom token data
+  const { data: customTokenSymbol } = useReadContract({
+    address: customTokenAddress as `0x${string}`,
+    abi: erc20Abi,
+    functionName: "symbol",
+    query: {
+      enabled: !!customTokenAddress && customTokenAddress.startsWith("0x"),
+    },
+  });
+
+  const { data: customTokenName } = useReadContract({
+    address: customTokenAddress as `0x${string}`,
+    abi: erc20Abi,
+    functionName: "name",
+    query: {
+      enabled: !!customTokenAddress && customTokenAddress.startsWith("0x"),
+    },
+  });
+
+  const { data: customTokenDecimals } = useReadContract({
+    address: customTokenAddress as `0x${string}`,
+    abi: erc20Abi,
+    functionName: "decimals",
+    query: {
+      enabled: !!customTokenAddress && customTokenAddress.startsWith("0x"),
+    },
+  });
 
   const chainTokens = tokens[chainId as keyof typeof tokens];
   const tokenList: Token[] = [
@@ -52,20 +83,56 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
     onTokenSelect(token);
     setIsDropdownOpen(false);
     setShowCustomInput(false);
+    setCustomTokenAddress("");
   };
 
-  const handleCustomToken = () => {
-    if (customTokenAddress && customTokenAddress.startsWith("0x")) {
+  const handleCustomToken = async () => {
+    if (!customTokenAddress || !customTokenAddress.startsWith("0x")) {
+      return;
+    }
+
+    setFetchingCustomToken(true);
+
+    // Wait a bit for the token data to be fetched
+    setTimeout(() => {
       const customToken: Token = {
         address: customTokenAddress,
-        symbol: tokenBalance?.symbol || "TOKEN",
-        name: "Custom Token",
-        decimals: tokenBalance?.decimals || 18,
+        symbol: customTokenSymbol || "TOKEN",
+        name: customTokenName || "Custom Token",
+        decimals: customTokenDecimals || 18,
       };
+
       handleTokenSelect(customToken);
-      setCustomTokenAddress("");
-    }
+      setFetchingCustomToken(false);
+    }, 500);
   };
+
+  // Watch for custom token data changes and update selected token if it's custom
+  useEffect(() => {
+    if (
+      selectedToken &&
+      selectedToken.address === customTokenAddress &&
+      selectedToken.address !== "ETH" &&
+      !tokenList.find(t => t.address === selectedToken.address)
+    ) {
+      // Update the selected token with fresh data
+      const updatedToken: Token = {
+        address: selectedToken.address,
+        symbol: customTokenSymbol || tokenBalance?.symbol || "TOKEN",
+        name: customTokenName || tokenBalance?.name || "Custom Token",
+        decimals: customTokenDecimals || tokenBalance?.decimals || 18,
+      };
+
+      // Only update if data has actually changed
+      if (
+        updatedToken.symbol !== selectedToken.symbol ||
+        updatedToken.name !== selectedToken.name ||
+        updatedToken.decimals !== selectedToken.decimals
+      ) {
+        onTokenSelect(updatedToken);
+      }
+    }
+  }, [customTokenSymbol, customTokenName, customTokenDecimals, tokenBalance]);
 
   const formatBalance = () => {
     if (!tokenBalance?.balance) return "0";
@@ -74,6 +141,25 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
     }
     return formatUnits(tokenBalance.balance, tokenBalance.decimals || 18);
   };
+
+  const displayTokenInfo = () => {
+    if (!selectedToken) return { name: "Select Token", symbol: "" };
+
+    // For custom tokens, use the fetched data or tokenBalance data
+    if (selectedToken.address !== "ETH" && !tokenList.find(t => t.address === selectedToken.address)) {
+      return {
+        name: customTokenName || tokenBalance?.name || selectedToken.name,
+        symbol: customTokenSymbol || tokenBalance?.symbol || selectedToken.symbol,
+      };
+    }
+
+    return {
+      name: selectedToken.name,
+      symbol: selectedToken.symbol,
+    };
+  };
+
+  const tokenInfo = displayTokenInfo();
 
   return (
     <div className="rounded-2xl p-6 mb-6 border shadow-lg">
@@ -87,15 +173,15 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
         >
           <div className="flex items-center">
             <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold mr-3 bg-primary">
-              {selectedToken ? selectedToken.symbol.charAt(0) : <Coins className="w-5 h-5" />}
+              {tokenInfo.symbol ? tokenInfo.symbol.charAt(0) : <Coins className="w-5 h-5" />}
             </div>
             <div className="text-left">
               <div className="font-medium">
-                {selectedToken ? `${selectedToken.name} (${selectedToken.symbol})` : "Select Token"}
+                {tokenInfo.symbol ? `${tokenInfo.name} (${tokenInfo.symbol})` : "Select Token"}
               </div>
               {selectedToken && tokenBalance && (
                 <div className="text-xs opacity-70">
-                  Balance: {formatBalance()} {selectedToken.symbol}
+                  Balance: {formatBalance()} {tokenInfo.symbol}
                 </div>
               )}
             </div>
@@ -146,8 +232,19 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
                       placeholder="Token contract address"
                     />
                     <div className="flex gap-2">
-                      <button onClick={handleCustomToken} className="btn btn-sm btn-primary rounded-md flex-1">
-                        Add
+                      <button
+                        onClick={handleCustomToken}
+                        className="btn btn-sm btn-primary rounded-md flex-1"
+                        disabled={!customTokenAddress || fetchingCustomToken}
+                      >
+                        {fetchingCustomToken ? (
+                          <>
+                            <span className="loading loading-spinner loading-xs"></span>
+                            Loading...
+                          </>
+                        ) : (
+                          "Add"
+                        )}
                       </button>
                       <button
                         onClick={() => {
@@ -171,7 +268,7 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
         <div className="mt-4 p-3 bg-warning/10 rounded-lg">
           <p className="text-sm">
             <span className="font-medium">Allowance:</span>{" "}
-            {formatUnits(tokenBalance.allowance, tokenBalance.decimals || 18)} {selectedToken.symbol}
+            {formatUnits(tokenBalance.allowance, tokenBalance.decimals || 18)} {tokenInfo.symbol}
           </p>
           {tokenBalance.allowance === 0n && (
             <p className="text-xs mt-1 text-warning">You'll need to approve tokens before splitting</p>

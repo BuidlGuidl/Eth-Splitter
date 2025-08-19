@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AssetSelector } from "./_components/AssetSelector";
 import { BulkImportModal } from "./_components/BulkImportModal";
@@ -8,10 +8,10 @@ import { RecipientRow } from "./_components/RecipientRow";
 import { SplitModeSelector } from "./_components/SplitModeSelector";
 import { TotalAmountDisplay } from "./_components/TotalAmountDisplay";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, Download, Plus, Upload, X } from "lucide-react";
-import { formatUnits, isAddress, parseUnits } from "viem";
-import { useAccount, useChainId, useEnsResolver } from "wagmi";
-import { AddressInput, EtherInput, InputBase } from "~~/components/scaffold-eth";
+import { ArrowRight, Download, Plus, Upload } from "lucide-react";
+import { isAddress } from "viem";
+import { useAccount, useChainId } from "wagmi";
+import { EtherInput, InputBase } from "~~/components/scaffold-eth";
 import { useTokenBalance } from "~~/hooks/useTokenBalance";
 import { notification } from "~~/utils/scaffold-eth";
 import { Contact, loadCache, loadContacts, updateCacheAmounts, updateCacheWallets } from "~~/utils/splitter";
@@ -49,10 +49,13 @@ export default function Split() {
   const [totalAmount, setTotalAmount] = useState("");
   const [equalAmount, setEqualAmount] = useState("");
   const [showBulkImport, setShowBulkImport] = useState(false);
+  const [showContactSelector, setShowContactSelector] = useState(false);
+  const [selectedContacts, setSelectedContacts] = useState<Set<string>>(new Set());
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [savedContacts, setSavedContacts] = useState<Contact[]>([]);
 
   const tokenBalance = useTokenBalance(selectedToken?.address);
+  const isCalculatingRef = useRef(false);
 
   useEffect(() => {
     const contacts = loadContacts();
@@ -113,22 +116,36 @@ export default function Split() {
     }
   };
 
-  const updateRecipient = (id: string, field: keyof Recipient, value: string) => {
-    setRecipients(recipients.map(r => (r.id === id ? { ...r, [field]: value } : r)));
+  const updateRecipient = useCallback(
+    (id: string, field: keyof Recipient, value: string) => {
+      setRecipients(prevRecipients => {
+        const updated = prevRecipients.map(r => {
+          if (r.id === id) {
+            const newRecipient = { ...r, [field]: value };
 
-    setErrors(prev => {
-      const newErrors = { ...prev };
-      delete newErrors[`${id}-${field}`];
-      return newErrors;
-    });
+            // Auto-fill label if address matches a saved contact
+            if (field === "address" && value) {
+              const contact = savedContacts.find(c => c.address.toLowerCase() === value.toLowerCase());
+              if (contact) {
+                newRecipient.label = contact.label;
+              }
+            }
 
-    if (field === "address" && value) {
-      const contact = savedContacts.find(c => c.address.toLowerCase() === value.toLowerCase());
-      if (contact) {
-        setRecipients(recipients.map(r => (r.id === id ? { ...r, label: contact.label } : r)));
-      }
-    }
-  };
+            return newRecipient;
+          }
+          return r;
+        });
+        return updated;
+      });
+
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[`${id}-${field}`];
+        return newErrors;
+      });
+    },
+    [savedContacts],
+  );
 
   const handleBulkImport = (importedRecipients: Recipient[]) => {
     setRecipients(importedRecipients);
@@ -143,54 +160,83 @@ export default function Split() {
       return;
     }
 
-    const newRecipients = contacts.slice(0, 10).map((contact, index) => ({
-      id: Date.now().toString() + index,
-      address: contact.address,
-      amount: "",
-      label: contact.label,
-    }));
+    setShowContactSelector(true);
+  };
+
+  const handleContactSelection = () => {
+    if (selectedContacts.size === 0) {
+      notification.error("Please select at least one contact");
+      return;
+    }
+
+    const newRecipients = Array.from(selectedContacts).map((address, index) => {
+      const contact = savedContacts.find(c => c.address === address);
+      return {
+        id: Date.now().toString() + index,
+        address: address,
+        amount: "",
+        label: contact?.label || "",
+      };
+    });
 
     setRecipients(newRecipients);
+    setShowContactSelector(false);
+    setSelectedContacts(new Set());
     notification.success(`Imported ${newRecipients.length} contacts`);
   };
 
-  const calculateDistribution = () => {
-    if (splitMode === "EQUAL") {
-      const validRecipients = recipients.filter(r => validateAddress(r.address));
-      if (validRecipients.length === 0) return;
+  const calculateDistribution = useCallback(() => {
+    if (isCalculatingRef.current) return;
+    isCalculatingRef.current = true;
 
-      const amount = parseFloat(equalAmount);
-      if (!amount || isNaN(amount)) return;
+    try {
+      if (splitMode === "EQUAL") {
+        const validRecipients = recipients.filter(r => validateAddress(r.address));
+        if (validRecipients.length === 0) {
+          setTotalAmount("");
+          return;
+        }
 
-      const totalNeeded = amount * validRecipients.length;
-      setTotalAmount(totalNeeded.toString());
+        const amount = parseFloat(equalAmount);
+        if (!amount || isNaN(amount)) {
+          setTotalAmount("");
+          return;
+        }
 
-      setRecipients(
-        recipients.map(r => ({
-          ...r,
-          amount: validateAddress(r.address) ? equalAmount : "",
-          percentage: 100 / validRecipients.length,
-        })),
-      );
-    } else {
-      const total = recipients.reduce((sum, r) => {
-        const amount = parseFloat(r.amount || "0");
-        return sum + (isNaN(amount) ? 0 : amount);
-      }, 0);
+        const totalNeeded = amount * validRecipients.length;
+        setTotalAmount(totalNeeded.toString());
 
-      setTotalAmount(total.toString());
-
-      setRecipients(
-        recipients.map(r => {
-          const amount = parseFloat(r.amount || "0");
-          return {
+        // Only update recipients if amounts have actually changed
+        setRecipients(prevRecipients =>
+          prevRecipients.map(r => ({
             ...r,
-            percentage: total > 0 ? (amount / total) * 100 : 0,
-          };
-        }),
-      );
+            amount: validateAddress(r.address) ? equalAmount : "",
+            percentage: validateAddress(r.address) ? 100 / validRecipients.length : 0,
+          })),
+        );
+      } else {
+        const total = recipients.reduce((sum, r) => {
+          const amount = parseFloat(r.amount || "0");
+          return sum + (isNaN(amount) ? 0 : amount);
+        }, 0);
+
+        setTotalAmount(total.toString());
+
+        // Only update percentages, not amounts
+        setRecipients(prevRecipients =>
+          prevRecipients.map(r => {
+            const amount = parseFloat(r.amount || "0");
+            return {
+              ...r,
+              percentage: total > 0 && !isNaN(amount) ? (amount / total) * 100 : 0,
+            };
+          }),
+        );
+      }
+    } finally {
+      isCalculatingRef.current = false;
     }
-  };
+  }, [splitMode, equalAmount, recipients]);
 
   const validateForm = (): boolean => {
     const newErrors: { [key: string]: string } = {};
@@ -252,9 +298,22 @@ export default function Split() {
   };
 
   useEffect(() => {
-    console.log("Dependencies changed, recalculating distribution");
-    calculateDistribution();
-  }, [splitMode, equalAmount, recipients]);
+    const timer = setTimeout(() => {
+      calculateDistribution();
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [splitMode, equalAmount, recipients.length]);
+
+  useEffect(() => {
+    if (splitMode === "UNEQUAL") {
+      const timer = setTimeout(() => {
+        calculateDistribution();
+      }, 300);
+
+      return () => clearTimeout(timer);
+    }
+  }, [recipients.map(r => r.amount).join(","), splitMode]);
 
   return (
     <div className="max-w-7xl w-full mx-auto py-10 px-4">
@@ -284,7 +343,9 @@ export default function Split() {
                     value={equalAmount}
                     onChange={setEqualAmount}
                     placeholder="0.0"
-                    suffix={<span className="px-3 text-sm my-auto font-medium">{selectedToken?.symbol || "TOKEN"}</span>}
+                    suffix={
+                      <span className="px-3 text-sm my-auto font-medium">{selectedToken?.symbol || "TOKEN"}</span>
+                    }
                   />
                 )}
                 {errors["equalAmount"] && <p className="mt-1 text-sm text-error">{errors["equalAmount"]}</p>}
@@ -362,6 +423,89 @@ export default function Split() {
         splitMode={splitMode}
         savedContacts={savedContacts}
       />
+
+      {/* Contact Selector Modal */}
+      {showContactSelector && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={() => setShowContactSelector(false)}
+        >
+          <motion.div
+            initial={{ scale: 0.9 }}
+            animate={{ scale: 1 }}
+            className="bg-base-100 rounded-2xl shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="p-6 border-b">
+              <h2 className="text-xl font-semibold">Select Contacts</h2>
+              <p className="text-sm mt-1">Choose which contacts to import</p>
+            </div>
+
+            <div className="p-6 max-h-[60vh] overflow-y-auto">
+              <div className="space-y-2">
+                {savedContacts.map(contact => (
+                  <label
+                    key={contact.address}
+                    className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-base-200"
+                  >
+                    <input
+                      type="checkbox"
+                      className="checkbox checkbox-primary mr-3"
+                      checked={selectedContacts.has(contact.address)}
+                      onChange={e => {
+                        const newSelected = new Set(selectedContacts);
+                        if (e.target.checked) {
+                          newSelected.add(contact.address);
+                        } else {
+                          newSelected.delete(contact.address);
+                        }
+                        setSelectedContacts(newSelected);
+                      }}
+                    />
+                    <div className="flex-1">
+                      <div className="font-medium">{contact.label}</div>
+                      <div className="text-xs opacity-70">{contact.address}</div>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="p-6 border-t flex gap-3">
+              <button
+                onClick={() => {
+                  setSelectedContacts(new Set(savedContacts.map(c => c.address)));
+                }}
+                className="btn btn-sm btn-ghost"
+              >
+                Select All
+              </button>
+              <button onClick={() => setSelectedContacts(new Set())} className="btn btn-sm btn-ghost">
+                Clear All
+              </button>
+              <div className="flex-1" />
+              <button
+                onClick={() => {
+                  setShowContactSelector(false);
+                  setSelectedContacts(new Set());
+                }}
+                className="btn btn-sm btn-ghost"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleContactSelection}
+                className="btn btn-sm btn-primary"
+                disabled={selectedContacts.size === 0}
+              >
+                Import ({selectedContacts.size})
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
     </div>
   );
 }

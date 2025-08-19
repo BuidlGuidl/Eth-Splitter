@@ -1,17 +1,12 @@
-// app/split/_components/BulkImportModal.tsx
 "use client";
 
 import React, { useState } from "react";
 import { SplitMode } from "../page";
 import { AnimatePresence, motion } from "framer-motion";
-import { FileText, Upload, X } from "lucide-react";
+import { FileText, Info, Upload, X } from "lucide-react";
 import { isAddress } from "viem";
-import { normalize } from "viem/ens";
-import { useEnsResolver } from "wagmi";
 import { notification } from "~~/utils/scaffold-eth";
 import { Contact } from "~~/utils/splitter";
-
-// app/split/_components/BulkImportModal.tsx
 
 interface Recipient {
   id: string;
@@ -62,6 +57,21 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
     return ensMap;
   };
 
+  const detectSplitType = (lines: string[]): SplitMode => {
+    // Check if any line has a numeric value that could be an amount
+    for (const line of lines) {
+      const parts = line.split(/[,\s:]+/).filter(Boolean);
+      if (parts.length >= 2) {
+        const secondPart = parts[1];
+        // Check if second part is a number (amount)
+        if (/^\d+\.?\d*$/.test(secondPart)) {
+          return "UNEQUAL";
+        }
+      }
+    }
+    return "EQUAL";
+  };
+
   const handleImport = async () => {
     if (!bulkText.trim()) {
       notification.error("Please enter addresses to import");
@@ -77,11 +87,22 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
         .map(line => line.trim())
         .filter(Boolean);
 
+      // Detect the type of split based on the data format
+      const detectedMode = detectSplitType(lines);
+
+      if (detectedMode !== splitMode) {
+        notification.warning(
+          `Data appears to be for ${detectedMode} split. Please switch to ${detectedMode} mode or adjust your data.`,
+        );
+        setIsResolving(false);
+        return;
+      }
+
       const recipients: Recipient[] = [];
       const ensNamesToResolve: string[] = [];
       const errors: string[] = [];
 
-      // First pass: parse and validate
+      // Parse each line based on the split mode
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
         // Split by comma, space, or colon
@@ -90,43 +111,56 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
         if (parts.length === 0) continue;
 
         const addressOrEns = parts[0];
-        const amount = parts[1] || "";
-        const label = parts.slice(2).join(" ") || "";
+        let amount = "";
+        let label = "";
+
+        if (splitMode === "UNEQUAL") {
+          // For unequal split: address, amount, label (optional)
+          amount = parts[1] || "";
+          label = parts.slice(2).join(" ") || "";
+
+          // Validate amount for unequal split
+          if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
+            errors.push(`Line ${i + 1}: Invalid or missing amount for address ${addressOrEns}`);
+            continue;
+          }
+        } else {
+          // For equal split: address, label (optional)
+          label = parts.slice(1).join(" ") || "";
+        }
 
         // Check if it's an ENS name
         if (addressOrEns.includes(".")) {
           ensNamesToResolve.push(addressOrEns);
           recipients.push({
             id: Date.now().toString() + i,
-            address: addressOrEns, // Will be replaced with resolved address
-            amount: splitMode === "EQUAL" ? "" : amount,
+            address: "", // Will be resolved
+            amount: amount,
             label: label || addressOrEns,
             ensName: addressOrEns,
           });
         } else if (isAddress(addressOrEns)) {
-          // Check for saved contact
-          const contact = savedContacts.find(c => c.address.toLowerCase() === addressOrEns.toLowerCase());
+          // Check if this address has a saved label
+          const savedContact = savedContacts.find(c => c.address.toLowerCase() === addressOrEns.toLowerCase());
 
           recipients.push({
             id: Date.now().toString() + i,
             address: addressOrEns,
-            amount: splitMode === "EQUAL" ? "" : amount,
-            label: label || contact?.label || "",
+            amount: amount,
+            label: label || savedContact?.label || "",
           });
         } else {
-          errors.push(`Line ${i + 1}: Invalid address "${addressOrEns}"`);
+          errors.push(`Line ${i + 1}: Invalid address format: ${addressOrEns}`);
         }
       }
 
       // Resolve ENS names if any
       if (ensNamesToResolve.length > 0) {
-        notification.info(`Resolving ${ensNamesToResolve.length} ENS names...`);
-        const resolvedAddresses = await resolveENSNames(ensNamesToResolve);
+        const ensResolutions = await resolveENSNames(ensNamesToResolve);
 
-        // Update recipients with resolved addresses
         recipients.forEach(recipient => {
-          if (recipient.ensName && resolvedAddresses.has(recipient.ensName)) {
-            recipient.address = resolvedAddresses.get(recipient.ensName)!;
+          if (recipient.ensName && ensResolutions.has(recipient.ensName)) {
+            recipient.address = ensResolutions.get(recipient.ensName) || "";
           } else if (recipient.ensName) {
             // If ENS couldn't be resolved, mark as error
             errors.push(`Could not resolve ENS: ${recipient.ensName}`);
@@ -193,6 +227,42 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
     reader.readAsText(file);
   };
 
+  const getInstructions = () => {
+    if (splitMode === "EQUAL") {
+      return (
+        <div className="space-y-1 text-xs">
+          <p className="font-medium">Format for Equal Split:</p>
+          <p>• One address/ENS per line</p>
+          <p>• Optional: Add label after address (comma or space separated)</p>
+          <p className="mt-2 text-gray-600">Examples:</p>
+          <code className="block bg-base-300 p-2 rounded mt-1">
+            0x742d35Cc6634C0532925a3b844Bc9e7595f0fA7B, Alice
+            <br />
+            vitalik.eth, Vitalik
+            <br />
+            0x123...abc
+          </code>
+        </div>
+      );
+    } else {
+      return (
+        <div className="space-y-1 text-xs">
+          <p className="font-medium">Format for Custom Split:</p>
+          <p>• Address/ENS, Amount, Label (optional)</p>
+          <p>• Amount is required for each recipient</p>
+          <p className="mt-2 text-gray-600">Examples:</p>
+          <code className="block bg-base-300 p-2 rounded mt-1">
+            0x742d35Cc6634C0532925a3b844Bc9e7595f0fA7B, 1.5, Alice
+            <br />
+            vitalik.eth, 2.0, Vitalik
+            <br />
+            0x123...abc, 0.5
+          </code>
+        </div>
+      );
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -222,16 +292,9 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
           {/* Content */}
           <div className="p-6 space-y-4 overflow-y-auto max-h-[60vh]">
             <div className="bg-info/10 border border-info/30 rounded-lg p-4">
-              <p className="text-sm font-medium mb-2">Import Format:</p>
-              <div className="space-y-1 text-xs">
-                <p>
-                  • <strong>For equal split:</strong> address/ENS, label (optional)
-                </p>
-                <p>
-                  • <strong>For custom split:</strong> address/ENS, amount, label (optional)
-                </p>
-                <p>• One recipient per line or separated by semicolons</p>
-                <p>• ENS names (like vitalik.eth) will be resolved automatically</p>
+              <div className="flex items-start gap-2">
+                <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                <div className="flex-1">{getInstructions()}</div>
               </div>
             </div>
 
@@ -242,66 +305,50 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
                 onChange={e => setBulkText(e.target.value)}
                 placeholder={
                   splitMode === "EQUAL"
-                    ? "vitalik.eth, Vitalik Buterin\n0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb3, Test Wallet\n0xAbc123..., Alice"
-                    : "vitalik.eth, 1.5, Vitalik Buterin\n0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb3, 2.0, Test Wallet\n0xAbc123..., 0.5, Alice"
+                    ? "0x742d35Cc6634C0532925a3b844Bc9e7595f0fA7B, Alice\nvitalik.eth, Vitalik\n0x123...abc"
+                    : "0x742d35Cc6634C0532925a3b844Bc9e7595f0fA7B, 1.5, Alice\nvitalik.eth, 2.0, Vitalik\n0x123...abc, 0.5"
                 }
-                rows={8}
-                className="w-full px-4 py-3 border border-base-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all font-mono text-sm resize-none"
-                disabled={isResolving}
+                className="textarea textarea-bordered w-full h-48 font-mono text-sm rounded-md mt-2"
               />
             </div>
 
-            <div className="flex gap-3">
-              <label className="btn btn-ghost btn-sm rounded-md flex-1">
+            <div className="flex items-center gap-4">
+              <label className="btn btn-sm btn-ghost">
                 <FileText className="w-4 h-4 mr-2" />
-                Import from File
-                <input
-                  type="file"
-                  accept=".txt,.csv"
-                  onChange={handleFileImport}
-                  className="hidden"
-                  disabled={isResolving}
-                />
+                Upload File
+                <input type="file" accept=".txt,.csv" onChange={handleFileImport} className="hidden" />
               </label>
-            </div>
-
-            {/* Example */}
-            <div className="bg-base-200 rounded-lg p-4">
-              <p className="text-xs font-medium mb-2">Example:</p>
-              <pre className="text-xs font-mono whitespace-pre-wrap">
-                {splitMode === "EQUAL"
-                  ? `alice.eth, Alice Smith
-0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb3, Bob Jones
-0x5aAeb6053f3E94C9b9A09f33669435E7Ef1BeAed`
-                  : `alice.eth, 1.5, Alice Smith
-0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb3, 2.0, Bob Jones
-0x5aAeb6053f3E94C9b9A09f33669435E7Ef1BeAed, 0.75`}
-              </pre>
+              <span className="text-xs opacity-70">Supports .txt and .csv files</span>
             </div>
           </div>
 
           {/* Footer */}
-          <div className="flex justify-end gap-3 p-6 border-t">
-            <button onClick={onClose} className="btn btn-ghost rounded-md" disabled={isResolving}>
-              Cancel
-            </button>
-            <button
-              onClick={handleImport}
-              className="btn btn-primary rounded-md"
-              disabled={!bulkText.trim() || isResolving}
-            >
-              {isResolving ? (
-                <>
-                  <span className="loading loading-spinner loading-sm mr-2"></span>
-                  Resolving...
-                </>
-              ) : (
-                <>
-                  <Upload className="w-4 h-4 mr-2" />
-                  Import Recipients
-                </>
-              )}
-            </button>
+          <div className="flex items-center justify-between p-6 border-t">
+            <div className="text-sm opacity-70">
+              {bulkText && `${bulkText.split(/[\n;]+/).filter(Boolean).length} lines detected`}
+            </div>
+            <div className="flex gap-3">
+              <button onClick={onClose} className="btn btn-sm btn-ghost">
+                Cancel
+              </button>
+              <button
+                onClick={handleImport}
+                disabled={!bulkText.trim() || isResolving}
+                className="btn btn-sm btn-primary"
+              >
+                {isResolving ? (
+                  <>
+                    <span className="loading loading-spinner loading-xs"></span>
+                    Resolving...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-4 h-4 mr-2" />
+                    Import
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </motion.div>
       </motion.div>
