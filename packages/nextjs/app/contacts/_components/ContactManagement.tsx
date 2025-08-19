@@ -198,7 +198,7 @@ export const ContactManagement: React.FC<ContactManagementProps> = ({
                       <td className="px-2 py-3">
                         <Address address={contact.address} />
                       </td>
-                      <td className="px-2 py-3">
+                      <td className="px-4 py-3">
                         {editingContact === contact.address ? (
                           <div className="flex items-center gap-2">
                             <InputBase value={editLabel} onChange={handleLabelChange} placeholder="Enter label" />
