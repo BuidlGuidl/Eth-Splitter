@@ -164,7 +164,7 @@ export const ContactManagement: React.FC<ContactManagementProps> = ({
         <div className="text-center py-12 bg-base-100 rounded-lg">
           {searchTerm ? (
             <>
-              <p className="text-gray-600 dark:text-gray-400">No contacts match "{searchTerm}"</p>
+              <p className="text-gray-600 dark:text-gray-400">No contacts match &quot;{searchTerm}&quot;</p>
               <button onClick={() => setSearchTerm("")} className="mt-2 text-primary hover:text-primary-focus">
                 Clear search
               </button>

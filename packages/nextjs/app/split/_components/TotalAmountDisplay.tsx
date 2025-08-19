@@ -2,7 +2,7 @@
 
 import React from "react";
 import { AlertCircle } from "lucide-react";
-import { formatUnits, parseUnits } from "viem";
+import { formatUnits } from "viem";
 
 interface TotalAmountDisplayProps {
   totalAmount: string;

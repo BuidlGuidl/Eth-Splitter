@@ -19,7 +19,9 @@ export const SplitModeSelector: React.FC<SplitModeSelectorProps> = ({ splitMode,
         <button
           onClick={() => onModeChange("EQUAL")}
           className={`p-4 rounded-xl border-2 transition-all cursor-pointer ${
-            splitMode === "EQUAL" ? "border-primary bg-primary/80" : "border-base-300 hover:border-base-100 hover:bg-secondary"
+            splitMode === "EQUAL"
+              ? "border-primary bg-primary/80"
+              : "border-base-300 hover:border-base-100 hover:bg-secondary"
           }`}
         >
           <div className="flex items-center justify-center mb-2">
@@ -31,7 +33,9 @@ export const SplitModeSelector: React.FC<SplitModeSelectorProps> = ({ splitMode,
         <button
           onClick={() => onModeChange("UNEQUAL")}
           className={`p-4 rounded-xl border-2 transition-all cursor-pointer ${
-            splitMode === "UNEQUAL" ? "border-primary bg-primary/80" : "border-base-300 hover:border-base-100 hover:bg-secondary"
+            splitMode === "UNEQUAL"
+              ? "border-primary bg-primary/80"
+              : "border-base-300 hover:border-base-100 hover:bg-secondary"
           }`}
         >
           <div className="flex items-center justify-center mb-2">
