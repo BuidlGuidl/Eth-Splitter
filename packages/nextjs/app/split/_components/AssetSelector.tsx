@@ -220,7 +220,7 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
                 {!showCustomInput ? (
                   <button
                     onClick={() => setShowCustomInput(true)}
-                    className="w-full text-sm text-primary font-bold hover:underline"
+                    className="w-full text-sm font-bold hover:underline"
                   >
                     + Add Custom Token
                   </button>
