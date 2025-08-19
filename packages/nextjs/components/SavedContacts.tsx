@@ -8,24 +8,29 @@ import { Address } from "~~/components/scaffold-eth";
 import { notification } from "~~/utils/scaffold-eth";
 import { Contact } from "~~/utils/splitter";
 
-interface SavedContactsnotificationProps {
+interface SavedContactsProps {
   contacts: Contact[];
   onDeleteContact?: (address: string) => void;
   onEditContact?: (contact: Contact) => void;
   showManageButton?: boolean;
   title?: string;
   className?: string;
+  maxDisplay?: number;
 }
 
-export const SavedContacts: React.FC<SavedContactsnotificationProps> = ({
+export const SavedContacts: React.FC<SavedContactsProps> = ({
   contacts,
   onDeleteContact,
   onEditContact,
   showManageButton = true,
   title = "Your Saved Contacts",
   className = "",
+  maxDisplay = 5,
 }) => {
   const router = useRouter();
+
+  const displayedContacts = contacts.slice(0, maxDisplay);
+  const hasMore = contacts.length > maxDisplay;
 
   const handleDeleteContact = (address: string) => {
     if (onDeleteContact) {
@@ -37,10 +42,17 @@ export const SavedContacts: React.FC<SavedContactsnotificationProps> = ({
   return (
     <div className={className}>
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{title}</h2>
-        {showManageButton && (
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+          {title}
+          {hasMore && (
+            <span className="ml-2 text-sm font-normal text-gray-500">
+              (Showing {maxDisplay} of {contacts.length})
+            </span>
+          )}
+        </h2>
+        {showManageButton && contacts.length > 0 && (
           <button onClick={() => router.push("/contacts")} className="btn btn-md btn-ghost py-1">
-            Manage All Contacts
+            {hasMore ? "View All" : "Manage"} Contacts
             <ChevronRight className="w-4 h-4 ml-1" />
           </button>
         )}
@@ -62,8 +74,8 @@ export const SavedContacts: React.FC<SavedContactsnotificationProps> = ({
             </thead>
             <tbody className="divide-y divide-base-100">
               <AnimatePresence>
-                {contacts.length > 0 ? (
-                  contacts.map((contact, index) => (
+                {displayedContacts.length > 0 ? (
+                  displayedContacts.map((contact, index) => (
                     <motion.tr
                       key={contact.address}
                       initial={{ opacity: 0, x: -20 }}
@@ -136,6 +148,14 @@ export const SavedContacts: React.FC<SavedContactsnotificationProps> = ({
           </table>
         </div>
       </motion.div>
+
+      {hasMore && (
+        <div className="mt-4 text-center">
+          <button onClick={() => router.push("/contacts")} className="btn-sm btn-ghost btn">
+            View all {contacts.length} contacts →
+          </button>
+        </div>
+      )}
     </div>
   );
 };

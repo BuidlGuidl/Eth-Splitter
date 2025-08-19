@@ -122,7 +122,6 @@ export default function Split() {
           if (r.id === id) {
             const newRecipient = { ...r, [field]: value };
 
-            // Auto-fill label if address matches a saved contact
             if (field === "address" && value) {
               const contact = savedContacts.find(c => c.address.toLowerCase() === value.toLowerCase());
               if (contact) {
@@ -168,10 +167,8 @@ export default function Split() {
       return;
     }
 
-    // Get existing addresses (case-insensitive)
     const existingAddresses = new Set(recipients.map(r => r.address.toLowerCase()).filter(Boolean));
 
-    // Filter out contacts that are already in the recipients list
     const contactsToImport = Array.from(selectedContacts).filter(
       address => !existingAddresses.has(address.toLowerCase()),
     );
@@ -193,7 +190,6 @@ export default function Split() {
       };
     });
 
-    // Append to existing recipients instead of replacing
     setRecipients(prevRecipients => [...prevRecipients, ...newRecipients]);
     setShowContactSelector(false);
     setSelectedContacts(new Set());
@@ -227,7 +223,6 @@ export default function Split() {
         const totalNeeded = amount * validRecipients.length;
         setTotalAmount(totalNeeded.toString());
 
-        // Only update recipients if amounts have actually changed
         setRecipients(prevRecipients =>
           prevRecipients.map(r => ({
             ...r,
@@ -243,7 +238,6 @@ export default function Split() {
 
         setTotalAmount(total.toString());
 
-        // Only update percentages, not amounts
         setRecipients(prevRecipients =>
           prevRecipients.map(r => {
             const amount = parseFloat(r.amount || "0");
@@ -446,7 +440,6 @@ export default function Split() {
         existingRecipients={recipients}
       />
 
-      {/* Contact Selector Modal */}
       {showContactSelector && (
         <motion.div
           initial={{ opacity: 0 }}
@@ -457,15 +450,17 @@ export default function Split() {
           <motion.div
             initial={{ scale: 0.9 }}
             animate={{ scale: 1 }}
-            className="bg-base-200 rounded-2xl shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden"
+            className="bg-base-200 rounded-2xl shadow-xl max-w-2xl w-full max-h-[80vh] flex flex-col"
             onClick={e => e.stopPropagation()}
           >
-            <div className="p-6 border-b border-base-100">
+            <div className="p-6 border-b border-base-100 flex-shrink-0">
               <h2 className="text-xl font-semibold">Select Contacts</h2>
-              <p className="text-sm mt-1">Choose which contacts to import</p>
+              <p className="text-sm mt-1 text-base-content/70">
+                Choose which contacts to import ({savedContacts.length} available)
+              </p>
             </div>
 
-            <div className="px-6 pt-4 flex gap-3">
+            <div className="px-6 pt-4 pb-2 flex gap-3 flex-shrink-0 border-b border-base-100">
               <button
                 onClick={() => {
                   setSelectedContacts(new Set(savedContacts.map(c => c.address)));
@@ -477,39 +472,61 @@ export default function Split() {
               <button onClick={() => setSelectedContacts(new Set())} className="btn btn-sm btn-ghost">
                 Clear All
               </button>
+              <div className="ml-auto text-sm text-base-content/60 self-center">{selectedContacts.size} selected</div>
             </div>
 
-            <div className="p-6 max-h-[60vh] overflow-y-auto">
+            <div className="flex-1 overflow-y-auto p-6 min-h-0">
               <div className="space-y-2">
-                {savedContacts.map(contact => (
-                  <label
-                    key={contact.address}
-                    className="flex items-center p-3 border border-base-100 rounded-lg cursor-pointer hover:bg-base-300"
-                  >
-                    <input
-                      type="checkbox"
-                      className="checkbox checkbox-primary mr-3"
-                      checked={selectedContacts.has(contact.address)}
-                      onChange={e => {
-                        const newSelected = new Set(selectedContacts);
-                        if (e.target.checked) {
-                          newSelected.add(contact.address);
-                        } else {
-                          newSelected.delete(contact.address);
-                        }
-                        setSelectedContacts(newSelected);
-                      }}
-                    />
-                    <div className="flex md:flex-row flex-col justify-between w-full">
-                      <Address address={contact.address} />
-                      <div className="font-medium text-xs ">{contact.label}</div>
-                    </div>
-                  </label>
-                ))}
+                {savedContacts.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-base-content/60">No saved contacts available</p>
+                    <p className="text-sm text-base-content/40 mt-2">Add contacts from the Contacts page first</p>
+                  </div>
+                ) : (
+                  savedContacts.map(contact => {
+                    const isAlreadyAdded = recipients.some(
+                      r => r.address.toLowerCase() === contact.address.toLowerCase(),
+                    );
+
+                    return (
+                      <label
+                        key={contact.address}
+                        className={`flex items-center p-3 border border-base-100 rounded-lg ${
+                          isAlreadyAdded
+                            ? "opacity-50 cursor-not-allowed bg-base-300"
+                            : "cursor-pointer hover:bg-base-300"
+                        } transition-colors`}
+                      >
+                        <input
+                          type="checkbox"
+                          className="checkbox checkbox-primary mr-3"
+                          checked={selectedContacts.has(contact.address)}
+                          disabled={isAlreadyAdded}
+                          onChange={e => {
+                            const newSelected = new Set(selectedContacts);
+                            if (e.target.checked) {
+                              newSelected.add(contact.address);
+                            } else {
+                              newSelected.delete(contact.address);
+                            }
+                            setSelectedContacts(newSelected);
+                          }}
+                        />
+                        <div className="flex md:flex-row flex-col justify-between w-full gap-2">
+                          <Address address={contact.address} />
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-xs">{contact.label}</span>
+                            {isAlreadyAdded && <span className="text-xs text-warning">Already added</span>}
+                          </div>
+                        </div>
+                      </label>
+                    );
+                  })
+                )}
               </div>
             </div>
 
-            <div className="p-6 border-t border-base-100 flex gap-3">
+            <div className="p-6 border-t border-base-100 flex gap-3 flex-shrink-0">
               <div className="flex-1" />
               <button
                 onClick={() => {
