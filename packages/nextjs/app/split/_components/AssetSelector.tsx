@@ -271,7 +271,7 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
             {formatUnits(tokenBalance.allowance, tokenBalance.decimals || 18)} {tokenInfo.symbol}
           </p>
           {tokenBalance.allowance === 0n && (
-            <p className="text-xs mt-1 text-warning">You&apos;ll need to approve tokens before splitting</p>
+            <p className="text-xs mt-1 text-error">You&apos;ll need to approve tokens before splitting</p>
           )}
         </div>
       )}

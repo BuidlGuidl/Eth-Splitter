@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { AlertCircle, ArrowLeft, CheckCircle } from "lucide-react";
 import { formatEther, formatUnits, parseEther, parseUnits } from "viem";
@@ -174,12 +175,14 @@ export default function SplitReviewPage() {
 
             {/* Illustration */}
             <div className="flex justify-center mb-8">
-              <div className="w-64 h-64 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-2xl flex items-center justify-center">
-                <div className="text-center">
-                  <div className="text-6xl mb-4">💰</div>
-                  <p className="text-base-content/60">Ready to distribute</p>
-                </div>
-              </div>
+              <Image
+                src={"/split.png"}
+                className="w-64 h-64 rounded-2xl "
+                alt="split illustration"
+                width={256}
+                height={256}
+                loading="lazy"
+              />
             </div>
 
             {/* Recipients Table */}
@@ -267,14 +270,13 @@ export default function SplitReviewPage() {
                 <button
                   onClick={handleBackToEdit}
                   disabled={isExecuting}
-                  className="btn btn-outline btn-lg w-full rounded-xl"
+                  className="btn btn-base-200 btn-lg w-full rounded-xl"
                 >
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Back to Edit Split
                 </button>
               </div>
 
-              {/* Balance Check */}
               {splitData.token.address === "ETH" ? (
                 <div className="mt-6 p-4 bg-base-200 rounded-xl">
                   <p className="text-xs text-base-content/60 mb-1">Your ETH Balance</p>
