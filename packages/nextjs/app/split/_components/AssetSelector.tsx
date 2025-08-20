@@ -8,6 +8,7 @@ import { erc20Abi } from "viem";
 import { useReadContract } from "wagmi";
 import { AddressInput } from "~~/components/scaffold-eth";
 import { tokens } from "~~/constants/tokens";
+import { useTargetNetwork } from "~~/hooks/scaffold-eth";
 
 interface Token {
   address: string;
@@ -29,10 +30,18 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
   tokenBalance,
   chainId,
 }) => {
+  const { targetNetwork } = useTargetNetwork();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [customTokenAddress, setCustomTokenAddress] = useState("");
   const [fetchingCustomToken, setFetchingCustomToken] = useState(false);
+  const [tokenList, setTokenList] = useState<Token[]>([]);
+  const [tokenInfo, setTokenInfo] = useState<{ name: string; symbol: string }>({
+    name: "Select Token",
+    symbol: "",
+  });
+
+  const nativeCurrency = targetNetwork.nativeCurrency || { name: "Ether", symbol: "ETH", decimals: 18 };
 
   // Fetch custom token data
   const { data: customTokenSymbol } = useReadContract({
@@ -63,21 +72,38 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
   });
 
   const chainTokens = tokens[chainId as keyof typeof tokens];
-  const tokenList: Token[] = [
-    { address: "ETH", symbol: "ETH", name: "Ethereum", decimals: 18 },
-    ...(chainTokens?.contracts.map(t => ({
-      address: t.address,
-      symbol: t.name,
-      name: t.name,
-      decimals: 18,
-    })) || []),
-  ];
 
   useEffect(() => {
-    if (!selectedToken && tokenList.length > 0) {
+    const nativeToken: Token = {
+      address: "ETH",
+      symbol: nativeCurrency.symbol,
+      name: nativeCurrency.name,
+      decimals: nativeCurrency.decimals,
+    };
+
+    const tokenList: Token[] = [
+      nativeToken,
+      ...(chainTokens?.contracts.map(t => ({
+        address: t.address,
+        symbol: t.name,
+        name: t.name,
+        decimals: 18,
+      })) || []),
+    ];
+
+    setTokenList(tokenList);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nativeCurrency]);
+
+  useEffect(() => {
+    if (
+      (!selectedToken || (selectedToken.address === "ETH" && selectedToken.symbol !== tokenList[0].symbol)) &&
+      tokenList.length > 0
+    ) {
       onTokenSelect(tokenList[0]);
     }
-  }, [chainId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chainId, tokenList]);
 
   const handleTokenSelect = (token: Token) => {
     onTokenSelect(token);
@@ -132,7 +158,28 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
         onTokenSelect(updatedToken);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [customTokenSymbol, customTokenName, customTokenDecimals, tokenBalance]);
+
+  useEffect(() => {
+    if (!selectedToken) {
+      setTokenInfo({ name: "Select Token", symbol: "" });
+      return;
+    }
+
+    if (selectedToken.address !== "ETH" && !tokenList.find(t => t.address === selectedToken.address)) {
+      setTokenInfo({
+        name: customTokenName || tokenBalance?.name || selectedToken.name,
+        symbol: customTokenSymbol || tokenBalance?.symbol || selectedToken.symbol,
+      });
+    } else {
+      setTokenInfo({
+        name: selectedToken.name,
+        symbol: selectedToken.symbol,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedToken]);
 
   const formatBalance = () => {
     if (!tokenBalance?.balance) return "0";
@@ -141,25 +188,6 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
     }
     return formatUnits(tokenBalance.balance, tokenBalance.decimals || 18);
   };
-
-  const displayTokenInfo = () => {
-    if (!selectedToken) return { name: "Select Token", symbol: "" };
-
-    // For custom tokens, use the fetched data or tokenBalance data
-    if (selectedToken.address !== "ETH" && !tokenList.find(t => t.address === selectedToken.address)) {
-      return {
-        name: customTokenName || tokenBalance?.name || selectedToken.name,
-        symbol: customTokenSymbol || tokenBalance?.symbol || selectedToken.symbol,
-      };
-    }
-
-    return {
-      name: selectedToken.name,
-      symbol: selectedToken.symbol,
-    };
-  };
-
-  const tokenInfo = displayTokenInfo();
 
   return (
     <div className="rounded-2xl p-6 mb-6 border border-base-100 shadow-lg">

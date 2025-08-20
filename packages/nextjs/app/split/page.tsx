@@ -16,7 +16,7 @@ import { useTokenBalance } from "~~/hooks/useTokenBalance";
 import { notification } from "~~/utils/scaffold-eth";
 import { Contact, loadCache, loadContacts, updateCacheAmounts, updateCacheWallets } from "~~/utils/splitter";
 
-interface Recipient {
+export interface Recipient {
   id: string;
   address: string;
   amount: string;
@@ -321,6 +321,7 @@ export default function Split() {
     }, 300);
 
     return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [splitMode, equalAmount, recipients.length]);
 
   useEffect(() => {
@@ -331,6 +332,7 @@ export default function Split() {
 
       return () => clearTimeout(timer);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recipients.map(r => r.amount).join(","), splitMode]);
 
   return (

@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { AlertCircle, ArrowLeft, CheckCircle } from "lucide-react";
 import { formatEther, formatGwei, formatUnits, parseEther, parseUnits } from "viem";
 import { useAccount, useBalance, useFeeData, usePublicClient } from "wagmi";
-import { useDeployedContractInfo, useScaffoldWriteContract } from "~~/hooks/scaffold-eth";
+import { useDeployedContractInfo, useScaffoldWriteContract, useTargetNetwork } from "~~/hooks/scaffold-eth";
 import { useTokenBalance } from "~~/hooks/useTokenBalance";
 import { useGlobalState } from "~~/services/store/store";
 import { notification } from "~~/utils/scaffold-eth";
@@ -35,8 +35,12 @@ export default function SplitReviewPage() {
   const [splitData, setSplitData] = useState<SplitData | null>(null);
   const [estimatedGas, setEstimatedGas] = useState<bigint>(0n);
   const [isEstimatingGas, setIsEstimatingGas] = useState(false);
+  const [gasCostInUSD, setGasCostInUSD] = useState("0.00");
   const [gasEstimationError, setGasEstimationError] = useState<string | null>(null);
   const [isExecuting, setIsExecuting] = useState(false);
+  const { targetNetwork } = useTargetNetwork();
+
+  const nativeCurrency = targetNetwork.nativeCurrency;
 
   const { writeContractAsync: writeSplitter } = useScaffoldWriteContract({
     contractName: "ETHSplitter",
@@ -226,6 +230,18 @@ export default function SplitReviewPage() {
     estimateGas();
   };
 
+  const gasPrice = feeData?.gasPrice || BigInt(0);
+  const maxFeePerGas = feeData?.maxFeePerGas || BigInt(0);
+  const effectiveGasPrice = maxFeePerGas > 0 ? maxFeePerGas : gasPrice;
+  const totalGasCost = estimatedGas * effectiveGasPrice;
+  const gasCostInEth = formatEther(totalGasCost);
+
+  useEffect(() => {
+    const gasCostInEth = parseFloat(formatEther(totalGasCost));
+    const usdValue = (gasCostInEth * nativeCurrencyPrice).toFixed(2);
+    setGasCostInUSD(usdValue);
+  }, [totalGasCost, nativeCurrencyPrice, estimatedGas]);
+
   if (!splitData || !splitData.token) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -233,13 +249,6 @@ export default function SplitReviewPage() {
       </div>
     );
   }
-
-  const gasPrice = feeData?.gasPrice || BigInt(0);
-  const maxFeePerGas = feeData?.maxFeePerGas || BigInt(0);
-  const effectiveGasPrice = maxFeePerGas > 0 ? maxFeePerGas : gasPrice;
-  const totalGasCost = estimatedGas * effectiveGasPrice;
-  const gasCostInEth = formatEther(totalGasCost);
-  const gasCostInUSD = (parseFloat(gasCostInEth) * nativeCurrencyPrice).toFixed(2);
 
   return (
     <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
@@ -359,13 +368,17 @@ export default function SplitReviewPage() {
                     </div>
                   ) : gasEstimationError ? (
                     <div>
-                      <p className="text-xl font-bold">{parseFloat(gasCostInEth).toFixed(6)} ETH</p>
+                      <p className="text-xl font-bold">
+                        {parseFloat(gasCostInEth).toFixed(6)} {nativeCurrency.symbol}
+                      </p>
                       <p className="text-sm text-base-content/60">≈ ${gasCostInUSD} USD</p>
                       <p className="text-xs text-warning mt-1">{gasEstimationError}</p>
                     </div>
                   ) : (
                     <>
-                      <p className="text-xl font-bold">{parseFloat(gasCostInEth).toFixed(6)} ETH</p>
+                      <p className="text-xl font-bold">
+                        {parseFloat(gasCostInEth).toFixed(6)} {nativeCurrency.symbol}
+                      </p>
                       <p className="text-sm text-base-content/60">≈ ${gasCostInUSD} USD</p>
                       {effectiveGasPrice > 0 && (
                         <p className="text-xs text-base-content/40 mt-1">
@@ -417,8 +430,10 @@ export default function SplitReviewPage() {
 
               {splitData.token.address === "ETH" ? (
                 <div className="mt-6 p-4 bg-base-200 rounded-xl">
-                  <p className="text-xs text-base-content/60 mb-1">Your ETH Balance</p>
-                  <p className="text-sm font-medium">{ethBalance ? formatEther(ethBalance.value) : "0"} ETH</p>
+                  <p className="text-xs text-base-content/60 mb-1">Your {nativeCurrency.symbol} Balance</p>
+                  <p className="text-sm font-medium">
+                    {ethBalance ? formatEther(ethBalance.value) : "0"} {nativeCurrency.symbol}
+                  </p>
                   {ethBalance && parseEther(splitData.totalAmount) > ethBalance.value && (
                     <p className="text-xs text-error mt-2">Insufficient balance</p>
                   )}

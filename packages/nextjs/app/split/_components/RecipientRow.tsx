@@ -2,6 +2,7 @@
 
 import React from "react";
 import { SplitMode } from "../page";
+import { Recipient } from "../page";
 import { motion } from "framer-motion";
 import { Minus, User } from "lucide-react";
 import { AddressInput, EtherInput, InputBase } from "~~/components/scaffold-eth";
@@ -22,7 +23,7 @@ interface RecipientRowProps {
   equalAmount: string;
   savedContacts: Contact[];
   errors: { [key: string]: string };
-  onUpdate: (id: string, field: string, value: string) => void;
+  onUpdate: (id: string, field: keyof Recipient, value: string) => void;
   onRemove: (id: string) => void;
   canRemove: boolean;
   usdMode: boolean;
