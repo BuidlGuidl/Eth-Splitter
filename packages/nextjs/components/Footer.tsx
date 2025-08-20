@@ -17,6 +17,8 @@ export const Footer = () => {
   const { targetNetwork } = useTargetNetwork();
   const isLocalNetwork = targetNetwork.id === hardhat.id;
 
+  const codeLink = "https://github.com/BuidlGuidl/Eth-Splitter";
+
   return (
     <div className="min-h-0 py-5 px-1 mb-11 lg:mb-0">
       <div>
@@ -46,31 +48,23 @@ export const Footer = () => {
       <div className="w-full">
         <ul className="menu menu-horizontal w-full">
           <div className="flex justify-center items-center gap-2 text-sm w-full">
-            <div className="text-center">
-              <a href="https://github.com/scaffold-eth/se-2" target="_blank" rel="noreferrer" className="link">
-                Fork me
-              </a>
-            </div>
-            <span>·</span>
-            <div className="flex justify-center items-center gap-2">
-              <p className="m-0 text-center">
-                Built with <HeartIcon className="inline-block h-4 w-4" /> at
+            <div>
+              <p className="m-0 text-center flex gap-1 items-center">
+                <a href={codeLink} target="_blank" rel="noreferrer" className="underline underline-offset-2">
+                  Code/Repo
+                </a>{" "}
+                📝 {"  "}
+                Built with <HeartIcon className="inline-block h-4 w-4" /> at{" "}
+                <a
+                  className="flex underline underline-offset-2 gap-1 items-center"
+                  href="https://buidlguidl.com/"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <BuidlGuidlLogo className="w-3 h-5 pb-1" />
+                  <span className="link">BuidlGuidl</span>
+                </a>
               </p>
-              <a
-                className="flex justify-center items-center gap-1"
-                href="https://buidlguidl.com/"
-                target="_blank"
-                rel="noreferrer"
-              >
-                <BuidlGuidlLogo className="w-3 h-5 pb-1" />
-                <span className="link">BuidlGuidl</span>
-              </a>
-            </div>
-            <span>·</span>
-            <div className="text-center">
-              <a href="https://t.me/joinchat/KByvmRe5wkR-8F_zz6AjpA" target="_blank" rel="noreferrer" className="link">
-                Support
-              </a>
             </div>
           </div>
         </ul>
