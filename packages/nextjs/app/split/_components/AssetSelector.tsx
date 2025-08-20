@@ -43,7 +43,6 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
 
   const nativeCurrency = targetNetwork.nativeCurrency || { name: "Ether", symbol: "ETH", decimals: 18 };
 
-  // Fetch custom token data
   const { data: customTokenSymbol } = useReadContract({
     address: customTokenAddress as `0x${string}`,
     abi: erc20Abi,
@@ -119,7 +118,6 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
 
     setFetchingCustomToken(true);
 
-    // Wait a bit for the token data to be fetched
     setTimeout(() => {
       const customToken: Token = {
         address: customTokenAddress,
@@ -133,7 +131,6 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
     }, 500);
   };
 
-  // Watch for custom token data changes and update selected token if it's custom
   useEffect(() => {
     if (
       selectedToken &&
@@ -141,7 +138,6 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
       selectedToken.address !== "ETH" &&
       !tokenList.find(t => t.address === selectedToken.address)
     ) {
-      // Update the selected token with fresh data
       const updatedToken: Token = {
         address: selectedToken.address,
         symbol: customTokenSymbol || tokenBalance?.symbol || "TOKEN",
@@ -149,7 +145,6 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
         decimals: customTokenDecimals || tokenBalance?.decimals || 18,
       };
 
-      // Only update if data has actually changed
       if (
         updatedToken.symbol !== selectedToken.symbol ||
         updatedToken.name !== selectedToken.name ||

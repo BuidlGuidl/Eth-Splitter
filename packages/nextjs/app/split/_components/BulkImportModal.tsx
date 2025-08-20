@@ -94,7 +94,6 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
       const errors: string[] = [];
       const validatedAddresses = new Set<string>();
 
-      // Get existing addresses (case-insensitive)
       const existingAddresses = new Set(existingRecipients.map(r => r.address.toLowerCase()).filter(Boolean));
 
       for (let i = 0; i < lines.length; i++) {
@@ -122,7 +121,6 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
         let resolvedAddress = "";
         let ensName = "";
 
-        // Check if it's an ENS name
         if (addressOrEns.includes(".")) {
           const resolved = await resolveENSName(addressOrEns);
           if (resolved) {
@@ -139,14 +137,12 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
           continue;
         }
 
-        // Check for duplicates within the import
         const addressLower = resolvedAddress.toLowerCase();
         if (validatedAddresses.has(addressLower)) {
           errors.push(`Line ${i + 1}: Duplicate address ${addressOrEns} (already in import list)`);
           continue;
         }
 
-        // Check for duplicates with existing recipients
         if (existingAddresses.has(addressLower)) {
           errors.push(`Line ${i + 1}: Address ${addressOrEns} already exists in recipients list`);
           continue;
@@ -154,7 +150,6 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
 
         validatedAddresses.add(addressLower);
 
-        // Check if this address has a saved label
         const savedContact = savedContacts.find(c => c.address.toLowerCase() === resolvedAddress.toLowerCase());
 
         recipients.push({
@@ -209,7 +204,6 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
   };
 
   const handleImportFromContacts = () => {
-    // Filter out contacts that are already in the recipients list
     const existingAddresses = new Set(existingRecipients.map(r => r.address.toLowerCase()).filter(Boolean));
 
     const availableContacts = savedContacts.filter(contact => !existingAddresses.has(contact.address.toLowerCase()));
@@ -287,7 +281,6 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
           className="bg-base-200 rounded-2xl shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden"
           onClick={e => e.stopPropagation()}
         >
-          {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-base-100 ">
             <h2 className="text-xl font-semibold">Bulk Add Recipients</h2>
             <button onClick={onClose} className="btn btn-ghost btn-sm btn-circle">
@@ -295,7 +288,6 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
             </button>
           </div>
 
-          {/* Content */}
           <div className="p-6 space-y-4 overflow-y-auto max-h-[60vh]">
             <div className="bg-info/10 border  border-base-100 rounded-lg p-4">
               <div className="flex items-start gap-2">
@@ -318,7 +310,6 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
               />
             </div>
 
-            {/* Action Buttons */}
             <div className="flex flex-wrap gap-2">
               <label className="btn btn-sm btn-ghost">
                 <Upload className="w-4 h-4 mr-2" />
@@ -341,7 +332,6 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
             </div>
           </div>
 
-          {/* Footer */}
           <div className="p-6 border-t flex justify-end gap-3">
             <button onClick={onClose} className="btn btn-ghost" disabled={isResolving}>
               Cancel

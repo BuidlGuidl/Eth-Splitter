@@ -1,4 +1,3 @@
-// utils/splitter.ts
 const CONTACTS_STORAGE_KEY = "ES_CONTACTS_SK";
 const CACHE_STORAGE_KEY = "ES_CACHE_SK";
 
@@ -14,7 +13,6 @@ export interface SplitCache {
   expiry: number;
 }
 
-// Contact Management Functions
 export const saveContacts = (contacts: Contact[]) => {
   if (typeof window !== "undefined") {
     const savedContacts = window.localStorage.getItem(CONTACTS_STORAGE_KEY);
@@ -22,15 +20,12 @@ export const saveContacts = (contacts: Contact[]) => {
     if (savedContacts) {
       const contactsObj: Contact[] = JSON.parse(savedContacts);
       contacts.forEach(contact => {
-        // Check if contact with same address already exists
         const existingContactIndex = contactsObj.findIndex(
           c => c.address.toLowerCase() === contact.address.toLowerCase(),
         );
         if (existingContactIndex >= 0) {
-          // Update existing contact's label
           contactsObj[existingContactIndex] = contact;
         } else {
-          // Add new contact
           contactsObj.push(contact);
         }
       });
@@ -89,7 +84,6 @@ export const removeContact = (address: string) => {
   }
 };
 
-// Cache Management Functions
 export const loadCache = (): SplitCache | null => {
   if (typeof window !== "undefined") {
     const cachedString = localStorage.getItem(CACHE_STORAGE_KEY);
@@ -102,7 +96,6 @@ export const loadCache = (): SplitCache | null => {
     try {
       const cacheData = JSON.parse(cachedString);
 
-      // Check if cache has expired (30 minutes)
       if (now > cacheData.expiry) {
         localStorage.removeItem(CACHE_STORAGE_KEY);
         return null;
