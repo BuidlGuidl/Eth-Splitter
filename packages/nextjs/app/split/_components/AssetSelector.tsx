@@ -201,7 +201,7 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
                 <button
                   key={token.address}
                   onClick={() => handleTokenSelect(token)}
-                  className="w-full px-4 py-3 hover:bg-base-300 cursor-pointer transition-colors flex items-center justify-between"
+                  className="w-full px-4 py-3 hover:bg-base-300 cursor-pointer transition-colors flex items-center border-b border-base-100 justify-between"
                 >
                   <div className="flex items-center">
                     <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center font-bold mr-3">
@@ -216,10 +216,10 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
                 </button>
               ))}
 
-              <div className="border-t p-3 border-base-100">
+              <div className=" p-3">
                 {!showCustomInput ? (
                   <button onClick={() => setShowCustomInput(true)} className="w-full text-sm font-bold hover:underline">
-                    + Add Custom Token
+                    + Custom Token
                   </button>
                 ) : (
                   <div className="space-y-2">

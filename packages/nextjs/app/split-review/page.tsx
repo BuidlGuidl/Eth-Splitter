@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { AlertCircle, ArrowLeft, CheckCircle } from "lucide-react";
-import { formatEther, formatUnits, parseEther, parseUnits } from "viem";
-import { useAccount, useBalance } from "wagmi";
-import { useScaffoldWriteContract } from "~~/hooks/scaffold-eth";
+import { formatEther, formatGwei, formatUnits, parseEther, parseUnits } from "viem";
+import { useAccount, useBalance, useFeeData, usePublicClient } from "wagmi";
+import { useDeployedContractInfo, useScaffoldWriteContract } from "~~/hooks/scaffold-eth";
 import { useTokenBalance } from "~~/hooks/useTokenBalance";
 import { useGlobalState } from "~~/services/store/store";
 import { notification } from "~~/utils/scaffold-eth";
@@ -30,18 +30,27 @@ interface SplitData {
 export default function SplitReviewPage() {
   const router = useRouter();
   const { address: connectedAddress } = useAccount();
+  const publicClient = usePublicClient();
   const nativeCurrencyPrice = useGlobalState(state => state.nativeCurrency.price);
   const [splitData, setSplitData] = useState<SplitData | null>(null);
-  const [estimatedGas, setEstimatedGas] = useState<string>("0.0075");
+  const [estimatedGas, setEstimatedGas] = useState<bigint>(0n);
+  const [isEstimatingGas, setIsEstimatingGas] = useState(false);
+  const [gasEstimationError, setGasEstimationError] = useState<string | null>(null);
   const [isExecuting, setIsExecuting] = useState(false);
 
   const { writeContractAsync: writeSplitter } = useScaffoldWriteContract({
     contractName: "ETHSplitter",
   });
 
+  const { data: deployedContractInfo } = useDeployedContractInfo({
+    contractName: "ETHSplitter",
+  });
+
   const { data: ethBalance } = useBalance({
     address: connectedAddress,
   });
+
+  const { data: feeData } = useFeeData();
 
   const { balance: tokenBalance, allowance: tokenAllowance, approve } = useTokenBalance(splitData?.token?.address);
 
@@ -54,6 +63,89 @@ export default function SplitReviewPage() {
     }
     setSplitData(JSON.parse(data));
   }, [router]);
+
+  const estimateGas = useCallback(async () => {
+    if (!splitData || !splitData.token || !deployedContractInfo || !publicClient || !connectedAddress) {
+      return;
+    }
+
+    setIsEstimatingGas(true);
+    setGasEstimationError(null);
+
+    try {
+      const recipients = splitData.recipients.map(r => r.address as `0x${string}`);
+      let estimatedGasResult: bigint;
+
+      if (splitData.token.address === "ETH") {
+        if (splitData.splitMode === "EQUAL") {
+          estimatedGasResult = await publicClient.estimateContractGas({
+            address: deployedContractInfo.address as `0x${string}`,
+            abi: deployedContractInfo.abi,
+            functionName: "splitEqualETH",
+            args: [recipients],
+            value: parseEther(splitData.totalAmount),
+            account: connectedAddress,
+          });
+        } else {
+          const amounts = splitData.recipients.map(r => parseEther(r.amount));
+          const totalValue = amounts.reduce((sum, amount) => sum + amount, BigInt(0));
+
+          estimatedGasResult = await publicClient.estimateContractGas({
+            address: deployedContractInfo.address as `0x${string}`,
+            abi: deployedContractInfo.abi,
+            functionName: "splitETH",
+            args: [recipients, amounts],
+            value: totalValue,
+            account: connectedAddress,
+          });
+        }
+      } else {
+        const tokenAddress = splitData.token.address as `0x${string}`;
+        const decimals = splitData.token.decimals || 18;
+        const totalAmount = parseUnits(splitData.totalAmount, decimals);
+
+        if (splitData.splitMode === "EQUAL") {
+          estimatedGasResult = await publicClient.estimateContractGas({
+            address: deployedContractInfo.address as `0x${string}`,
+            abi: deployedContractInfo.abi,
+            functionName: "splitEqualERC20",
+            args: [tokenAddress, recipients, totalAmount],
+            account: connectedAddress,
+          });
+        } else {
+          const amounts = splitData.recipients.map(r => parseUnits(r.amount, decimals));
+
+          estimatedGasResult = await publicClient.estimateContractGas({
+            address: deployedContractInfo.address as `0x${string}`,
+            abi: deployedContractInfo.abi,
+            functionName: "splitERC20",
+            args: [tokenAddress, recipients, amounts],
+            account: connectedAddress,
+          });
+        }
+      }
+
+      const gasWithBuffer = (estimatedGasResult * BigInt(110)) / BigInt(100);
+      setEstimatedGas(gasWithBuffer);
+      setGasEstimationError(null);
+    } catch (error) {
+      console.error("Gas estimation error:", error);
+      setGasEstimationError("Unable to estimate gas accurately");
+
+      const baseGas = BigInt(50000);
+      const perRecipientGas = BigInt(30000);
+      const fallbackGas = baseGas + perRecipientGas * BigInt(splitData.recipients.length);
+      setEstimatedGas(fallbackGas);
+    } finally {
+      setIsEstimatingGas(false);
+    }
+  }, [splitData, deployedContractInfo, publicClient, connectedAddress]);
+
+  useEffect(() => {
+    if (splitData && deployedContractInfo && publicClient && connectedAddress) {
+      estimateGas();
+    }
+  }, [splitData, deployedContractInfo, publicClient, connectedAddress, estimateGas]);
 
   const handleConfirmTransaction = async () => {
     if (!splitData || !splitData.token) {
@@ -97,7 +189,7 @@ export default function SplitReviewPage() {
             await approve(totalAmount);
           }
 
-          await new Promise(resolve => setTimeout(resolve, 2000));
+          await new Promise(resolve => setTimeout(resolve, 3000));
         }
 
         if (splitData.splitMode === "EQUAL") {
@@ -130,6 +222,10 @@ export default function SplitReviewPage() {
     router.push("/split");
   };
 
+  const handleRefreshGasEstimate = () => {
+    estimateGas();
+  };
+
   if (!splitData || !splitData.token) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -138,27 +234,28 @@ export default function SplitReviewPage() {
     );
   }
 
-  const estimatedGasUSD = (parseFloat(estimatedGas) * nativeCurrencyPrice).toFixed(2);
+  const gasPrice = feeData?.gasPrice || BigInt(0);
+  const maxFeePerGas = feeData?.maxFeePerGas || BigInt(0);
+  const effectiveGasPrice = maxFeePerGas > 0 ? maxFeePerGas : gasPrice;
+  const totalGasCost = estimatedGas * effectiveGasPrice;
+  const gasCostInEth = formatEther(totalGasCost);
+  const gasCostInUSD = (parseFloat(gasCostInEth) * nativeCurrencyPrice).toFixed(2);
 
   return (
     <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
-        {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold mb-2">Summary and Confirmation</h1>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column - Split Details */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Token Badge */}
             <div className="flex justify-center mb-6">
               <div className="badge badge-primary badge-lg gap-2 px-4 py-3">
                 <span className="font-medium">{splitData.token.symbol}</span>
               </div>
             </div>
 
-            {/* Total Amount */}
             <div className="text-center mb-8">
               <p className="text-base-content/60 mb-2">Total Amount to Split</p>
               <h2 className="text-5xl font-bold">
@@ -166,18 +263,16 @@ export default function SplitReviewPage() {
               </h2>
             </div>
 
-            {/* Description */}
             <div className="bg-base-200 rounded-2xl p-6 mb-8">
               <p className="text-base-content/80">
                 This overview details the final distribution of assets to recipients.
               </p>
             </div>
 
-            {/* Illustration */}
             <div className="flex justify-center mb-8">
               <Image
                 src={"/split.png"}
-                className="w-64 h-64 rounded-2xl "
+                className="w-64 h-64 rounded-2xl"
                 alt="split illustration"
                 width={256}
                 height={256}
@@ -185,7 +280,6 @@ export default function SplitReviewPage() {
               />
             </div>
 
-            {/* Recipients Table */}
             <div className="bg-base-100 rounded-2xl shadow-lg overflow-hidden">
               <table className="table w-full">
                 <thead>
@@ -227,34 +321,78 @@ export default function SplitReviewPage() {
             </div>
           </div>
 
-          {/* Right Column - Confirm Transaction */}
           <div className="lg:col-span-1">
             <div className="bg-base-100 rounded-2xl shadow-lg p-6 sticky top-6">
               <h3 className="text-xl font-semibold mb-6">Confirm Transaction</h3>
 
-              {/* Gas Fee */}
               <div className="bg-base-200 rounded-xl p-4 mb-6">
                 <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm text-base-content/60">Estimated Gas Fee</span>
-                  <AlertCircle className="w-4 h-4 text-base-content/40" />
+                  <span className="text-sm text-base-content/60">
+                    {isEstimatingGas ? "Estimating Gas..." : "Estimated Gas Fee"}
+                  </span>
+                  <button
+                    onClick={handleRefreshGasEstimate}
+                    disabled={isEstimatingGas}
+                    className="btn btn-ghost btn-xs"
+                    title="Refresh gas estimate"
+                  >
+                    <svg
+                      className={`w-3 h-3 ${isEstimatingGas ? "animate-spin" : ""}`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                      />
+                    </svg>
+                  </button>
                 </div>
                 <div className="text-right">
-                  <p className="text-xl font-bold">{estimatedGas} ETH</p>
-                  <p className="text-sm text-base-content/60">≈ ${estimatedGasUSD} USD</p>
+                  {isEstimatingGas ? (
+                    <div className="flex justify-end items-center gap-2">
+                      <span className="loading loading-spinner loading-sm"></span>
+                      <p className="text-sm text-base-content/60">Calculating...</p>
+                    </div>
+                  ) : gasEstimationError ? (
+                    <div>
+                      <p className="text-xl font-bold">{parseFloat(gasCostInEth).toFixed(6)} ETH</p>
+                      <p className="text-sm text-base-content/60">≈ ${gasCostInUSD} USD</p>
+                      <p className="text-xs text-warning mt-1">{gasEstimationError}</p>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-xl font-bold">{parseFloat(gasCostInEth).toFixed(6)} ETH</p>
+                      <p className="text-sm text-base-content/60">≈ ${gasCostInUSD} USD</p>
+                      {effectiveGasPrice > 0 && (
+                        <p className="text-xs text-base-content/40 mt-1">
+                          Gas: {estimatedGas.toString()} @ {formatGwei(effectiveGasPrice)} Gwei
+                        </p>
+                      )}
+                    </>
+                  )}
                 </div>
               </div>
 
-              {/* Ready Status */}
-              <div className="flex items-center gap-2 mb-6 p-4 bg-success/10 rounded-xl">
-                <CheckCircle className="w-5 h-5 text-success" />
-                <span className="text-sm font-medium">Ready to confirm your transaction.</span>
-              </div>
+              {!gasEstimationError ? (
+                <div className="flex items-center gap-2 mb-6 p-4 bg-success/10 rounded-xl">
+                  <CheckCircle className="w-5 h-5 text-success" />
+                  <span className="text-sm font-medium">Ready to confirm your transaction.</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 mb-6 p-4 bg-warning/10 rounded-xl">
+                  <AlertCircle className="w-5 h-5 text-warning" />
+                  <span className="text-sm font-medium">Using fallback gas estimate.</span>
+                </div>
+              )}
 
-              {/* Action Buttons */}
               <div className="space-y-3">
                 <button
                   onClick={handleConfirmTransaction}
-                  disabled={isExecuting}
+                  disabled={isExecuting || isEstimatingGas}
                   className="btn btn-primary btn-lg w-full rounded-xl"
                 >
                   {isExecuting ? (

@@ -4,7 +4,7 @@ import { useAccount, useBalance, useReadContract, useWriteContract } from "wagmi
 
 export const useTokenBalance = (tokenAddress?: string) => {
   const { address } = useAccount();
-  const { data: deployedContractInfo } = useDeployedContractInfo("ETHSplitter");
+  const { data: deployedContractInfo } = useDeployedContractInfo({ contractName: "ETHSplitter" });
 
   const { data: ethBalance, isLoading: ethLoading } = useBalance({
     address,
