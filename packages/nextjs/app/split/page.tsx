@@ -8,7 +8,7 @@ import { RecipientRow } from "./_components/RecipientRow";
 import { SplitModeSelector } from "./_components/SplitModeSelector";
 import { TotalAmountDisplay } from "./_components/TotalAmountDisplay";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, Download, Plus, Upload } from "lucide-react";
+import { AlertTriangle, ArrowRight, Download, Plus, Upload } from "lucide-react";
 import { isAddress } from "viem";
 import { useChainId } from "wagmi";
 import { Address, EtherInput, InputBase } from "~~/components/scaffold-eth";
@@ -53,6 +53,7 @@ export default function Split() {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [savedContacts, setSavedContacts] = useState<Contact[]>([]);
   const [usdMode, setUsdMode] = useState(false);
+  const [duplicateAddresses, setDuplicateAddresses] = useState<string[]>([]);
 
   const toggleUsdMode = () => setUsdMode(prev => !prev);
 
@@ -100,6 +101,34 @@ export default function Split() {
     return !isNaN(num) && num > 0;
   };
 
+  const findDuplicateAddresses = useCallback((recipients: Recipient[]): string[] => {
+    const addressCount: { [key: string]: number } = {};
+    const duplicates: string[] = [];
+
+    recipients.forEach(r => {
+      if (r.address && validateAddress(r.address)) {
+        const normalizedAddress = r.address.toLowerCase();
+        addressCount[normalizedAddress] = (addressCount[normalizedAddress] || 0) + 1;
+        if (addressCount[normalizedAddress] === 2) {
+          duplicates.push(r.address);
+        }
+      }
+    });
+
+    return duplicates;
+  }, []);
+
+  const getUniqueValidRecipients = useCallback((recipients: Recipient[]): Recipient[] => {
+    const seenAddresses = new Set<string>();
+    return recipients.filter(r => {
+      if (!validateAddress(r.address)) return false;
+      const normalizedAddress = r.address.toLowerCase();
+      if (seenAddresses.has(normalizedAddress)) return false;
+      seenAddresses.add(normalizedAddress);
+      return true;
+    });
+  }, []);
+
   const addRecipient = () => {
     const newRecipient: Recipient = {
       id: Date.now().toString(),
@@ -136,45 +165,26 @@ export default function Split() {
           }
           return r;
         });
-        return updated;
-      });
 
-      setErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[`${id}-${field}`];
-        return newErrors;
+        return updated;
       });
     },
     [savedContacts],
   );
 
-  const handleBulkImport = (importedRecipients: Recipient[]) => {
-    setRecipients(prevRecipients => [...prevRecipients, ...importedRecipients]);
-    setShowBulkImport(false);
-    notification.success(`Imported ${importedRecipients.length} recipients`);
+  const handleBulkImport = (newRecipients: Recipient[]) => {
+    setRecipients(prevRecipients => [...prevRecipients, ...newRecipients]);
   };
 
   const handleImportFromStorage = () => {
-    const contacts = loadContacts();
-    if (contacts.length === 0) {
-      notification.error("No saved contacts found");
-      return;
-    }
-
     setShowContactSelector(true);
   };
 
-  const handleContactSelection = () => {
-    if (selectedContacts.size === 0) {
-      notification.error("Please select at least one contact");
-      return;
-    }
-
-    const existingAddresses = new Set(recipients.map(r => r.address.toLowerCase()).filter(Boolean));
-
-    const contactsToImport = Array.from(selectedContacts).filter(
-      address => !existingAddresses.has(address.toLowerCase()),
-    );
+  const handleImportSelectedContacts = () => {
+    const contactsToImport = Array.from(selectedContacts).filter(address => {
+      const exists = recipients.some(r => r.address.toLowerCase() === address.toLowerCase());
+      return !exists;
+    });
 
     if (contactsToImport.length === 0) {
       notification.warning("All selected contacts are already in the recipients list");
@@ -210,9 +220,13 @@ export default function Split() {
     isCalculatingRef.current = true;
 
     try {
+      const duplicates = findDuplicateAddresses(recipients);
+      setDuplicateAddresses(duplicates);
+
       if (splitMode === "EQUAL") {
-        const validRecipients = recipients.filter(r => validateAddress(r.address));
-        if (validRecipients.length === 0) {
+        const uniqueValidRecipients = getUniqueValidRecipients(recipients);
+
+        if (uniqueValidRecipients.length === 0) {
           setTotalAmount("");
           return;
         }
@@ -223,18 +237,20 @@ export default function Split() {
           return;
         }
 
-        const totalNeeded = amount * validRecipients.length;
+        const totalNeeded = amount * uniqueValidRecipients.length;
         setTotalAmount(totalNeeded.toString());
 
         setRecipients(prevRecipients =>
           prevRecipients.map(r => ({
             ...r,
             amount: validateAddress(r.address) ? equalAmount : "",
-            percentage: validateAddress(r.address) ? 100 / validRecipients.length : 0,
+            percentage: validateAddress(r.address) ? 100 / uniqueValidRecipients.length : 0,
           })),
         );
       } else {
-        const total = recipients.reduce((sum, r) => {
+        const uniqueValidRecipients = getUniqueValidRecipients(recipients);
+
+        const total = uniqueValidRecipients.reduce((sum, r) => {
           const amount = parseFloat(r.amount || "0");
           return sum + (isNaN(amount) ? 0 : amount);
         }, 0);
@@ -254,7 +270,7 @@ export default function Split() {
     } finally {
       isCalculatingRef.current = false;
     }
-  }, [splitMode, equalAmount, recipients]);
+  }, [splitMode, equalAmount, recipients, findDuplicateAddresses, getUniqueValidRecipients]);
 
   const validateForm = (): boolean => {
     const newErrors: { [key: string]: string } = {};
@@ -288,7 +304,6 @@ export default function Split() {
     const addresses = recipients.map(r => r.address).filter(Boolean);
     const uniqueAddresses = new Set(addresses);
     if (addresses.length !== uniqueAddresses.size) {
-      notification.error("Duplicate addresses detected");
       isValid = false;
     }
 
@@ -334,6 +349,8 @@ export default function Split() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recipients.map(r => r.amount).join(","), splitMode]);
+
+  const hasDuplicates = duplicateAddresses.length > 0;
 
   return (
     <div className="max-w-7xl w-full mx-auto py-10 px-4">
@@ -392,6 +409,22 @@ export default function Split() {
                 </div>
               </div>
 
+              {hasDuplicates && (
+                <div className="mb-4 p-3 bg-error/10 border border-error/30 rounded-xl">
+                  <div className="flex items-center text-error">
+                    <AlertTriangle className="w-4 h-4 mr-2" />
+                    <span className="font-medium">Duplicate Addresses Detected</span>
+                  </div>
+                  {duplicateAddresses.map((addr, index) => (
+                    <div key={addr} className="flex gap-1 items-center">
+                      <span>{index + 1}.</span>
+                      <Address address={addr} size="sm" disableAddressLink showAvatar={false} showCopyIcon={false} />
+                    </div>
+                  ))}
+                  <p className="text-sm mt-1 text-error/70">Please remove duplicate addresses before proceeding.</p>
+                </div>
+              )}
+
               <div className="space-y-4 max-h-[400px] overflow-y-auto">
                 <AnimatePresence>
                   {recipients.map((recipient, index) => (
@@ -428,7 +461,7 @@ export default function Split() {
               <button
                 onClick={handleReviewSplit}
                 className="btn btn-md rounded-md w-full btn-primary"
-                disabled={!selectedToken || recipients.length < 2}
+                disabled={!selectedToken || recipients.length < 2 || hasDuplicates}
               >
                 Review Split
                 <ArrowRight className="w-4 h-4 ml-2" />
@@ -500,16 +533,17 @@ export default function Split() {
                         key={contact.address}
                         className={`flex items-center p-3 border border-base-100 rounded-lg ${
                           isAlreadyAdded
-                            ? "opacity-50 cursor-not-allowed bg-base-300"
-                            : "cursor-pointer hover:bg-base-300"
-                        } transition-colors`}
+                            ? "opacity-50 cursor-not-allowed bg-base-100"
+                            : "cursor-pointer hover:bg-base-100"
+                        }`}
                       >
                         <input
                           type="checkbox"
-                          className="checkbox checkbox-primary mr-3"
-                          checked={selectedContacts.has(contact.address)}
+                          className="checkbox checkbox-sm mr-3"
                           disabled={isAlreadyAdded}
+                          checked={selectedContacts.has(contact.address) && !isAlreadyAdded}
                           onChange={e => {
+                            if (isAlreadyAdded) return;
                             const newSelected = new Set(selectedContacts);
                             if (e.target.checked) {
                               newSelected.add(contact.address);
@@ -519,12 +553,10 @@ export default function Split() {
                             setSelectedContacts(newSelected);
                           }}
                         />
-                        <div className="flex md:flex-row flex-col justify-between w-full gap-2">
-                          <Address address={contact.address} />
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium text-xs">{contact.label}</span>
-                            {isAlreadyAdded && <span className="text-xs text-warning">Already added</span>}
-                          </div>
+                        <div className="flex-1">
+                          <div className="font-medium">{contact.label}</div>
+                          <Address address={contact.address} size="sm" disableAddressLink />
+                          {isAlreadyAdded && <div className="text-xs text-base-content/50 mt-1">Already added</div>}
                         </div>
                       </label>
                     );
@@ -534,22 +566,21 @@ export default function Split() {
             </div>
 
             <div className="p-6 border-t border-base-100 flex gap-3 flex-shrink-0">
-              <div className="flex-1" />
               <button
                 onClick={() => {
                   setShowContactSelector(false);
                   setSelectedContacts(new Set());
                 }}
-                className="btn btn-sm btn-ghost"
+                className="btn btn-ghost flex-1"
               >
                 Cancel
               </button>
               <button
-                onClick={handleContactSelection}
-                className="btn btn-sm btn-primary"
+                onClick={handleImportSelectedContacts}
+                className="btn btn-primary flex-1"
                 disabled={selectedContacts.size === 0}
               >
-                Import ({selectedContacts.size})
+                Import Selected ({selectedContacts.size})
               </button>
             </div>
           </motion.div>

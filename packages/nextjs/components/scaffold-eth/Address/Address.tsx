@@ -73,6 +73,8 @@ type AddressProps = {
   format?: "short" | "long";
   size?: "xs" | "sm" | "base" | "lg" | "xl" | "2xl" | "3xl";
   onlyEnsOrAddress?: boolean;
+  showAvatar?: boolean;
+  showCopyIcon?: boolean;
 };
 
 export const Address = ({
@@ -81,6 +83,8 @@ export const Address = ({
   format,
   size = "base",
   onlyEnsOrAddress = false,
+  showAvatar = true,
+  showCopyIcon = true,
 }: AddressProps) => {
   const checkSumAddress = address ? getAddress(address) : undefined;
 
@@ -144,13 +148,15 @@ export const Address = ({
 
   return (
     <div className="flex items-center shrink-0">
-      <div className="shrink-0">
-        <BlockieAvatar
-          address={checkSumAddress}
-          ensImage={ensAvatar}
-          size={(blockieSizeMap[blockieSize] * 24) / blockieSizeMap["base"]}
-        />
-      </div>
+      {showAvatar && (
+        <div className="shrink-0">
+          <BlockieAvatar
+            address={checkSumAddress}
+            ensImage={ensAvatar}
+            size={(blockieSizeMap[blockieSize] * 24) / blockieSizeMap["base"]}
+          />
+        </div>
+      )}
       <div className="flex flex-col">
         {showSkeleton &&
           (isEnsNameLoading ? (
@@ -176,10 +182,12 @@ export const Address = ({
               {onlyEnsOrAddress ? displayEnsOrAddress : displayAddress}
             </AddressLinkWrapper>
           </span>
-          <AddressCopyIcon
-            className={`ml-1 ${copyIconSizeMap[addressSize]} cursor-pointer`}
-            address={checkSumAddress}
-          />
+          {showCopyIcon && (
+            <AddressCopyIcon
+              className={`ml-1 ${copyIconSizeMap[addressSize]} cursor-pointer`}
+              address={checkSumAddress}
+            />
+          )}
         </div>
       </div>
     </div>
