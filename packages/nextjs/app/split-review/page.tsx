@@ -398,7 +398,7 @@ export default function SplitReviewPage() {
               ) : (
                 <div className="flex items-center gap-2 mb-6 p-4 bg-warning/10 rounded-xl">
                   <AlertCircle className="w-5 h-5 text-warning" />
-                  <span className="text-sm font-medium">Using fallback gas estimate.</span>
+                  <span className="text-sm font-medium">Calculated gas estimate.</span>
                 </div>
               )}
 
