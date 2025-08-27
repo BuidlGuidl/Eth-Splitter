@@ -9,7 +9,7 @@ import { SplitModeSelector } from "./_components/SplitModeSelector";
 import { TotalAmountDisplay } from "./_components/TotalAmountDisplay";
 import { AnimatePresence, motion } from "framer-motion";
 import { AlertTriangle, ArrowRight, Download, Plus, Upload } from "lucide-react";
-import { isAddress } from "viem";
+import { formatUnits, isAddress, parseUnits } from "viem";
 import { useChainId } from "wagmi";
 import { Address, EtherInput, InputBase } from "~~/components/scaffold-eth";
 import { useTokenBalance } from "~~/hooks/useTokenBalance";
@@ -33,6 +33,55 @@ interface Token {
 }
 
 export type SplitMode = "EQUAL" | "UNEQUAL";
+
+const addAmounts = (amounts: string[], decimals: number): string => {
+  try {
+    const sum = amounts.reduce((acc, amount) => {
+      if (!amount || amount === "") return acc;
+      try {
+        const parsed = parseUnits(amount, decimals);
+        return acc + parsed;
+      } catch {
+        return acc;
+      }
+    }, 0n);
+
+    return formatUnits(sum, decimals);
+  } catch (error) {
+    console.error("Error adding amounts:", error);
+    return "0";
+  }
+};
+
+const multiplyAmount = (amount: string, count: number, decimals: number): string => {
+  try {
+    if (!amount || amount === "" || count === 0) return "0";
+
+    const parsed = parseUnits(amount, decimals);
+    const result = parsed * BigInt(count);
+    return formatUnits(result, decimals);
+  } catch (error) {
+    console.error("Error multiplying amount:", error);
+    return "0";
+  }
+};
+
+const calculatePercentage = (amount: string, total: string, decimals: number): number => {
+  try {
+    if (!amount || !total || amount === "" || total === "" || total === "0") return 0;
+
+    const amountBigInt = parseUnits(amount, decimals);
+    const totalBigInt = parseUnits(total, decimals);
+
+    if (totalBigInt === 0n) return 0;
+
+    const percentage = (amountBigInt * 10000n) / totalBigInt;
+    return Number(percentage) / 100;
+  } catch (error) {
+    console.error("Error calculating percentage:", error);
+    return 0;
+  }
+};
 
 export default function Split() {
   const router = useRouter();
@@ -59,6 +108,11 @@ export default function Split() {
 
   const tokenBalance = useTokenBalance(selectedToken?.address);
   const isCalculatingRef = useRef(false);
+
+  const getTokenDecimals = (): number => {
+    if (!selectedToken) return 18;
+    return selectedToken.address === "ETH" ? 18 : selectedToken.decimals;
+  };
 
   useEffect(() => {
     const contacts = loadContacts();
@@ -97,8 +151,13 @@ export default function Split() {
 
   const validateAmount = (amount: string): boolean => {
     if (!amount) return false;
-    const num = parseFloat(amount);
-    return !isNaN(num) && num > 0;
+    try {
+      const decimals = getTokenDecimals();
+      const parsed = parseUnits(amount, decimals);
+      return parsed > 0n;
+    } catch {
+      return false;
+    }
   };
 
   const findDuplicateAddresses = useCallback((recipients: Recipient[]): string[] => {
@@ -223,6 +282,8 @@ export default function Split() {
       const duplicates = findDuplicateAddresses(recipients);
       setDuplicateAddresses(duplicates);
 
+      const decimals = getTokenDecimals();
+
       if (splitMode === "EQUAL") {
         const uniqueValidRecipients = getUniqueValidRecipients(recipients);
 
@@ -231,46 +292,48 @@ export default function Split() {
           return;
         }
 
-        const amount = parseFloat(equalAmount);
-        if (!amount || isNaN(amount)) {
+        if (!equalAmount || !validateAmount(equalAmount)) {
           setTotalAmount("");
           return;
         }
 
-        const totalNeeded = amount * uniqueValidRecipients.length;
-        setTotalAmount(totalNeeded.toString());
+        const totalNeeded = multiplyAmount(equalAmount, uniqueValidRecipients.length, decimals);
+        setTotalAmount(totalNeeded);
+
+        const percentage = 100 / uniqueValidRecipients.length;
 
         setRecipients(prevRecipients =>
           prevRecipients.map(r => ({
             ...r,
             amount: validateAddress(r.address) ? equalAmount : "",
-            percentage: validateAddress(r.address) ? 100 / uniqueValidRecipients.length : 0,
+            percentage: validateAddress(r.address) ? percentage : 0,
           })),
         );
       } else {
         const uniqueValidRecipients = getUniqueValidRecipients(recipients);
 
-        const total = uniqueValidRecipients.reduce((sum, r) => {
-          const amount = parseFloat(r.amount || "0");
-          return sum + (isNaN(amount) ? 0 : amount);
-        }, 0);
+        const validAmounts = uniqueValidRecipients
+          .map(r => r.amount)
+          .filter(amount => amount && validateAmount(amount));
 
-        setTotalAmount(total.toString());
+        const total = addAmounts(validAmounts, decimals);
+        setTotalAmount(total);
 
         setRecipients(prevRecipients =>
           prevRecipients.map(r => {
-            const amount = parseFloat(r.amount || "0");
-            return {
-              ...r,
-              percentage: total > 0 && !isNaN(amount) ? (amount / total) * 100 : 0,
-            };
+            if (!r.amount || !validateAmount(r.amount)) {
+              return { ...r, percentage: 0 };
+            }
+            const percentage = calculatePercentage(r.amount, total, decimals);
+            return { ...r, percentage };
           }),
         );
       }
     } finally {
       isCalculatingRef.current = false;
     }
-  }, [splitMode, equalAmount, recipients, findDuplicateAddresses, getUniqueValidRecipients]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [splitMode, equalAmount, recipients, findDuplicateAddresses, getUniqueValidRecipients, getTokenDecimals]);
 
   const validateForm = (): boolean => {
     const newErrors: { [key: string]: string } = {};
@@ -337,7 +400,7 @@ export default function Split() {
 
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [splitMode, equalAmount, recipients]);
+  }, [splitMode, equalAmount, recipients, selectedToken]); // Added selectedToken dependency
 
   useEffect(() => {
     if (splitMode === "UNEQUAL") {
@@ -348,7 +411,7 @@ export default function Split() {
       return () => clearTimeout(timer);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [recipients.map(r => r.amount).join(","), splitMode]);
+  }, [recipients.map(r => r.amount).join(","), splitMode, selectedToken]); // Added selectedToken dependency
 
   const hasDuplicates = duplicateAddresses.length > 0;
 
