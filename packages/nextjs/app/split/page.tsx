@@ -322,7 +322,7 @@ export default function Split() {
 
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [splitMode, equalAmount, recipients.length]);
+  }, [splitMode, equalAmount, recipients]);
 
   useEffect(() => {
     if (splitMode === "UNEQUAL") {
