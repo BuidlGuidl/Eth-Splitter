@@ -86,7 +86,7 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
         address: t.address,
         symbol: t.name,
         name: t.name,
-        decimals: 18,
+        decimals: t.decimals,
       })) || []),
     ];
 
