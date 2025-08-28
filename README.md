@@ -2,9 +2,9 @@
 
 ![Screenshot_658](https://github.com/Avelous/Eth-Splitter/assets/86206128/38ab22cf-5ad4-475d-bf74-1df80affc81a)
 
-[ethsplitter.vercel.app](https://ethsplitter.vercel.app/) 
+[ethsplitter.vercel.app](https://ethsplitter.vercel.app/)
 
-<br></br> 
+<br></br>
 ETHSplitter is a
 smart contract and a NextJs App built with
 [Scaffold ETH](https://github.com/scaffold-eth/scaffold-eth-2) to split Ethereum

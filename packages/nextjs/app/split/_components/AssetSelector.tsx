@@ -1,0 +1,300 @@
+"use client";
+
+import React, { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { ChevronDown, Coins } from "lucide-react";
+import { formatUnits } from "viem";
+import { erc20Abi } from "viem";
+import { useReadContract } from "wagmi";
+import { AddressInput } from "~~/components/scaffold-eth";
+import { tokens } from "~~/constants/tokens";
+import { useTargetNetwork } from "~~/hooks/scaffold-eth";
+
+interface Token {
+  address: string;
+  symbol: string;
+  name: string;
+  decimals: number;
+}
+
+interface AssetSelectorProps {
+  selectedToken: Token | null;
+  onTokenSelect: (token: Token) => void;
+  tokenBalance: any;
+  chainId: number;
+}
+
+export const AssetSelector: React.FC<AssetSelectorProps> = ({
+  selectedToken,
+  onTokenSelect,
+  tokenBalance,
+  chainId,
+}) => {
+  const { targetNetwork } = useTargetNetwork();
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [showCustomInput, setShowCustomInput] = useState(false);
+  const [customTokenAddress, setCustomTokenAddress] = useState("");
+  const [fetchingCustomToken, setFetchingCustomToken] = useState(false);
+  const [tokenList, setTokenList] = useState<Token[]>([]);
+  const [tokenInfo, setTokenInfo] = useState<{ name: string; symbol: string }>({
+    name: "Select Token",
+    symbol: "",
+  });
+
+  const nativeCurrency = targetNetwork.nativeCurrency || { name: "Ether", symbol: "ETH", decimals: 18 };
+
+  const { data: customTokenSymbol } = useReadContract({
+    address: customTokenAddress as `0x${string}`,
+    abi: erc20Abi,
+    functionName: "symbol",
+    query: {
+      enabled: !!customTokenAddress && customTokenAddress.startsWith("0x"),
+    },
+  });
+
+  const { data: customTokenName } = useReadContract({
+    address: customTokenAddress as `0x${string}`,
+    abi: erc20Abi,
+    functionName: "name",
+    query: {
+      enabled: !!customTokenAddress && customTokenAddress.startsWith("0x"),
+    },
+  });
+
+  const { data: customTokenDecimals } = useReadContract({
+    address: customTokenAddress as `0x${string}`,
+    abi: erc20Abi,
+    functionName: "decimals",
+    query: {
+      enabled: !!customTokenAddress && customTokenAddress.startsWith("0x"),
+    },
+  });
+
+  const chainTokens = tokens[chainId as keyof typeof tokens];
+
+  useEffect(() => {
+    const nativeToken: Token = {
+      address: "ETH",
+      symbol: nativeCurrency.symbol,
+      name: nativeCurrency.name,
+      decimals: nativeCurrency.decimals,
+    };
+
+    const tokenList: Token[] = [
+      nativeToken,
+      ...(chainTokens?.contracts.map(t => ({
+        address: t.address,
+        symbol: t.name,
+        name: t.name,
+        decimals: t.decimals,
+      })) || []),
+    ];
+
+    setTokenList(tokenList);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nativeCurrency]);
+
+  useEffect(() => {
+    if (
+      (!selectedToken || (selectedToken.address === "ETH" && selectedToken.symbol !== tokenList[0].symbol)) &&
+      tokenList.length > 0
+    ) {
+      onTokenSelect(tokenList[0]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chainId, tokenList]);
+
+  const handleTokenSelect = (token: Token) => {
+    onTokenSelect(token);
+    setIsDropdownOpen(false);
+    setShowCustomInput(false);
+    setCustomTokenAddress("");
+  };
+
+  const handleCustomToken = async () => {
+    if (!customTokenAddress || !customTokenAddress.startsWith("0x")) {
+      return;
+    }
+
+    setFetchingCustomToken(true);
+
+    setTimeout(() => {
+      const customToken: Token = {
+        address: customTokenAddress,
+        symbol: customTokenSymbol || "TOKEN",
+        name: customTokenName || "Custom Token",
+        decimals: customTokenDecimals || 18,
+      };
+
+      handleTokenSelect(customToken);
+      setFetchingCustomToken(false);
+    }, 500);
+  };
+
+  useEffect(() => {
+    if (
+      selectedToken &&
+      selectedToken.address === customTokenAddress &&
+      selectedToken.address !== "ETH" &&
+      !tokenList.find(t => t.address === selectedToken.address)
+    ) {
+      const updatedToken: Token = {
+        address: selectedToken.address,
+        symbol: customTokenSymbol || tokenBalance?.symbol || "TOKEN",
+        name: customTokenName || tokenBalance?.name || "Custom Token",
+        decimals: customTokenDecimals || tokenBalance?.decimals || 18,
+      };
+
+      if (
+        updatedToken.symbol !== selectedToken.symbol ||
+        updatedToken.name !== selectedToken.name ||
+        updatedToken.decimals !== selectedToken.decimals
+      ) {
+        onTokenSelect(updatedToken);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [customTokenSymbol, customTokenName, customTokenDecimals, tokenBalance]);
+
+  useEffect(() => {
+    if (!selectedToken) {
+      setTokenInfo({ name: "Select Token", symbol: "" });
+      return;
+    }
+
+    if (selectedToken.address !== "ETH" && !tokenList.find(t => t.address === selectedToken.address)) {
+      setTokenInfo({
+        name: customTokenName || tokenBalance?.name || selectedToken.name,
+        symbol: customTokenSymbol || tokenBalance?.symbol || selectedToken.symbol,
+      });
+    } else {
+      setTokenInfo({
+        name: selectedToken.name,
+        symbol: selectedToken.symbol,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedToken]);
+
+  const formatBalance = () => {
+    if (!tokenBalance?.balance) return "0";
+    if (selectedToken?.address === "ETH") {
+      return formatUnits(tokenBalance.balance.value, 18);
+    }
+    return formatUnits(tokenBalance.balance, tokenBalance.decimals || 18);
+  };
+
+  return (
+    <div className="rounded-2xl p-6 mb-6 border border-base-100 shadow-lg">
+      <h2 className="text-xl font-semibold mb-4">Select Asset</h2>
+      <p className="mb-4">Choose the asset you wish to split.</p>
+
+      <div className="relative">
+        <button
+          onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+          className="w-full px-4 py-3 rounded-xl focus:ring-2 focus:ring-primary transition-all flex items-center justify-between border border-base-100 hover:border-primary"
+        >
+          <div className="flex items-center">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold mr-3 bg-primary">
+              {tokenInfo.symbol ? tokenInfo.symbol.charAt(0) : <Coins className="w-5 h-5" />}
+            </div>
+            <div className="text-left">
+              <div className="font-medium">
+                {tokenInfo.symbol ? `${tokenInfo.name} (${tokenInfo.symbol})` : "Select Token"}
+              </div>
+              {selectedToken && tokenBalance && (
+                <div className="text-xs opacity-70">
+                  Balance: {formatBalance()} {tokenInfo.symbol}
+                </div>
+              )}
+            </div>
+          </div>
+          <ChevronDown className={`w-5 h-5 transition-transform ${isDropdownOpen ? "rotate-180" : ""}`} />
+        </button>
+
+        <AnimatePresence>
+          {isDropdownOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="absolute z-10 w-full mt-2 bg-base-200 border border-base-300 rounded-xl shadow-lg overflow-hidden"
+            >
+              {tokenList.map(token => (
+                <button
+                  key={token.address}
+                  onClick={() => handleTokenSelect(token)}
+                  className="w-full px-4 py-3 hover:bg-base-300 cursor-pointer transition-colors flex items-center border-b border-base-100 justify-between"
+                >
+                  <div className="flex items-center">
+                    <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center font-bold mr-3">
+                      {token.symbol.charAt(0)}
+                    </div>
+                    <div className="text-left">
+                      <div className="font-medium">{token.name}</div>
+                      <div className="text-xs opacity-70">{token.symbol}</div>
+                    </div>
+                  </div>
+                  {token.address === selectedToken?.address && <div className="w-2 h-2 rounded-full bg-primary"></div>}
+                </button>
+              ))}
+
+              <div className=" p-3">
+                {!showCustomInput ? (
+                  <button onClick={() => setShowCustomInput(true)} className="w-full text-sm font-bold hover:underline">
+                    + Custom Token
+                  </button>
+                ) : (
+                  <div className="space-y-2">
+                    <AddressInput
+                      value={customTokenAddress}
+                      onChange={setCustomTokenAddress}
+                      placeholder="Token contract address"
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleCustomToken}
+                        className="btn btn-sm btn-primary rounded-md flex-1"
+                        disabled={!customTokenAddress || fetchingCustomToken}
+                      >
+                        {fetchingCustomToken ? (
+                          <>
+                            <span className="loading loading-spinner loading-xs"></span>
+                            Loading...
+                          </>
+                        ) : (
+                          "Add"
+                        )}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowCustomInput(false);
+                          setCustomTokenAddress("");
+                        }}
+                        className="btn btn-sm btn-ghost rounded-md"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {selectedToken && tokenBalance?.allowance !== undefined && selectedToken.address !== "ETH" && (
+        <div className="mt-4 p-3 bg-warning/10 rounded-lg">
+          <p className="text-sm">
+            <span className="font-medium">Allowance:</span>{" "}
+            {formatUnits(tokenBalance.allowance, tokenBalance.decimals || 18)} {tokenInfo.symbol}
+          </p>
+          {tokenBalance.allowance === 0n && (
+            <p className="text-xs mt-1 text-error">You&apos;ll need to approve tokens before splitting</p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
