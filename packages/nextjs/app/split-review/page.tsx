@@ -496,10 +496,9 @@ export default function SplitReviewPage() {
                     {tokenBalance ? formatUnits(tokenBalance as bigint, splitData.token.decimals) : "0"}{" "}
                     {splitData.token.symbol}
                   </p>
-                  {tokenBalance &&
-                    parseUnits(splitData.totalAmount, splitData.token.decimals) > (tokenBalance as bigint) && (
-                      <p className="text-xs text-error mt-2">Insufficient balance</p>
-                    )}
+                  {parseUnits(splitData.totalAmount, splitData.token.decimals) > (tokenBalance as bigint) && (
+                    <p className="text-xs text-error mt-2">Insufficient balance</p>
+                  )}
                 </div>
               )}
             </div>
