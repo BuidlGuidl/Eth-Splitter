@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { AlertCircle, ArrowLeft, CheckCircle } from "lucide-react";
 import { formatEther, formatGwei, formatUnits, parseEther, parseUnits } from "viem";
 import { useAccount, useBalance, useFeeData, usePublicClient } from "wagmi";
+import { Address } from "~~/components/scaffold-eth";
 import { useDeployedContractInfo, useScaffoldWriteContract, useTargetNetwork } from "~~/hooks/scaffold-eth";
 import { useTokenBalance } from "~~/hooks/useTokenBalance";
 import { useGlobalState } from "~~/services/store/store";
@@ -38,6 +39,7 @@ export default function SplitReviewPage() {
   const [gasCostInUSD, setGasCostInUSD] = useState("0.00");
   const [gasEstimationError, setGasEstimationError] = useState<string | null>(null);
   const [isExecuting, setIsExecuting] = useState(false);
+  const [isApproving, setIsApproving] = useState(false);
   const { targetNetwork } = useTargetNetwork();
 
   const nativeCurrency = targetNetwork.nativeCurrency;
@@ -56,7 +58,13 @@ export default function SplitReviewPage() {
 
   const { data: feeData } = useFeeData();
 
-  const { balance: tokenBalance, allowance: tokenAllowance, approve } = useTokenBalance(splitData?.token?.address);
+  const {
+    balance: tokenBalance,
+    allowance: tokenAllowance,
+    approve,
+    isApproving: isApprovingFromHook,
+    isConfirming: isConfirmingApproval,
+  } = useTokenBalance(splitData?.token?.address);
 
   useEffect(() => {
     const data = localStorage.getItem("pendingSplit");
@@ -69,7 +77,7 @@ export default function SplitReviewPage() {
   }, [router]);
 
   const estimateGas = useCallback(async () => {
-    if (!splitData || !splitData.token || !deployedContractInfo || !publicClient || !connectedAddress) {
+    if (!splitData || !deployedContractInfo || !publicClient || !connectedAddress) {
       return;
     }
 
@@ -77,17 +85,20 @@ export default function SplitReviewPage() {
     setGasEstimationError(null);
 
     try {
-      const recipients = splitData.recipients.map(r => r.address as `0x${string}`);
-      let estimatedGasResult: bigint;
+      let estimatedGasResult = BigInt(0);
 
-      if (splitData.token.address === "ETH") {
+      const recipients = splitData.recipients.map(r => r.address as `0x${string}`);
+
+      if (splitData.token?.address === "ETH") {
         if (splitData.splitMode === "EQUAL") {
+          const totalValue = parseEther(splitData.totalAmount);
+
           estimatedGasResult = await publicClient.estimateContractGas({
             address: deployedContractInfo.address as `0x${string}`,
             abi: deployedContractInfo.abi,
             functionName: "splitEqualETH",
             args: [recipients],
-            value: parseEther(splitData.totalAmount),
+            value: totalValue,
             account: connectedAddress,
           });
         } else {
@@ -104,8 +115,8 @@ export default function SplitReviewPage() {
           });
         }
       } else {
-        const tokenAddress = splitData.token.address as `0x${string}`;
-        const decimals = splitData.token.decimals || 18;
+        const tokenAddress = splitData.token?.address as `0x${string}`;
+        const decimals = splitData.token?.decimals || 18;
         const totalAmount = parseUnits(splitData.totalAmount, decimals);
 
         if (splitData.splitMode === "EQUAL") {
@@ -151,6 +162,30 @@ export default function SplitReviewPage() {
     }
   }, [splitData, deployedContractInfo, publicClient, connectedAddress, estimateGas]);
 
+  const handleApproveToken = async () => {
+    if (!splitData || !splitData.token || splitData.token.address === "ETH") {
+      return;
+    }
+
+    setIsApproving(true);
+
+    try {
+      const decimals = splitData.token.decimals || 18;
+      const totalAmount = parseUnits(splitData.totalAmount, decimals);
+
+      notification.info("Approving token spend...");
+
+      if (approve) {
+        approve(totalAmount);
+      }
+    } catch (error) {
+      console.error("Error approving tokens:", error);
+      notification.error("Failed to approve tokens");
+    } finally {
+      setIsApproving(false);
+    }
+  };
+
   const handleConfirmTransaction = async () => {
     if (!splitData || !splitData.token) {
       notification.error("Invalid split data");
@@ -187,13 +222,9 @@ export default function SplitReviewPage() {
         const totalAmount = parseUnits(splitData.totalAmount, decimals);
 
         if (!tokenAllowance || tokenAllowance < totalAmount) {
-          notification.info("Approving token spend...");
-
-          if (approve) {
-            await approve(totalAmount);
-          }
-
-          await new Promise(resolve => setTimeout(resolve, 3000));
+          notification.error("Insufficient token allowance. Please approve tokens first.");
+          setIsExecuting(false);
+          return;
         }
 
         if (splitData.splitMode === "EQUAL") {
@@ -241,6 +272,12 @@ export default function SplitReviewPage() {
     const usdValue = (gasCostInEth * nativeCurrencyPrice).toFixed(2);
     setGasCostInUSD(usdValue);
   }, [totalGasCost, nativeCurrencyPrice, estimatedGas]);
+
+  const needsApproval = splitData?.token?.address !== "ETH" && splitData?.token;
+  const totalAmountBigInt = needsApproval
+    ? parseUnits(splitData.totalAmount, splitData.token?.decimals || 18)
+    : BigInt(0);
+  const hassufficientAllowance = tokenAllowance && tokenAllowance >= totalAmountBigInt;
 
   if (!splitData || !splitData.token) {
     return (
@@ -304,7 +341,7 @@ export default function SplitReviewPage() {
                       <td className="py-4">
                         <div className="flex flex-col">
                           <span className="font-mono text-sm">
-                            {recipient.address.slice(0, 6)}...{recipient.address.slice(-4)}
+                            <Address address={recipient.address} />
                           </span>
                           {recipient.label && (
                             <span className="text-xs text-base-content/60 mt-1">{recipient.label}</span>
@@ -337,60 +374,28 @@ export default function SplitReviewPage() {
               <div className="bg-base-200 rounded-xl p-4 mb-6">
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm text-base-content/60">
-                    {isEstimatingGas ? "Estimating Gas..." : "Estimated Gas Fee"}
+                    {isEstimatingGas ? "Estimating..." : "Gas Estimate"}
                   </span>
                   <button
                     onClick={handleRefreshGasEstimate}
                     disabled={isEstimatingGas}
-                    className="btn btn-ghost btn-xs"
-                    title="Refresh gas estimate"
+                    className="text-primary text-xs hover:underline"
                   >
-                    <svg
-                      className={`w-3 h-3 ${isEstimatingGas ? "animate-spin" : ""}`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                      />
-                    </svg>
+                    Refresh
                   </button>
                 </div>
-                <div className="text-right">
-                  {isEstimatingGas ? (
-                    <div className="flex justify-end items-center gap-2">
-                      <span className="loading loading-spinner loading-sm"></span>
-                      <p className="text-sm text-base-content/60">Calculating...</p>
-                    </div>
-                  ) : gasEstimationError ? (
-                    <div>
-                      <p className="text-xl font-bold">
-                        {parseFloat(gasCostInEth).toFixed(6)} {nativeCurrency.symbol}
-                      </p>
-                      <p className="text-sm text-base-content/60">≈ ${gasCostInUSD} USD</p>
-                      <p className="text-xs text-warning mt-1">{gasEstimationError}</p>
-                    </div>
-                  ) : (
-                    <>
-                      <p className="text-xl font-bold">
-                        {parseFloat(gasCostInEth).toFixed(6)} {nativeCurrency.symbol}
-                      </p>
-                      <p className="text-sm text-base-content/60">≈ ${gasCostInUSD} USD</p>
-                      {effectiveGasPrice > 0 && (
-                        <p className="text-xs text-base-content/40 mt-1">
-                          Gas: {estimatedGas.toString()} @ {formatGwei(effectiveGasPrice)} Gwei
-                        </p>
-                      )}
-                    </>
-                  )}
-                </div>
+                <p className="text-lg font-semibold">{formatGwei(effectiveGasPrice)} Gwei</p>
+                <p className="text-sm text-base-content/60">
+                  ≈ {gasCostInEth} {nativeCurrency.symbol} (${gasCostInUSD})
+                </p>
               </div>
 
-              {gasEstimationError ? (
+              {isEstimatingGas ? (
+                <div className="flex items-center gap-2 mb-6 p-4 bg-warning/10 rounded-xl">
+                  <span className="loading loading-spinner loading-xs text-warning"></span>
+                  <span className="text-sm font-medium">Estimating gas...</span>
+                </div>
+              ) : gasEstimationError ? (
                 <div className="flex items-center gap-2 mb-6 p-4 bg-warning/10 rounded-xl">
                   <AlertCircle className="w-5 h-5 text-warning" />
                   <span className="text-sm font-medium">Calculated gas estimate.</span>
@@ -402,17 +407,63 @@ export default function SplitReviewPage() {
                 </div>
               )}
 
+              {needsApproval && (
+                <div className="mb-6 p-4 bg-base-200 rounded-xl">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm font-medium">Token Approval</span>
+                    {hassufficientAllowance && <CheckCircle className="w-4 h-4 text-success" />}
+                  </div>
+                  <p className="text-xs text-base-content/60 mb-2">
+                    Current allowance:{" "}
+                    {tokenAllowance ? formatUnits(tokenAllowance, splitData.token.decimals || 18) : "0"}{" "}
+                    {splitData.token.symbol}
+                  </p>
+                  <p className="text-xs text-base-content/60 mb-3">
+                    Required: {splitData.totalAmount} {splitData.token.symbol}
+                  </p>
+                  {!hassufficientAllowance && (
+                    <button
+                      onClick={handleApproveToken}
+                      disabled={isApproving || isApprovingFromHook || isConfirmingApproval}
+                      className="btn btn-sm btn-primary w-full rounded-lg"
+                    >
+                      {isApproving || isApprovingFromHook || isConfirmingApproval ? (
+                        <>
+                          <span className="loading loading-spinner loading-xs"></span>
+                          {isConfirmingApproval ? "Confirming..." : "Approving..."}
+                        </>
+                      ) : (
+                        `Approve ${splitData.token.symbol}`
+                      )}
+                    </button>
+                  )}
+                  {!!hassufficientAllowance && (
+                    <div className="text-xs text-success text-center">✓ Sufficient allowance granted</div>
+                  )}
+                </div>
+              )}
+
               <div className="space-y-3">
                 <button
                   onClick={handleConfirmTransaction}
-                  disabled={isExecuting || isEstimatingGas}
-                  className="btn btn-primary btn-lg w-full rounded-xl"
+                  disabled={
+                    isExecuting ||
+                    isEstimatingGas ||
+                    (needsApproval && !hassufficientAllowance) ||
+                    isApproving ||
+                    isConfirmingApproval
+                  }
+                  className={`btn btn-lg w-full rounded-xl ${
+                    needsApproval && !hassufficientAllowance ? "btn-disabled" : "btn-primary"
+                  }`}
                 >
                   {isExecuting ? (
                     <>
                       <span className="loading loading-spinner"></span>
                       Processing...
                     </>
+                  ) : needsApproval && !hassufficientAllowance ? (
+                    "Approve Tokens First"
                   ) : (
                     "Confirm Transaction"
                   )}

@@ -1,6 +1,9 @@
+import { useEffect, useState } from "react";
 import { useDeployedContractInfo } from "./scaffold-eth";
+import { readContract } from "@wagmi/core";
 import { erc20Abi } from "viem";
-import { useAccount, useBalance, useReadContract, useWriteContract } from "wagmi";
+import { useAccount, useBalance, useReadContract, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
+import { wagmiConfig } from "~~/services/web3/wagmiConfig";
 
 export const useTokenBalance = (tokenAddress?: string) => {
   const { address } = useAccount();
@@ -9,6 +12,8 @@ export const useTokenBalance = (tokenAddress?: string) => {
   const { data: ethBalance, isLoading: ethLoading } = useBalance({
     address,
   });
+
+  const [allowance, setAllowance] = useState<bigint | undefined>(undefined);
 
   const { data: tokenBalance, isLoading: tokenLoading } = useReadContract({
     address: tokenAddress as `0x${string}`,
@@ -49,17 +54,12 @@ export const useTokenBalance = (tokenAddress?: string) => {
 
   const SPLITTER_ADDRESS = deployedContractInfo?.address as `0x${string}`;
 
-  const { data: allowance } = useReadContract({
-    address: tokenAddress as `0x${string}`,
-    abi: erc20Abi,
-    functionName: "allowance",
-    args: address && SPLITTER_ADDRESS ? [address, SPLITTER_ADDRESS] : undefined,
-    query: {
-      enabled: !!tokenAddress && tokenAddress !== "ETH" && !!address && !!SPLITTER_ADDRESS,
-    },
-  });
+  const { writeContract: approveWrite, isPending: isApproving, data: approveHash } = useWriteContract();
 
-  const { writeContract: approveWrite, isPending: isApproving } = useWriteContract();
+  // Wait for transaction confirmation
+  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
+    hash: approveHash,
+  });
 
   const approve = (amount: bigint) => {
     if (!tokenAddress || tokenAddress === "ETH" || !SPLITTER_ADDRESS) return;
@@ -71,6 +71,29 @@ export const useTokenBalance = (tokenAddress?: string) => {
     });
   };
 
+  useEffect(() => {
+    const fetchAllowance = async () => {
+      if (!tokenAddress || tokenAddress === "ETH" || !address || !SPLITTER_ADDRESS) {
+        setAllowance(undefined);
+        return;
+      }
+      try {
+        const result = await readContract(wagmiConfig, {
+          address: tokenAddress as `0x${string}`,
+          abi: erc20Abi,
+          functionName: "allowance",
+          args: [address, SPLITTER_ADDRESS],
+        });
+        setAllowance(result);
+      } catch (error) {
+        console.error("Error fetching allowance:", error);
+        setAllowance(undefined);
+      }
+    };
+
+    fetchAllowance();
+  }, [tokenAddress, address, SPLITTER_ADDRESS, isConfirmed]);
+
   if (tokenAddress === "ETH" || !tokenAddress) {
     return {
       balance: ethBalance,
@@ -81,6 +104,7 @@ export const useTokenBalance = (tokenAddress?: string) => {
       isLoading: ethLoading,
       approve: undefined,
       isApproving: false,
+      isConfirming: false,
     };
   }
 
@@ -93,5 +117,6 @@ export const useTokenBalance = (tokenAddress?: string) => {
     isLoading: tokenLoading,
     approve,
     isApproving,
+    isConfirming,
   };
 };
