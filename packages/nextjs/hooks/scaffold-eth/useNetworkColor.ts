@@ -1,14 +1,22 @@
-import { useDarkMode } from "usehooks-ts";
-import { getTargetNetwork } from "~~/utils/scaffold-eth";
+import { useTheme } from "next-themes";
+import { useSelectedNetwork } from "~~/hooks/scaffold-eth";
+import { AllowedChainIds, ChainWithAttributes } from "~~/utils/scaffold-eth";
 
-const DEFAULT_NETWORK_COLOR: [string, string] = ["#666666", "#bbbbbb"];
+export const DEFAULT_NETWORK_COLOR: [string, string] = ["#666666", "#bbbbbb"];
+
+export function getNetworkColor(network: ChainWithAttributes, isDarkMode: boolean) {
+  const colorConfig = network.color ?? DEFAULT_NETWORK_COLOR;
+  return Array.isArray(colorConfig) ? (isDarkMode ? colorConfig[1] : colorConfig[0]) : colorConfig;
+}
 
 /**
  * Gets the color of the target network
  */
-export const useNetworkColor = () => {
-  const { isDarkMode } = useDarkMode();
-  const colorConfig = getTargetNetwork().color ?? DEFAULT_NETWORK_COLOR;
+export const useNetworkColor = (chainId?: AllowedChainIds) => {
+  const { resolvedTheme } = useTheme();
 
-  return Array.isArray(colorConfig) ? (isDarkMode ? colorConfig[1] : colorConfig[0]) : colorConfig;
+  const chain = useSelectedNetwork(chainId);
+  const isDarkMode = resolvedTheme === "dark";
+
+  return getNetworkColor(chain, isDarkMode);
 };
