@@ -277,7 +277,7 @@ export default function SplitReviewPage() {
   const totalAmountBigInt = needsApproval
     ? parseUnits(splitData.totalAmount, splitData.token?.decimals || 18)
     : BigInt(0);
-  const hassufficientAllowance = tokenAllowance && tokenAllowance >= totalAmountBigInt;
+  const hasSufficientAllowance = tokenAllowance && tokenAllowance >= totalAmountBigInt;
 
   if (!splitData || !splitData.token) {
     return (
@@ -411,7 +411,7 @@ export default function SplitReviewPage() {
                 <div className="mb-6 p-4 bg-base-200 rounded-xl">
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-sm font-medium">Token Approval</span>
-                    {hassufficientAllowance && <CheckCircle className="w-4 h-4 text-success" />}
+                    {hasSufficientAllowance && <CheckCircle className="w-4 h-4 text-success" />}
                   </div>
                   <p className="text-xs text-base-content/60 mb-2">
                     Current allowance:{" "}
@@ -421,7 +421,7 @@ export default function SplitReviewPage() {
                   <p className="text-xs text-base-content/60 mb-3">
                     Required: {splitData.totalAmount} {splitData.token.symbol}
                   </p>
-                  {!hassufficientAllowance && (
+                  {!hasSufficientAllowance && (
                     <button
                       onClick={handleApproveToken}
                       disabled={isApproving || isApprovingFromHook || isConfirmingApproval}
@@ -437,7 +437,7 @@ export default function SplitReviewPage() {
                       )}
                     </button>
                   )}
-                  {!!hassufficientAllowance && (
+                  {!!hasSufficientAllowance && (
                     <div className="text-xs text-success text-center">✓ Sufficient allowance granted</div>
                   )}
                 </div>
@@ -449,12 +449,12 @@ export default function SplitReviewPage() {
                   disabled={
                     isExecuting ||
                     isEstimatingGas ||
-                    (needsApproval && !hassufficientAllowance) ||
+                    (needsApproval && !hasSufficientAllowance) ||
                     isApproving ||
                     isConfirmingApproval
                   }
                   className={`btn btn-lg w-full rounded-xl ${
-                    needsApproval && !hassufficientAllowance ? "btn-disabled" : "btn-primary"
+                    needsApproval && !hasSufficientAllowance ? "btn-disabled" : "btn-primary"
                   }`}
                 >
                   {isExecuting ? (
@@ -462,7 +462,7 @@ export default function SplitReviewPage() {
                       <span className="loading loading-spinner"></span>
                       Processing...
                     </>
-                  ) : needsApproval && !hassufficientAllowance ? (
+                  ) : needsApproval && !hasSufficientAllowance ? (
                     "Approve Tokens First"
                   ) : (
                     "Confirm Transaction"
