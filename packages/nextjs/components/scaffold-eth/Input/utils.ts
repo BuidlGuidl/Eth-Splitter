@@ -105,5 +105,5 @@ export const isValidInteger = (dataType: IntegerVariant, value: string) => {
 };
 
 // Treat any dot-separated string as a potential ENS name
-const ensRegex = /.+\..+/;
-export const isENS = (address = "") => ensRegex.test(address);
+const ensRegexWithSubdomains = /^[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*\.(eth|xyz|luxe|kred|art)$/;
+export const isENS = (address = "") => ensRegexWithSubdomains.test(address);
