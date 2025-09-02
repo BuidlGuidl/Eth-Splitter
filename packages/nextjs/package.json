@@ -25,6 +25,8 @@
     "burner-connector": "0.0.16",
     "daisyui": "^5.0.9",
     "framer-motion": "^12.23.12",
+    "graphql": "^16.9.0",
+    "graphql-request": "^7.1.0",
     "kubo-rpc-client": "^5.0.2",
     "lucide-react": "^0.539.0",
     "next": "^15.2.3",
