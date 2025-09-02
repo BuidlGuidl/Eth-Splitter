@@ -11,10 +11,6 @@ export const chainConfigs = {
       chainId: 8453,
       transport: "https://base-mainnet.g.alchemy.com/v2/",
     },
-    localhost: {
-      chainId: 31337,
-      transport: "http://localhost:8545",
-    },
     optimism: {
       chainId: 10,
       transport: "https://opt-mainnet.g.alchemy.com/v2/",
@@ -28,10 +24,6 @@ export const chainConfigs = {
     base: {
       address: "0x6A8A356C2Fdb6d4004e785ADd08Af7e085a1432a" as `0x${string}`,
       startBlock: 34427536,
-    },
-    localhost: {
-      address: "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0" as `0x${string}`,
-      startBlock: 5,
     },
     optimism: {
       address: "0x4E64AFA9a309B42B3F1E985F2a8F951cACAB7633" as `0x${string}`,
