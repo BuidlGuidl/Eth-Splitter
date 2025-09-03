@@ -10,7 +10,6 @@ import {
   erc20EqualSplitRecipients,
   userStats,
   tokenStats,
-  globalStats,
 } from "ponder:schema";
 
 async function updateUserStats(
@@ -127,14 +126,6 @@ ponder.on("ETHSplitter:EthSplit", async ({ event, context }) => {
     totalAmount,
     Number(event.block.timestamp)
   );
-
-  await updateGlobalStats(
-    context,
-    chainId,
-    "eth",
-    totalAmount,
-    Number(event.block.timestamp)
-  );
 });
 
 ponder.on("ETHSplitter:EthSplitEqual", async ({ event, context }) => {
@@ -178,14 +169,6 @@ ponder.on("ETHSplitter:EthSplitEqual", async ({ event, context }) => {
     sender,
     chainId,
     "ethSent",
-    totalAmount,
-    Number(event.block.timestamp)
-  );
-
-  await updateGlobalStats(
-    context,
-    chainId,
-    "eth",
     totalAmount,
     Number(event.block.timestamp)
   );
@@ -245,14 +228,6 @@ ponder.on("ETHSplitter:Erc20Split", async ({ event, context }) => {
     totalAmount,
     Number(event.block.timestamp)
   );
-
-  await updateGlobalStats(
-    context,
-    chainId,
-    "erc20",
-    totalAmount,
-    Number(event.block.timestamp)
-  );
 });
 
 ponder.on("ETHSplitter:Erc20SplitEqual", async ({ event, context }) => {
@@ -308,14 +283,6 @@ ponder.on("ETHSplitter:Erc20SplitEqual", async ({ event, context }) => {
     totalAmount,
     Number(event.block.timestamp)
   );
-
-  await updateGlobalStats(
-    context,
-    chainId,
-    "erc20",
-    totalAmount,
-    Number(event.block.timestamp)
-  );
 });
 
 async function updateTokenStats(
@@ -345,48 +312,5 @@ async function updateTokenStats(
       uniqueRecipients: 1,
       lastActivityTimestamp: timestamp,
     });
-  }
-}
-
-async function updateGlobalStats(
-  context: any,
-  chainId: number,
-  type: "eth" | "erc20",
-  amount: bigint,
-  timestamp: number
-) {
-  const globalId = chainId.toString();
-  const existingStats = await context.db.find(globalStats, { id: globalId });
-
-  if (existingStats) {
-    const updates: any = { lastActivityTimestamp: timestamp };
-
-    if (type === "eth") {
-      updates.totalEthVolume = (
-        BigInt(existingStats.totalEthVolume) + amount
-      ).toString();
-      updates.totalEthSplits = existingStats.totalEthSplits + 1;
-    } else {
-      updates.totalErc20Volume = (
-        BigInt(existingStats.totalErc20Volume) + amount
-      ).toString();
-      updates.totalErc20Splits = existingStats.totalErc20Splits + 1;
-    }
-
-    await context.db.update(globalStats, { id: globalId }).set(updates);
-  } else {
-    const newStats: any = {
-      id: globalId,
-      chainId,
-      totalEthVolume: type === "eth" ? amount.toString() : "0",
-      totalErc20Volume: type === "erc20" ? amount.toString() : "0",
-      totalEthSplits: type === "eth" ? 1 : 0,
-      totalErc20Splits: type === "erc20" ? 1 : 0,
-      totalUniqueSenders: 1,
-      totalUniqueRecipients: 1,
-      lastActivityTimestamp: timestamp,
-    };
-
-    await context.db.insert(globalStats).values(newStats);
   }
 }

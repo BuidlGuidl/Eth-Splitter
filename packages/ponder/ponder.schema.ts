@@ -201,21 +201,3 @@ export const tokenStats = onchainTable(
     ),
   })
 );
-
-export const globalStats = onchainTable(
-  "global_stats",
-  (t) => ({
-    id: t.text().primaryKey(), // chainId as string
-    chainId: t.integer().notNull(),
-    totalEthVolume: t.text().notNull().default("0"),
-    totalErc20Volume: t.text().notNull().default("0"),
-    totalEthSplits: t.integer().notNull().default(0),
-    totalErc20Splits: t.integer().notNull().default(0),
-    totalUniqueSenders: t.integer().notNull().default(0),
-    totalUniqueRecipients: t.integer().notNull().default(0),
-    lastActivityTimestamp: t.integer().notNull(),
-  }),
-  (table) => ({
-    chainIdx: index("global_stats_chain_idx").on(table.chainId),
-  })
-);
