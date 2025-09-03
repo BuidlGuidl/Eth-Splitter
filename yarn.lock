@@ -5,6 +5,18 @@ __metadata:
   version: 6
   cacheKey: 8
 
+"@0no-co/graphql.web@npm:^1.0.13":
+  version: 1.2.0
+  resolution: "@0no-co/graphql.web@npm:1.2.0"
+  peerDependencies:
+    graphql: ^14.0.0 || ^15.0.0 || ^16.0.0
+  peerDependenciesMeta:
+    graphql:
+      optional: true
+  checksum: 4d5a54b93e6024b7d476e94b991e4e4ebc4ecb97e4ce886f76889741f5e419b587bedc6a00488753069534d8ae3e4de2e901ad58506ba2f74eeb8642edccc4ca
+  languageName: node
+  linkType: hard
+
 "@aashutoshrathi/word-wrap@npm:^1.2.3":
   version: 1.2.6
   resolution: "@aashutoshrathi/word-wrap@npm:1.2.6"
@@ -4885,7 +4897,7 @@ __metadata:
     "@heroicons/react": ^2.1.5
     "@rainbow-me/rainbowkit": 2.2.7
     "@tailwindcss/postcss": latest
-    "@tanstack/react-query": ^5.59.15
+    "@tanstack/react-query": ^5.80.6
     "@trivago/prettier-plugin-sort-imports": ^4.3.0
     "@types/node": ^18.19.50
     "@types/papaparse": ^5
@@ -4919,6 +4931,7 @@ __metadata:
     tailwindcss: ^4.1.3
     type-fest: ^4.26.1
     typescript: ^5.8.2
+    urql: ^4.2.1
     usehooks-ts: ^3.1.0
     vercel: ^39.1.3
     viem: 2.31.1
@@ -5897,21 +5910,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tanstack/query-core@npm:5.59.13":
-  version: 5.59.13
-  resolution: "@tanstack/query-core@npm:5.59.13"
-  checksum: 2f43f53ecd0151c9f83f822f47a8c882cce234ece2fa4fc575ae1bf865094ff145f5efe7cb9c750541df143804941248aceaf85e7c5346a7897d896845996dff
+"@tanstack/query-core@npm:5.85.9":
+  version: 5.85.9
+  resolution: "@tanstack/query-core@npm:5.85.9"
+  checksum: 414af549322cba053322637c15d96bab3ea1abedda94ca4a90e797dd19c5dec994fd0810f184f8d3d9a50be485d1cdcaa74244338c8aef88e2d48245ddf5ad94
   languageName: node
   linkType: hard
 
-"@tanstack/react-query@npm:^5.59.15":
-  version: 5.59.15
-  resolution: "@tanstack/react-query@npm:5.59.15"
+"@tanstack/react-query@npm:^5.80.6":
+  version: 5.85.9
+  resolution: "@tanstack/react-query@npm:5.85.9"
   dependencies:
-    "@tanstack/query-core": 5.59.13
+    "@tanstack/query-core": 5.85.9
   peerDependencies:
     react: ^18 || ^19
-  checksum: 465aa2cdfc83fe3ebbb3dfe94ad39ac9e047e6808890b9dfd253d7aec31cdc46198af3c3a8dfa6a7212f941db7df1fe9a724540504cc2e3efa1cdffcb2d48164
+  checksum: d56b48b2247ec41a8f856803e74ff59b0520270079f9e5d66a3ed86a9a655aeb7181706c54251c0cbb5edb5439d33827d65f8986befa023bdfa69092ec2a96af
   languageName: node
   linkType: hard
 
@@ -6574,6 +6587,16 @@ __metadata:
   version: 1.2.2
   resolution: "@unrs/rspack-resolver-binding-win32-x64-msvc@npm:1.2.2"
   conditions: os=win32 & cpu=x64
+  languageName: node
+  linkType: hard
+
+"@urql/core@npm:^5.1.1":
+  version: 5.2.0
+  resolution: "@urql/core@npm:5.2.0"
+  dependencies:
+    "@0no-co/graphql.web": ^1.0.13
+    wonka: ^6.3.2
+  checksum: 89c1959abd9230ba06ed5dc4cc5ea6585101c4b0c12894ddbdd1ec36d76b70799b819b999cbcaf154b6f9903eb6c2ba8eef6dff447bc5c9c1870878748868e85
   languageName: node
   linkType: hard
 
@@ -21107,6 +21130,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"urql@npm:^4.2.1":
+  version: 4.2.2
+  resolution: "urql@npm:4.2.2"
+  dependencies:
+    "@urql/core": ^5.1.1
+    wonka: ^6.3.2
+  peerDependencies:
+    "@urql/core": ^5.0.0
+    react: ">= 16.8.0"
+  checksum: efdfec715abe9117a2580693d4f0ef5a2bec746624eb6b66d542210eb79c42ee8d38aed71c9a512db49d58b1a4ed1e99ff6c9e0dc5c23132f15b5dcd22c14ad5
+  languageName: node
+  linkType: hard
+
 "use-callback-ref@npm:^1.3.3":
   version: 1.3.3
   resolution: "use-callback-ref@npm:1.3.3"
@@ -21772,6 +21808,13 @@ __metadata:
   dependencies:
     string-width: ^5.0.1
   checksum: 64c48cf27171221be5f86fc54b94dd29879165bdff1a7aa92dde723d9a8c99fb108312768a5d62c8c2b80b701fa27bbd36a1ddc58367585cd45c0db7920a0cba
+  languageName: node
+  linkType: hard
+
+"wonka@npm:^6.3.2":
+  version: 6.3.5
+  resolution: "wonka@npm:6.3.5"
+  checksum: bd9f4330664ea971ddbc762275c081d5a635bcebd1c567211d43278b925f3394ad454bb33a0ef5e8beadfaad552cdbc92c018dfb96350f3895341998efa5f521
   languageName: node
   linkType: hard
 

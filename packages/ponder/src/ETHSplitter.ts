@@ -1,9 +1,9 @@
 import { ponder } from "ponder:registry";
 import {
-  ethSplits,
-  ethEqualSplits,
-  erc20Splits,
-  erc20EqualSplits,
+  ethSplit,
+  ethEqualSplit,
+  erc20Split,
+  erc20EqualSplit,
 } from "ponder:schema";
 import { erc20Abi } from "viem";
 
@@ -12,7 +12,7 @@ ponder.on("ETHSplitter:EthSplit", async ({ event, context }) => {
   const chainId = context.network.chainId;
   const splitId = event.log.id;
 
-  await context.db.insert(ethSplits).values({
+  await context.db.insert(ethSplit).values({
     id: splitId,
     transactionHash: event.transaction.hash.toLowerCase(),
     sender: sender.toLowerCase(),
@@ -32,7 +32,7 @@ ponder.on("ETHSplitter:EthSplitEqual", async ({ event, context }) => {
   const splitId = event.log.id;
   const amountPerRecipient = totalAmount / BigInt(recipients.length);
 
-  await context.db.insert(ethEqualSplits).values({
+  await context.db.insert(ethEqualSplit).values({
     id: splitId,
     transactionHash: event.transaction.hash.toLowerCase(),
     sender: sender.toLowerCase(),
@@ -53,7 +53,7 @@ ponder.on("ETHSplitter:Erc20Split", async ({ event, context }) => {
 
   const totalAmount = amounts.reduce((sum, amount) => sum + amount, 0n);
 
-  await context.db.insert(erc20Splits).values({
+  await context.db.insert(erc20Split).values({
     id: splitId,
     transactionHash: event.transaction.hash.toLowerCase(),
     sender: sender.toLowerCase(),
@@ -85,7 +85,7 @@ ponder.on("ETHSplitter:Erc20SplitEqual", async ({ event, context }) => {
   const splitId = event.log.id;
   const amountPerRecipient = totalAmount / BigInt(recipients.length);
 
-  await context.db.insert(erc20EqualSplits).values({
+  await context.db.insert(erc20EqualSplit).values({
     id: splitId,
     transactionHash: event.transaction.hash.toLowerCase(),
     sender: sender.toLowerCase(),
