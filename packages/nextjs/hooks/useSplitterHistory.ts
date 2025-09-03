@@ -121,7 +121,7 @@ const fetchSplitterHistory = async (address: string) => {
   };
 
   const data = await request<GraphQLSplitterHistoryResponse>(
-    process.env.NEXT_PUBLIC_PONDER_URL || "http://localhost:42069",
+    process.env.NEXT_PUBLIC_PONDER_URL || "",
     query,
     variables,
   );
@@ -130,8 +130,7 @@ const fetchSplitterHistory = async (address: string) => {
 };
 
 export const useSplitterHistory = () => {
-  //   const { address } = useAccount();
-  const address = "0xa8DF02c5607100Eb108B5C39dCdD8c2aE44185Df";
+  const { address } = useAccount();
 
   return useQuery<SplitHistoryItem[]>({
     queryKey: ["splitterHistory", address],
