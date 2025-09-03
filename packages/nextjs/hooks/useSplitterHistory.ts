@@ -130,14 +130,13 @@ const fetchSplitterHistory = async (address: string) => {
 };
 
 export const useSplitterHistory = () => {
-  const { address } = useAccount();
+  //   const { address } = useAccount();
+  const address = "0xa8DF02c5607100Eb108B5C39dCdD8c2aE44185Df";
 
   return useQuery<SplitHistoryItem[]>({
     queryKey: ["splitterHistory", address],
     queryFn: async (): Promise<SplitHistoryItem[]> => {
       const response = await fetchSplitterHistory(address || "");
-
-      console.log("GraphQL response:", response);
 
       return [
         ...response.ethSplits.items,
