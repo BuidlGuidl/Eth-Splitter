@@ -2,7 +2,7 @@ import React from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { CheckCircle, Coins, Copy, ExternalLink, Hash, Layers, Users, X } from "lucide-react";
 import { formatUnits } from "viem";
-import { Address, BlockieAvatar } from "~~/components/scaffold-eth";
+import { Address } from "~~/components/scaffold-eth";
 import { useCopyToClipboard, useTargetNetwork } from "~~/hooks/scaffold-eth";
 import type { SplitHistoryItem } from "~~/hooks/useSplitterHistory";
 import { getBlockExplorerTxLink } from "~~/utils/scaffold-eth";
