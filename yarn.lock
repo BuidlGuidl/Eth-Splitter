@@ -4950,7 +4950,6 @@ __metadata:
     eslint-config-ponder: ^0.8.15
     hono: ^4.5.0
     ponder: ^0.8.15
-    telegraf: ^4.16.3
     typescript: ^5.3.2
     viem: ^2.21.3
   languageName: unknown
@@ -5925,13 +5924,6 @@ __metadata:
   peerDependencies:
     react: ^18 || ^19
   checksum: d56b48b2247ec41a8f856803e74ff59b0520270079f9e5d66a3ed86a9a655aeb7181706c54251c0cbb5edb5439d33827d65f8986befa023bdfa69092ec2a96af
-  languageName: node
-  linkType: hard
-
-"@telegraf/types@npm:^7.1.0":
-  version: 7.1.0
-  resolution: "@telegraf/types@npm:7.1.0"
-  checksum: c0cceb5e043f4c4bdba50d2614145751156864c60c775969ff0e8a984ccc222fbcba560c5249e86c205e776ab63401b5b979db8a28cd77ae655c63f23e7a2e6b
   languageName: node
   linkType: hard
 
@@ -8451,34 +8443,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"buffer-alloc-unsafe@npm:^1.1.0":
-  version: 1.1.0
-  resolution: "buffer-alloc-unsafe@npm:1.1.0"
-  checksum: c5e18bf51f67754ec843c9af3d4c005051aac5008a3992938dda1344e5cfec77c4b02b4ca303644d1e9a6e281765155ce6356d85c6f5ccc5cd21afc868def396
-  languageName: node
-  linkType: hard
-
-"buffer-alloc@npm:^1.2.0":
-  version: 1.2.0
-  resolution: "buffer-alloc@npm:1.2.0"
-  dependencies:
-    buffer-alloc-unsafe: ^1.1.0
-    buffer-fill: ^1.0.0
-  checksum: 560cd27f3cbe73c614867da373407d4506309c62fe18de45a1ce191f3785ec6ca2488d802ff82065798542422980ca25f903db078c57822218182c37c3576df5
-  languageName: node
-  linkType: hard
-
 "buffer-crc32@npm:~0.2.3":
   version: 0.2.13
   resolution: "buffer-crc32@npm:0.2.13"
   checksum: 06252347ae6daca3453b94e4b2f1d3754a3b146a111d81c68924c22d91889a40623264e95e67955b1cb4a68cbedf317abeabb5140a9766ed248973096db5ce1c
-  languageName: node
-  linkType: hard
-
-"buffer-fill@npm:^1.0.0":
-  version: 1.0.0
-  resolution: "buffer-fill@npm:1.0.0"
-  checksum: c29b4723ddeab01e74b5d3b982a0c6828f2ded49cef049ddca3dac661c874ecdbcecb5dd8380cf0f4adbeb8cff90a7de724126750a1f1e5ebd4eb6c59a1315b1
   languageName: node
   linkType: hard
 
@@ -15913,7 +15881,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mri@npm:1.2.0, mri@npm:^1.1.0, mri@npm:^1.2.0":
+"mri@npm:1.2.0, mri@npm:^1.1.0":
   version: 1.2.0
   resolution: "mri@npm:1.2.0"
   checksum: 83f515abbcff60150873e424894a2f65d68037e5a7fcde8a9e2b285ee9c13ac581b63cfc1e6826c4732de3aeb84902f7c1e16b7aff46cd3f897a0f757a894e85
@@ -17090,13 +17058,6 @@ __metadata:
   dependencies:
     p-finally: ^1.0.0
   checksum: 3dd0eaa048780a6f23e5855df3dd45c7beacff1f820476c1d0d1bcd6648e3298752ba2c877aa1c92f6453c7dd23faaf13d9f5149fc14c0598a142e2c5e8d649c
-  languageName: node
-  linkType: hard
-
-"p-timeout@npm:^4.1.0":
-  version: 4.1.0
-  resolution: "p-timeout@npm:4.1.0"
-  checksum: 321fec524c23a754e3f1487f2b0a5516fd32aba960d5610490eac56f8a0114b549a93f9919ffc05aa68956dc52e8330e0519f3ddf951d208d19c845f9cd778de
   languageName: node
   linkType: hard
 
@@ -18912,15 +18873,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"safe-compare@npm:^1.1.4":
-  version: 1.1.4
-  resolution: "safe-compare@npm:1.1.4"
-  dependencies:
-    buffer-alloc: ^1.2.0
-  checksum: 8c0a08f7a2bec1b33400e17bb7cce40ebe0e53902dbba13735e0131fa432140650de2ab4750637623e02e28edab10fa439825b57a7e8b705cae1deb80a58e516
-  languageName: node
-  linkType: hard
-
 "safe-push-apply@npm:^1.0.0":
   version: 1.0.0
   resolution: "safe-push-apply@npm:1.0.0"
@@ -18953,13 +18905,6 @@ __metadata:
   version: 2.1.2
   resolution: "safer-buffer@npm:2.1.2"
   checksum: cab8f25ae6f1434abee8d80023d7e72b598cf1327164ddab31003c51215526801e40b66c5e65d658a0af1e9d6478cadcb4c745f4bd6751f97d8644786c0978b0
-  languageName: node
-  linkType: hard
-
-"sandwich-stream@npm:^2.0.2":
-  version: 2.0.2
-  resolution: "sandwich-stream@npm:2.0.2"
-  checksum: 666d3276e5390786a4ad69f04da472fb69940d1a279a22aebd49ae78ca8f12855503e69d71f77d4b415144a284ffa14efa811a097ad7df501a68c01438b91282
   languageName: node
   linkType: hard
 
@@ -20255,24 +20200,6 @@ __metadata:
   dependencies:
     bintrees: 1.0.2
   checksum: 44de8246752b6f8c2924685f969fd3d94c36949f22b0907e99bef2b2220726dd8467f4730ea96b06040b9aa2587c0866049640039d1b956952dfa962bc2075a3
-  languageName: node
-  linkType: hard
-
-"telegraf@npm:^4.16.3":
-  version: 4.16.3
-  resolution: "telegraf@npm:4.16.3"
-  dependencies:
-    "@telegraf/types": ^7.1.0
-    abort-controller: ^3.0.0
-    debug: ^4.3.4
-    mri: ^1.2.0
-    node-fetch: ^2.7.0
-    p-timeout: ^4.1.0
-    safe-compare: ^1.1.4
-    sandwich-stream: ^2.0.2
-  bin:
-    telegraf: lib/cli.mjs
-  checksum: e24e1679849e6dcba9d58e932bb441a0c83b183e1a63b951e37635e4e32b9f96824f4bcaa48a9de1a8f92a0bf3afd2734475f0d4f7b4210d5b5f1f169e55c78d
   languageName: node
   linkType: hard
 

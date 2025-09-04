@@ -1,49 +1,51 @@
 import { createConfig } from "ponder";
 import { http } from "viem";
-import { ETHSplitterAbi } from "./abis/ETHSplitter";
+import deployedContracts from "../nextjs/contracts/deployedContracts";
+import scaffoldConfig from "../nextjs/scaffold.config";
 
-import { chainConfigs } from "./src/config/chains";
+const targetNetworks = scaffoldConfig.targetNetworks;
 
-const alchemyApiKey =
-  process.env.ALCHEMY_API_KEY || "oKxs-03sij-U_N0iOlrSsZFr29-IqbuF";
-
-const networks = Object.entries(chainConfigs.chains).reduce(
-  (acc, [chainName, chainConfig]) => {
-    let rpcUrl = chainConfig.transport;
-    if (rpcUrl.includes("g.alchemy.com")) {
-      rpcUrl = `${rpcUrl}${alchemyApiKey}`;
-    }
-
-    acc[chainName] = {
-      chainId: chainConfig.chainId,
-      transport: http(rpcUrl),
-    };
-    return acc;
-  },
-  {} as Record<string, { chainId: number; transport: ReturnType<typeof http> }>
+const networksWithContracts = targetNetworks.filter(
+  (network) => deployedContracts[network.id]?.ETHSplitter
 );
 
-const contractNetworks = Object.entries(
-  chainConfigs.ethSplitterContracts
-).reduce((acc, [chainName, contractConfig]) => {
-  acc[chainName] = {
-    address: contractConfig.address,
-    startBlock: contractConfig.startBlock,
-  };
+const networks = Object.fromEntries(
+  networksWithContracts.map((network) => [
+    network.name,
+    {
+      chainId: network.id,
+      transport: http(process.env[`PONDER_RPC_URL_${network.id}`]),
+    },
+  ])
+);
+
+const contractNetworks = networksWithContracts.reduce((acc, network) => {
+  const networkContracts = deployedContracts[network.id];
+
+  if (networkContracts?.ETHSplitter) {
+    acc[network.name] = {
+      address: networkContracts.ETHSplitter.address,
+      startBlock: networkContracts.ETHSplitter.deployedOnBlock || 0,
+    };
+  }
+
   return acc;
 }, {} as Record<string, { address: `0x${string}`; startBlock: number }>);
+
+const ethSplitterAbi =
+  networksWithContracts.length > 0
+    ? deployedContracts[networksWithContracts[0]?.id]?.ETHSplitter?.abi
+    : undefined;
 
 export default createConfig({
   database: {
     kind: "postgres",
     connectionString: process.env.DATABASE_URL,
   },
-
   networks,
-
   contracts: {
     ETHSplitter: {
-      abi: ETHSplitterAbi,
+      abi: ethSplitterAbi,
       network: contractNetworks,
     },
   },

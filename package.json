@@ -52,7 +52,6 @@
     "verify": "yarn hardhat:verify",
     "ponder:dev": "yarn workspace @se-2/ponder dev",
     "ponder:codegen": "yarn workspace @se-2/ponder codegen"
-
   },
   "packageManager": "yarn@3.2.3",
   "devDependencies": {
