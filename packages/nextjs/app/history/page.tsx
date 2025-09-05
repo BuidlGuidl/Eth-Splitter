@@ -12,7 +12,7 @@ import { Address } from "~~/components/scaffold-eth";
 import type { SplitHistoryItem } from "~~/hooks/useSplitterHistory";
 import { useSplitterHistory } from "~~/hooks/useSplitterHistory";
 
-export type FilterType = "all" | "eth" | "eth-equal" | "erc20" | "erc20-equal";
+export type FilterType = "all" | "ETH_SPLIT" | "ETH_EQUAL_SPLIT" | "ERC20_SPLIT" | "ERC20_EQUAL_SPLIT";
 export type SortOption = "date-desc" | "date-asc" | "amount-desc" | "amount-asc";
 
 const HistoryPage = () => {
@@ -28,26 +28,24 @@ const HistoryPage = () => {
   const filteredAndSortedHistory = useMemo(() => {
     let filtered = [...history];
 
+    // Filter by type
     if (selectedFilter !== "all") {
-      filtered = filtered.filter(item => {
-        if (selectedFilter === "eth") return "amounts" in item && !("token" in item);
-        if (selectedFilter === "eth-equal") return "amountPerRecipient" in item && !("token" in item);
-        if (selectedFilter === "erc20") return "amounts" in item && "token" in item;
-        if (selectedFilter === "erc20-equal") return "amountPerRecipient" in item && "token" in item;
-        return true;
-      });
+      filtered = filtered.filter(item => item.type === selectedFilter);
     }
 
+    // Filter by search term
     if (searchTerm) {
       const search = searchTerm.toLowerCase();
       filtered = filtered.filter(
         item =>
           item.transactionHash.toLowerCase().includes(search) ||
           item.recipients.some(r => r.toLowerCase().includes(search)) ||
-          ("token" in item && item.token.toLowerCase().includes(search)),
+          (item.token && item.token.toLowerCase().includes(search)) ||
+          (item.tokenSymbol && item.tokenSymbol.toLowerCase().includes(search)),
       );
     }
 
+    // Sort
     filtered.sort((a, b) => {
       switch (sortBy) {
         case "date-desc":

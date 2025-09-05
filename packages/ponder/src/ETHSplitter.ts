@@ -1,10 +1,5 @@
 import { ponder } from "ponder:registry";
-import {
-  ethSplit,
-  ethEqualSplit,
-  erc20Split,
-  erc20EqualSplit,
-} from "ponder:schema";
+import { split } from "ponder:schema";
 import { erc20Abi } from "viem";
 
 ponder.on("ETHSplitter:EthSplit", async ({ event, context }) => {
@@ -12,14 +7,19 @@ ponder.on("ETHSplitter:EthSplit", async ({ event, context }) => {
   const chainId = context.network.chainId;
   const splitId = event.log.id;
 
-  await context.db.insert(ethSplit).values({
+  await context.db.insert(split).values({
     id: splitId,
+    type: "ETH_SPLIT",
     transactionHash: event.transaction.hash.toLowerCase(),
     sender: sender.toLowerCase(),
     totalAmount: totalAmount.toString(),
-    amounts: amounts.map((a) => a.toString()),
-    recipients: recipients.map((r) => r.toLowerCase()),
+    amounts: amounts.map((a: bigint) => a.toString()),
+    recipients: recipients.map((r: string) => r.toLowerCase()),
     recipientCount: recipients.length,
+    amountPerRecipient: null,
+    token: null,
+    tokenSymbol: null,
+    tokenDecimals: null,
     blockNumber: Number(event.block.number),
     blockTimestamp: Number(event.block.timestamp),
     chainId,
@@ -32,14 +32,19 @@ ponder.on("ETHSplitter:EthSplitEqual", async ({ event, context }) => {
   const splitId = event.log.id;
   const amountPerRecipient = totalAmount / BigInt(recipients.length);
 
-  await context.db.insert(ethEqualSplit).values({
+  await context.db.insert(split).values({
     id: splitId,
+    type: "ETH_EQUAL_SPLIT",
     transactionHash: event.transaction.hash.toLowerCase(),
     sender: sender.toLowerCase(),
     totalAmount: totalAmount.toString(),
+    amounts: null,
+    recipients: recipients.map((r: string) => r.toLowerCase()),
     recipientCount: recipients.length,
-    recipients: recipients.map((r) => r.toLowerCase()),
     amountPerRecipient: amountPerRecipient.toString(),
+    token: null,
+    tokenSymbol: null,
+    tokenDecimals: null,
     blockNumber: Number(event.block.number),
     blockTimestamp: Number(event.block.timestamp),
     chainId,
@@ -51,28 +56,37 @@ ponder.on("ETHSplitter:Erc20Split", async ({ event, context }) => {
   const chainId = context.network.chainId;
   const splitId = event.log.id;
 
-  const totalAmount = amounts.reduce((sum, amount) => sum + amount, 0n);
+  const totalAmount = amounts.reduce(
+    (sum: bigint, amount: bigint) => sum + amount,
+    0n
+  );
 
-  await context.db.insert(erc20Split).values({
-    id: splitId,
-    transactionHash: event.transaction.hash.toLowerCase(),
-    sender: sender.toLowerCase(),
-    token: token.toLowerCase(),
-
-    totalAmount: totalAmount.toString(),
-    amounts: amounts.map((a) => a.toString()),
-    tokenSymbol: await context.client.readContract({
+  const [tokenSymbol, tokenDecimals] = await Promise.all([
+    context.client.readContract({
       address: token,
       abi: erc20Abi,
       functionName: "symbol",
     }),
-    tokenDecimals: await context.client.readContract({
+    context.client.readContract({
       address: token,
       abi: erc20Abi,
       functionName: "decimals",
     }),
-    recipients: recipients.map((r) => r.toLowerCase()),
+  ]);
+
+  await context.db.insert(split).values({
+    id: splitId,
+    type: "ERC20_SPLIT",
+    transactionHash: event.transaction.hash.toLowerCase(),
+    sender: sender.toLowerCase(),
+    totalAmount: totalAmount.toString(),
+    amounts: amounts.map((a: bigint) => a.toString()),
+    recipients: recipients.map((r: string) => r.toLowerCase()),
     recipientCount: recipients.length,
+    amountPerRecipient: null,
+    token: token.toLowerCase(),
+    tokenSymbol,
+    tokenDecimals,
     blockNumber: Number(event.block.number),
     blockTimestamp: Number(event.block.timestamp),
     chainId,
@@ -85,25 +99,32 @@ ponder.on("ETHSplitter:Erc20SplitEqual", async ({ event, context }) => {
   const splitId = event.log.id;
   const amountPerRecipient = totalAmount / BigInt(recipients.length);
 
-  await context.db.insert(erc20EqualSplit).values({
-    id: splitId,
-    transactionHash: event.transaction.hash.toLowerCase(),
-    sender: sender.toLowerCase(),
-    token: token.toLowerCase(),
-    totalAmount: totalAmount.toString(),
-    tokenSymbol: await context.client.readContract({
+  const [tokenSymbol, tokenDecimals] = await Promise.all([
+    context.client.readContract({
       address: token,
       abi: erc20Abi,
       functionName: "symbol",
     }),
-    tokenDecimals: await context.client.readContract({
+    context.client.readContract({
       address: token,
       abi: erc20Abi,
       functionName: "decimals",
     }),
-    recipients: recipients.map((r) => r.toLowerCase()),
+  ]);
+
+  await context.db.insert(split).values({
+    id: splitId,
+    type: "ERC20_EQUAL_SPLIT",
+    transactionHash: event.transaction.hash.toLowerCase(),
+    sender: sender.toLowerCase(),
+    totalAmount: totalAmount.toString(),
+    amounts: null,
+    recipients: recipients.map((r: string) => r.toLowerCase()),
     recipientCount: recipients.length,
     amountPerRecipient: amountPerRecipient.toString(),
+    token: token.toLowerCase(),
+    tokenSymbol,
+    tokenDecimals,
     blockNumber: Number(event.block.number),
     blockTimestamp: Number(event.block.timestamp),
     chainId,

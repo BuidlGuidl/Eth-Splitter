@@ -2,10 +2,14 @@ import { useQuery } from "@tanstack/react-query";
 import { gql, request } from "graphql-request";
 import { useAccount } from "wagmi";
 
+export type SplitType = "ETH_SPLIT" | "ETH_EQUAL_SPLIT" | "ERC20_SPLIT" | "ERC20_EQUAL_SPLIT";
+
 export type SplitEventBase = {
   id: string;
+  type: SplitType;
   transactionHash: string;
   sender: string;
+  totalAmount: string;
   recipients: string[];
   recipientCount: number;
   blockNumber: number;
@@ -14,100 +18,82 @@ export type SplitEventBase = {
 };
 
 export type EthSplit = SplitEventBase & {
-  totalAmount: string;
+  type: "ETH_SPLIT";
   amounts: string[];
+  amountPerRecipient: null;
+  token: null;
+  tokenSymbol: null;
+  tokenDecimals: null;
 };
 
 export type EthEqualSplit = SplitEventBase & {
-  totalAmount: string;
+  type: "ETH_EQUAL_SPLIT";
+  amounts: null;
   amountPerRecipient: string;
+  token: null;
+  tokenSymbol: null;
+  tokenDecimals: null;
 };
 
 export type Erc20Split = SplitEventBase & {
+  type: "ERC20_SPLIT";
+  amounts: string[];
+  amountPerRecipient: null;
   token: string;
   tokenSymbol: string;
   tokenDecimals: number;
-  totalAmount: string;
-  amounts: string[];
 };
 
 export type Erc20EqualSplit = SplitEventBase & {
+  type: "ERC20_EQUAL_SPLIT";
+  amounts: null;
+  amountPerRecipient: string;
   token: string;
   tokenSymbol: string;
   tokenDecimals: number;
-  totalAmount: string;
-  amountPerRecipient: string;
 };
 
 export type SplitHistoryItem = EthSplit | EthEqualSplit | Erc20Split | Erc20EqualSplit;
 
-type GraphQLSplitterHistoryResponse = {
-  ethSplits: { items: EthSplit[] };
-  ethEqualSplits: { items: EthEqualSplit[] };
-  erc20Splits: { items: Erc20Split[] };
-  erc20EqualSplits: { items: Erc20EqualSplit[] };
+type GraphQLSplitResponse = {
+  splits: {
+    items: Array<{
+      id: string;
+      type: SplitType;
+      transactionHash: string;
+      sender: string;
+      totalAmount: string;
+      recipients: string[];
+      recipientCount: number;
+      amounts: string[] | null;
+      amountPerRecipient: string | null;
+      token: string | null;
+      tokenSymbol: string | null;
+      tokenDecimals: number | null;
+      blockNumber: number;
+      blockTimestamp: number;
+      chainId: number;
+    }>;
+  };
 };
 
 const fetchSplitterHistory = async (address: string) => {
   const query = gql`
     query GetSplitterHistory($address: String!) {
-      ethSplits(where: { sender: $address }) {
+      splits(where: { sender: $address }, orderBy: "blockNumber", orderDirection: "desc") {
         items {
           id
+          type
           transactionHash
           sender
           totalAmount
+          recipients
+          recipientCount
           amounts
-          recipients
-          recipientCount
-          blockNumber
-          blockTimestamp
-          chainId
-        }
-      }
-      ethEqualSplits(where: { sender: $address }) {
-        items {
-          id
-          transactionHash
-          sender
-          totalAmount
-          recipients
-          recipientCount
           amountPerRecipient
-          blockNumber
-          blockTimestamp
-          chainId
-        }
-      }
-      erc20Splits(where: { sender: $address }) {
-        items {
-          id
-          transactionHash
-          sender
           token
           tokenSymbol
           tokenDecimals
-          totalAmount
-          amounts
-          recipients
-          recipientCount
-          blockNumber
-          blockTimestamp
-          chainId
-        }
-      }
-      erc20EqualSplits(where: { sender: $address }) {
-        items {
-          id
-          transactionHash
-          sender
-          token
-          tokenSymbol
-          tokenDecimals
-          totalAmount
-          recipients
-          recipientCount
-          amountPerRecipient
           blockNumber
           blockTimestamp
           chainId
@@ -120,8 +106,8 @@ const fetchSplitterHistory = async (address: string) => {
     address: address.toLowerCase(),
   };
 
-  const data = await request<GraphQLSplitterHistoryResponse>(
-    process.env.NEXT_PUBLIC_PONDER_URL || "",
+  const data = await request<GraphQLSplitResponse>(
+    process.env.NEXT_PUBLIC_PONDER_URL || "http://localhost:42069/",
     query,
     variables,
   );
@@ -135,16 +121,13 @@ export const useSplitterHistory = () => {
   return useQuery<SplitHistoryItem[]>({
     queryKey: ["splitterHistory", address],
     queryFn: async (): Promise<SplitHistoryItem[]> => {
-      const response = await fetchSplitterHistory(address || "");
+      if (!address) return [];
 
-      return [
-        ...response.ethSplits.items,
-        ...response.ethEqualSplits.items,
-        ...response.erc20Splits.items,
-        ...response.erc20EqualSplits.items,
-      ].sort((a, b) => b.blockNumber - a.blockNumber);
+      const response = await fetchSplitterHistory(address);
+
+      return response.splits.items as SplitHistoryItem[];
     },
-    enabled: true,
+    enabled: !!address,
     staleTime: 30_000,
     retry: 3,
   });

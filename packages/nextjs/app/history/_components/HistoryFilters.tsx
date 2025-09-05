@@ -22,10 +22,10 @@ export const HistoryFilters: React.FC<HistoryFiltersProps> = ({
 }) => {
   const filterOptions: { value: FilterType; label: string }[] = [
     { value: "all", label: "All Splits" },
-    { value: "eth", label: "ETH Custom" },
-    { value: "eth-equal", label: "ETH Equal" },
-    { value: "erc20", label: "ERC20 Custom" },
-    { value: "erc20-equal", label: "ERC20 Equal" },
+    { value: "ETH_SPLIT", label: "ETH Custom" },
+    { value: "ETH_EQUAL_SPLIT", label: "ETH Equal" },
+    { value: "ERC20_SPLIT", label: "ERC20 Custom" },
+    { value: "ERC20_EQUAL_SPLIT", label: "ERC20 Equal" },
   ];
 
   const sortOptions: { value: SortOption; label: string; icon: React.ReactNode }[] = [

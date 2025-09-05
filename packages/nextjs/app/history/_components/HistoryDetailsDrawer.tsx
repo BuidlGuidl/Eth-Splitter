@@ -6,6 +6,7 @@ import { Address } from "~~/components/scaffold-eth";
 import { useCopyToClipboard, useTargetNetwork } from "~~/hooks/scaffold-eth";
 import type { SplitHistoryItem } from "~~/hooks/useSplitterHistory";
 import { getBlockExplorerTxLink } from "~~/utils/scaffold-eth";
+import { isEqualSplit, isErc20Transaction } from "~~/utils/splitterHistory";
 
 interface HistoryDetailsDrawerProps {
   split: SplitHistoryItem | null;
@@ -19,8 +20,8 @@ export const HistoryDetailsDrawer: React.FC<HistoryDetailsDrawerProps> = ({ spli
 
   if (!split) return null;
 
-  const isEqualSplit = "amountPerRecipient" in split;
-  const isErc20 = "token" in split;
+  const isErc20 = isErc20Transaction(split);
+  const isEqual = isEqualSplit(split);
 
   const formatAmount = (amount: string, decimals = 18) => {
     const formatted = formatUnits(BigInt(amount), decimals);
@@ -33,14 +34,14 @@ export const HistoryDetailsDrawer: React.FC<HistoryDetailsDrawerProps> = ({ spli
 
   const getTokenSymbol = () => {
     if (isErc20) {
-      return (split as any).tokenSymbol || "TOKEN";
+      return split.tokenSymbol || "TOKEN";
     }
     return targetNetwork.nativeCurrency.symbol;
   };
 
   const getTokenDecimals = () => {
     if (isErc20) {
-      return (split as any).tokenDecimals || 18;
+      return split.tokenDecimals || 18;
     }
     return 18;
   };
@@ -56,10 +57,18 @@ export const HistoryDetailsDrawer: React.FC<HistoryDetailsDrawerProps> = ({ spli
   };
 
   const getSplitTypeLabel = () => {
-    if (isErc20 && isEqualSplit) return "ERC20 Equal Split";
-    if (isErc20) return "ERC20 Custom Split";
-    if (isEqualSplit) return "ETH Equal Split";
-    return "ETH Custom Split";
+    switch (split.type) {
+      case "ETH_SPLIT":
+        return "ETH Custom Split";
+      case "ETH_EQUAL_SPLIT":
+        return "ETH Equal Split";
+      case "ERC20_SPLIT":
+        return "ERC20 Custom Split";
+      case "ERC20_EQUAL_SPLIT":
+        return "ERC20 Equal Split";
+      default:
+        return "Unknown Split";
+    }
   };
 
   const explorerLink = getBlockExplorerTxLink(split.chainId, split.transactionHash);
@@ -115,11 +124,11 @@ export const HistoryDetailsDrawer: React.FC<HistoryDetailsDrawerProps> = ({ spli
                         <span className="font-mono">{split.recipientCount}</span>
                       </div>
 
-                      {isEqualSplit && (
+                      {isEqual && (
                         <div className="flex justify-between items-center">
                           <span className="text-base-content/60">Amount per Recipient</span>
                           <span className="font-mono">
-                            {formatAmount((split as any).amountPerRecipient, getTokenDecimals())} {getTokenSymbol()}
+                            {formatAmount(split.amountPerRecipient!, getTokenDecimals())} {getTokenSymbol()}
                           </span>
                         </div>
                       )}
@@ -153,7 +162,7 @@ export const HistoryDetailsDrawer: React.FC<HistoryDetailsDrawerProps> = ({ spli
                       {isErc20 && (
                         <div className="flex justify-between items-center">
                           <span className="text-base-content/60">Token</span>
-                          <Address address={(split as any).token as `0x${string}`} format="short" />
+                          <Address address={split.token! as `0x${string}`} format="short" />
                         </div>
                       )}
                     </div>
@@ -201,7 +210,7 @@ export const HistoryDetailsDrawer: React.FC<HistoryDetailsDrawerProps> = ({ spli
 
                     <div className="space-y-2 max-h-64 overflow-y-auto">
                       {split.recipients.map((recipient, idx) => {
-                        const amount = isEqualSplit ? (split as any).amountPerRecipient : (split as any).amounts[idx];
+                        const amount = isEqual ? split.amountPerRecipient! : split.amounts![idx];
 
                         return (
                           <div

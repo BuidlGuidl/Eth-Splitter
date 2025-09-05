@@ -5,6 +5,7 @@ import { formatUnits } from "viem";
 import { Address } from "~~/components/scaffold-eth";
 import { useTargetNetwork } from "~~/hooks/scaffold-eth";
 import type { SplitHistoryItem } from "~~/hooks/useSplitterHistory";
+import { isEqualSplit, isErc20Transaction } from "~~/utils/splitterHistory";
 
 interface HistoryCardProps {
   split: SplitHistoryItem;
@@ -15,8 +16,8 @@ interface HistoryCardProps {
 export const HistoryCard: React.FC<HistoryCardProps> = ({ split, onClick, delay = 0 }) => {
   const { targetNetwork } = useTargetNetwork();
 
-  const isEqualSplit = "amountPerRecipient" in split;
-  const isErc20 = "token" in split;
+  const isErc20 = isErc20Transaction(split);
+  const isEqual = isEqualSplit(split);
 
   const formatAmount = (amount: string, decimals = 18) => {
     const formatted = formatUnits(BigInt(amount), decimals);
@@ -29,28 +30,44 @@ export const HistoryCard: React.FC<HistoryCardProps> = ({ split, onClick, delay 
 
   const getTokenSymbol = () => {
     if (isErc20) {
-      return (split as any).tokenSymbol || "TOKEN";
+      return split.tokenSymbol || "TOKEN";
     }
     return targetNetwork.nativeCurrency.symbol;
   };
 
   const getTotalAmount = () => {
-    const decimals = isErc20 ? (split as any).tokenDecimals || 18 : 18;
+    const decimals = isErc20 ? split.tokenDecimals || 18 : 18;
     return formatAmount(split.totalAmount, decimals);
   };
 
   const getSplitTypeLabel = () => {
-    if (isErc20 && isEqualSplit) return "ERC20 Equal";
-    if (isErc20) return "ERC20 Custom";
-    if (isEqualSplit) return "ETH Equal";
-    return "ETH Custom";
+    switch (split.type) {
+      case "ETH_SPLIT":
+        return "ETH Custom";
+      case "ETH_EQUAL_SPLIT":
+        return "ETH Equal";
+      case "ERC20_SPLIT":
+        return "ERC20 Custom";
+      case "ERC20_EQUAL_SPLIT":
+        return "ERC20 Equal";
+      default:
+        return "Unknown";
+    }
   };
 
   const getSplitTypeBadgeColor = () => {
-    if (isErc20 && isEqualSplit) return "badge-accent";
-    if (isErc20) return "badge-secondary";
-    if (isEqualSplit) return "badge-primary";
-    return "badge-info";
+    switch (split.type) {
+      case "ETH_SPLIT":
+        return "badge-info";
+      case "ETH_EQUAL_SPLIT":
+        return "badge-primary";
+      case "ERC20_SPLIT":
+        return "badge-secondary";
+      case "ERC20_EQUAL_SPLIT":
+        return "badge-accent";
+      default:
+        return "badge-ghost";
+    }
   };
 
   const formatDate = (timestamp: number) => {
@@ -123,11 +140,11 @@ export const HistoryCard: React.FC<HistoryCardProps> = ({ split, onClick, delay 
           <div className="space-y-1">
             {split.recipients.slice(0, 2).map((recipient, idx) => (
               <div key={recipient} className="flex items-center justify-between text-sm">
-                <Address address={recipient as `0x${string}`} format="short" />
+                <Address address={recipient as `0x${string}`} format="short" disableAddressLink={true} />
                 <span className="text-base-content/60">
-                  {isEqualSplit
-                    ? formatAmount((split as any).amountPerRecipient, isErc20 ? (split as any).tokenDecimals || 18 : 18)
-                    : formatAmount((split as any).amounts[idx], isErc20 ? (split as any).tokenDecimals || 18 : 18)}{" "}
+                  {isEqual
+                    ? formatAmount(split.amountPerRecipient!, isErc20 ? split.tokenDecimals || 18 : 18)
+                    : formatAmount(split.amounts![idx], isErc20 ? split.tokenDecimals || 18 : 18)}{" "}
                   {getTokenSymbol()}
                 </span>
               </div>

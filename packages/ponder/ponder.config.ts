@@ -5,12 +5,8 @@ import scaffoldConfig from "../nextjs/scaffold.config";
 
 const targetNetworks = scaffoldConfig.targetNetworks;
 
-const networksWithContracts = targetNetworks.filter(
-  (network) => deployedContracts[network.id]?.ETHSplitter
-);
-
 const networks = Object.fromEntries(
-  networksWithContracts.map((network) => [
+  targetNetworks.map((network) => [
     network.name,
     {
       chainId: network.id,
@@ -19,23 +15,42 @@ const networks = Object.fromEntries(
   ])
 );
 
-const contractNetworks = networksWithContracts.reduce((acc, network) => {
-  const networkContracts = deployedContracts[network.id];
+const contractNames = Array.from(
+  new Set(
+    targetNetworks.flatMap((network) =>
+      Object.keys(deployedContracts[network.id] || {})
+    )
+  )
+);
 
-  if (networkContracts?.ETHSplitter) {
-    acc[network.name] = {
-      address: networkContracts.ETHSplitter.address,
-      startBlock: networkContracts.ETHSplitter.deployedOnBlock || 0,
-    };
-  }
+const contracts = Object.fromEntries(
+  contractNames.map((contractName) => {
+    const contractNetworks = targetNetworks.reduce((acc, network) => {
+      const networkContracts = deployedContracts[network.id];
 
-  return acc;
-}, {} as Record<string, { address: `0x${string}`; startBlock: number }>);
+      if (networkContracts?.[contractName]) {
+        acc[network.name] = {
+          address: networkContracts[contractName].address,
+          startBlock: networkContracts[contractName].deployedOnBlock || 0,
+        };
+      }
 
-const ethSplitterAbi =
-  networksWithContracts.length > 0
-    ? deployedContracts[networksWithContracts[0]?.id]?.ETHSplitter?.abi
-    : undefined;
+      return acc;
+    }, {} as Record<string, { address: `0x${string}`; startBlock: number }>);
+
+    const contractAbi = targetNetworks
+      .map((network) => deployedContracts[network.id]?.[contractName]?.abi)
+      .find((abi) => abi !== undefined);
+
+    return [
+      contractName,
+      {
+        abi: contractAbi,
+        network: contractNetworks,
+      },
+    ];
+  })
+);
 
 export default createConfig({
   database: {
@@ -43,10 +58,5 @@ export default createConfig({
     connectionString: process.env.DATABASE_URL,
   },
   networks,
-  contracts: {
-    ETHSplitter: {
-      abi: ethSplitterAbi,
-      network: contractNetworks,
-    },
-  },
+  contracts,
 });

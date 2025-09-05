@@ -4,6 +4,7 @@ import { Activity, Coins, TrendingUp, Users } from "lucide-react";
 import { formatUnits } from "viem";
 import { useTargetNetwork } from "~~/hooks/scaffold-eth";
 import type { SplitHistoryItem } from "~~/hooks/useSplitterHistory";
+import { isErc20Transaction } from "~~/utils/splitterHistory";
 
 interface HistoryStatsProps {
   history: SplitHistoryItem[];
@@ -28,25 +29,24 @@ export const HistoryStats: React.FC<HistoryStatsProps> = ({ history }) => {
     let totalErc20Volume = BigInt(0);
 
     const splitTypeCounts = {
-      "eth-custom": 0,
-      "eth-equal": 0,
-      "erc20-custom": 0,
-      "erc20-equal": 0,
+      ETH_SPLIT: 0,
+      ETH_EQUAL_SPLIT: 0,
+      ERC20_SPLIT: 0,
+      ERC20_EQUAL_SPLIT: 0,
     };
 
     history.forEach(split => {
       split.recipients.forEach(r => uniqueRecipients.add(r.toLowerCase()));
 
-      const isErc20 = "token" in split;
-      const isEqual = "amountPerRecipient" in split;
+      const isErc20 = isErc20Transaction(split);
 
       if (isErc20) {
         totalErc20Volume += BigInt(split.totalAmount);
-        splitTypeCounts[isEqual ? "erc20-equal" : "erc20-custom"]++;
       } else {
         totalEthVolume += BigInt(split.totalAmount);
-        splitTypeCounts[isEqual ? "eth-equal" : "eth-custom"]++;
       }
+
+      splitTypeCounts[split.type]++;
     });
 
     const mostUsedType = Object.entries(splitTypeCounts).reduce((a, b) =>
@@ -56,10 +56,10 @@ export const HistoryStats: React.FC<HistoryStatsProps> = ({ history }) => {
     );
 
     const typeLabels = {
-      "eth-custom": "ETH Custom",
-      "eth-equal": "ETH Equal",
-      "erc20-custom": "ERC20 Custom",
-      "erc20-equal": "ERC20 Equal",
+      ETH_SPLIT: "ETH Custom",
+      ETH_EQUAL_SPLIT: "ETH Equal",
+      ERC20_SPLIT: "ERC20 Custom",
+      ERC20_EQUAL_SPLIT: "ERC20 Equal",
     };
 
     return {
