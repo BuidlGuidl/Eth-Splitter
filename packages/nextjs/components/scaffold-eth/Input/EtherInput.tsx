@@ -72,6 +72,10 @@ export const EtherInput = ({
   }, [nativeCurrencyPrice, transitoryDisplayValue, displayUsdMode, value]);
 
   const handleChangeNumber = (newValue: string) => {
+    if (newValue.startsWith(".")) {
+      newValue = "0" + newValue;
+    }
+
     if (newValue && !SIGNED_NUMBER_REGEX.test(newValue)) {
       return;
     }
@@ -87,7 +91,11 @@ export const EtherInput = ({
 
     // Since the display value is a derived state (calculated from the ether value), usdMode would not allow introducing a decimal point.
     // This condition handles a transitory state for a display value with a trailing decimal sign
-    if (newValue.endsWith(".") || newValue.endsWith(".0")) {
+
+    const hasTrailingZeros = newValue.includes(".") && newValue.endsWith("0");
+    const endsWithDecimal = newValue.endsWith(".") || newValue.endsWith(".0");
+
+    if (endsWithDecimal || hasTrailingZeros) {
       setTransitoryDisplayValue(newValue);
     } else {
       setTransitoryDisplayValue(undefined);
