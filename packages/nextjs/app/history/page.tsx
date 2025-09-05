@@ -6,7 +6,7 @@ import { HistoryDetailsDrawer } from "./_components/HistoryDetailsDrawer";
 import { HistoryFilters } from "./_components/HistoryFilters";
 import { HistoryStats } from "./_components/HistoryStats";
 import { AnimatePresence, motion } from "framer-motion";
-import { History, Loader2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, History, Loader2 } from "lucide-react";
 import { useAccount } from "wagmi";
 import { Address } from "~~/components/scaffold-eth";
 import type { SplitHistoryItem } from "~~/hooks/useSplitterHistory";
@@ -14,6 +14,8 @@ import { useSplitterHistory } from "~~/hooks/useSplitterHistory";
 
 export type FilterType = "all" | "ETH_SPLIT" | "ETH_EQUAL_SPLIT" | "ERC20_SPLIT" | "ERC20_EQUAL_SPLIT";
 export type SortOption = "date-desc" | "date-asc" | "amount-desc" | "amount-asc";
+
+const ITEMS_PER_PAGE = 12;
 
 const HistoryPage = () => {
   const { address } = useAccount();
@@ -24,6 +26,7 @@ const HistoryPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSplit, setSelectedSplit] = useState<SplitHistoryItem | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const filteredAndSortedHistory = useMemo(() => {
     let filtered = [...history];
@@ -64,9 +67,106 @@ const HistoryPage = () => {
     return filtered;
   }, [history, selectedFilter, sortBy, searchTerm]);
 
+  const totalPages = Math.ceil(filteredAndSortedHistory.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedHistory = filteredAndSortedHistory.slice(startIndex, endIndex);
+
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedFilter, sortBy, searchTerm]);
+
   const handleCardClick = (split: SplitHistoryItem) => {
     setSelectedSplit(split);
     setDrawerOpen(true);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const PaginationControls = () => {
+    if (totalPages <= 1) return null;
+
+    const getPageNumbers = () => {
+      const pages: (number | string)[] = [];
+      const showEllipsisThreshold = 5;
+
+      if (totalPages <= showEllipsisThreshold + 2) {
+        for (let i = 1; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        pages.push(1);
+
+        if (currentPage > 3) {
+          pages.push("...");
+        }
+
+        for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) {
+          pages.push(i);
+        }
+
+        if (currentPage < totalPages - 2) {
+          pages.push("...");
+        }
+
+        pages.push(totalPages);
+      }
+
+      return pages;
+    };
+
+    return (
+      <div className="flex flex-col sm:flex-row items-center justify-between mt-8 pt-6 border-t border-base-300 gap-4 ">
+        <div className="text-sm text-base-content/60 ">
+          Showing {startIndex + 1}-{Math.min(endIndex, filteredAndSortedHistory.length)} of{" "}
+          {filteredAndSortedHistory.length} split{filteredAndSortedHistory.length !== 1 ? "s" : ""}
+        </div>
+
+        <div className="flex items-center gap-2 ">
+          <button
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className={`btn btn-sm ${currentPage === 1 ? "btn-disabled" : "btn-ghost"}`}
+            aria-label="Previous page"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+
+          <div className="flex gap-1">
+            {getPageNumbers().map((page, index) =>
+              typeof page === "number" ? (
+                <button
+                  key={index}
+                  onClick={() => handlePageChange(page)}
+                  className={`btn btn-sm min-w-[2.5rem] ${
+                    page === currentPage ? "btn-primary" : "btn-ghost hover:btn-secondary"
+                  }`}
+                  aria-label={`Go to page ${page}`}
+                >
+                  {page}
+                </button>
+              ) : (
+                <span key={index} className="px-2 text-base-content/40">
+                  {page}
+                </span>
+              ),
+            )}
+          </div>
+
+          <button
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className={`btn btn-sm ${currentPage === totalPages ? "btn-disabled" : "btn-ghost"}`}
+            aria-label="Next page"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    );
   };
 
   if (!address) {
@@ -136,13 +236,19 @@ const HistoryPage = () => {
         </motion.div>
       )}
 
-      <AnimatePresence mode="popLayout">
-        <motion.div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" layout>
-          {filteredAndSortedHistory.map((split, index) => (
-            <HistoryCard key={split.id} split={split} onClick={() => handleCardClick(split)} delay={index * 0.05} />
-          ))}
-        </motion.div>
-      </AnimatePresence>
+      {!isLoading && paginatedHistory.length > 0 && (
+        <>
+          <AnimatePresence mode="popLayout">
+            <motion.div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" layout>
+              {paginatedHistory.map((split, index) => (
+                <HistoryCard key={split.id} split={split} onClick={() => handleCardClick(split)} delay={index * 0.05} />
+              ))}
+            </motion.div>
+          </AnimatePresence>
+
+          <PaginationControls />
+        </>
+      )}
 
       <HistoryDetailsDrawer
         split={selectedSplit}

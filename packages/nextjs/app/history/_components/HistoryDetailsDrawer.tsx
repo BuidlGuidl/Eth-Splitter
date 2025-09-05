@@ -3,9 +3,10 @@ import { AnimatePresence, motion } from "framer-motion";
 import { CheckCircle, Coins, Copy, ExternalLink, Hash, Layers, Users, X } from "lucide-react";
 import { formatUnits } from "viem";
 import { Address } from "~~/components/scaffold-eth";
-import { useCopyToClipboard, useTargetNetwork } from "~~/hooks/scaffold-eth";
+import { useCopyToClipboard } from "~~/hooks/scaffold-eth";
 import type { SplitHistoryItem } from "~~/hooks/useSplitterHistory";
 import { getBlockExplorerTxLink } from "~~/utils/scaffold-eth";
+import { getTargetNetworks } from "~~/utils/scaffold-eth";
 import { isEqualSplit, isErc20Transaction } from "~~/utils/splitterHistory";
 
 interface HistoryDetailsDrawerProps {
@@ -15,7 +16,8 @@ interface HistoryDetailsDrawerProps {
 }
 
 export const HistoryDetailsDrawer: React.FC<HistoryDetailsDrawerProps> = ({ split, isOpen, onClose }) => {
-  const { targetNetwork } = useTargetNetwork();
+  const targetNetworks = getTargetNetworks();
+  const splitNetwork = targetNetworks.find(network => network.id == split?.chainId);
   const { copyToClipboard, isCopiedToClipboard } = useCopyToClipboard();
 
   if (!split) return null;
@@ -36,7 +38,7 @@ export const HistoryDetailsDrawer: React.FC<HistoryDetailsDrawerProps> = ({ spli
     if (isErc20) {
       return split.tokenSymbol || "TOKEN";
     }
-    return targetNetwork.nativeCurrency.symbol;
+    return splitNetwork?.nativeCurrency.symbol;
   };
 
   const getTokenDecimals = () => {
@@ -238,7 +240,7 @@ export const HistoryDetailsDrawer: React.FC<HistoryDetailsDrawerProps> = ({ spli
                     </h3>
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
-                      <span>{targetNetwork.name}</span>
+                      <span>{splitNetwork?.name}</span>
                       <span className="text-base-content/60">(Chain ID: {split.chainId})</span>
                     </div>
                   </div>
