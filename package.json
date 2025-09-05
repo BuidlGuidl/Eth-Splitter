@@ -5,7 +5,8 @@
   "workspaces": {
     "packages": [
       "packages/hardhat",
-      "packages/nextjs"
+      "packages/nextjs",
+      "packages/ponder"
     ]
   },
   "scripts": {
@@ -48,7 +49,9 @@
     "vercel:yolo": "yarn workspace @se-2/nextjs vercel:yolo",
     "ipfs": "yarn workspace @se-2/nextjs ipfs",
     "vercel:login": "yarn workspace @se-2/nextjs vercel:login",
-    "verify": "yarn hardhat:verify"
+    "verify": "yarn hardhat:verify",
+    "ponder:dev": "yarn workspace @se-2/ponder dev",
+    "ponder:codegen": "yarn workspace @se-2/ponder codegen"
   },
   "packageManager": "yarn@3.2.3",
   "devDependencies": {
