@@ -80,7 +80,7 @@ type GraphQLSplitResponse = {
 const fetchSplitterHistory = async (address: string) => {
   const query = gql`
     query GetSplitterHistory($address: String!) {
-      splits(where: { sender: $address }, orderBy: "blockNumber", orderDirection: "desc") {
+      splits(where: { sender: $address }, orderBy: "blockTimestamp", orderDirection: "desc") {
         items {
           id
           type
