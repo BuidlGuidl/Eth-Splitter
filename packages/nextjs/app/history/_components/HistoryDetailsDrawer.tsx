@@ -19,7 +19,6 @@ interface HistoryDetailsDrawerProps {
 export const HistoryDetailsDrawer: React.FC<HistoryDetailsDrawerProps> = ({ split, isOpen, onClose }) => {
   const targetNetworks = getTargetNetworks();
   const router = useRouter();
-  // ... existing code ...
 
   const splitNetwork = targetNetworks.find(network => network.id == split?.chainId);
   const { copyToClipboard, isCopiedToClipboard } = useCopyToClipboard();

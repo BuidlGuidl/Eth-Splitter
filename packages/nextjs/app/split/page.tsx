@@ -463,7 +463,7 @@ function SplitContent() {
 
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [splitMode, equalAmount, recipients, selectedToken]); // Added selectedToken dependency
+  }, [splitMode, equalAmount, recipients, selectedToken]);
 
   useEffect(() => {
     if (splitMode === "UNEQUAL") {
@@ -474,7 +474,7 @@ function SplitContent() {
       return () => clearTimeout(timer);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [recipients.map(r => r.amount).join(","), splitMode, selectedToken]); // Added selectedToken dependency
+  }, [recipients.map(r => r.amount).join(","), splitMode, selectedToken]);
 
   const hasDuplicates = duplicateAddresses.length > 0;
 
