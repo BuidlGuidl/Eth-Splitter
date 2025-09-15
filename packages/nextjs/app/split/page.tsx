@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 import { AssetSelector } from "./_components/AssetSelector";
@@ -84,7 +84,7 @@ const calculatePercentage = (amount: string, total: string, decimals: number): n
   }
 };
 
-export default function Split() {
+function SplitContent() {
   const router = useRouter();
   const chainId = useChainId();
   const searchParams = useSearchParams();
@@ -713,5 +713,19 @@ export default function Split() {
         </motion.div>
       )}
     </div>
+  );
+}
+
+export default function Split() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-screen">
+          <span className="loading loading-spinner loading-lg"></span>
+        </div>
+      }
+    >
+      <SplitContent />
+    </Suspense>
   );
 }
