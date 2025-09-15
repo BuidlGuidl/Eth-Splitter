@@ -248,9 +248,7 @@ export default function SplitReviewPage() {
       }
 
       if (txHash) {
-        notification.success("Split executed successfully!");
 
-        // Show success modal instead of redirecting
         setTransactionSuccess({
           hash: txHash,
           recipients: splitData.recipients,
@@ -293,7 +291,6 @@ export default function SplitReviewPage() {
     : BigInt(0);
   const hasSufficientAllowance = tokenAllowance && tokenAllowance >= totalAmountBigInt;
 
-  // Show transaction success modal if transaction completed
   if (transactionSuccess) {
     return (
       <TransactionSuccess
