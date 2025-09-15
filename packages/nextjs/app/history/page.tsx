@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import { HistoryCard } from "./_components/HistoryCard";
 import { HistoryDetailsDrawer } from "./_components/HistoryDetailsDrawer";
 import { HistoryFilters } from "./_components/HistoryFilters";
@@ -70,12 +70,10 @@ const HistoryPage = () => {
   const filteredAndSortedHistory = useMemo(() => {
     let filtered = [...history];
 
-    // Filter by type
     if (selectedFilter !== "all") {
       filtered = filtered.filter(item => item.type === selectedFilter);
     }
 
-    // Filter by search term
     if (searchTerm) {
       const search = searchTerm.toLowerCase();
       filtered = filtered.filter(
@@ -87,7 +85,6 @@ const HistoryPage = () => {
       );
     }
 
-    // Sort
     filtered.sort((a, b) => {
       switch (sortBy) {
         case "date-desc":
