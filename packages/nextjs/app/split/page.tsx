@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { AssetSelector } from "./_components/AssetSelector";
 import { BulkImportModal } from "./_components/BulkImportModal";
 import { RecipientRow } from "./_components/RecipientRow";
@@ -86,6 +87,7 @@ const calculatePercentage = (amount: string, total: string, decimals: number): n
 export default function Split() {
   const router = useRouter();
   const chainId = useChainId();
+  const searchParams = useSearchParams();
 
   const [selectedToken, setSelectedToken] = useState<Token | null>(null);
   const [splitMode, setSplitMode] = useState<SplitMode>("EQUAL");
@@ -115,25 +117,86 @@ export default function Split() {
   };
 
   useEffect(() => {
+    const mode = searchParams.get("mode");
+    const tokenParam = searchParams.get("token");
+    const recipientCount = searchParams.get("recipientCount");
+
+    if (mode && tokenParam && recipientCount) {
+      setSplitMode(mode as SplitMode);
+
+      if (tokenParam === "ETH") {
+        setSelectedToken({
+          address: "ETH",
+          symbol: "ETH",
+          name: "Ether",
+          decimals: 18,
+        });
+      } else {
+        const tokenSymbol = searchParams.get("tokenSymbol");
+        const tokenDecimals = searchParams.get("tokenDecimals");
+
+        setSelectedToken({
+          address: tokenParam,
+          symbol: tokenSymbol || "TOKEN",
+          name: tokenSymbol || "Token",
+          decimals: parseInt(tokenDecimals || "18"),
+        });
+      }
+
+      const count = parseInt(recipientCount);
+      const newRecipients: Recipient[] = [];
+
+      for (let i = 0; i < count; i++) {
+        const recipientAddress = searchParams.get(`recipient_${i}`);
+        if (recipientAddress) {
+          const contact = savedContacts.find(c => c.address.toLowerCase() === recipientAddress.toLowerCase());
+
+          newRecipients.push({
+            id: Date.now().toString() + i,
+            address: recipientAddress,
+            amount: "",
+            label: contact?.label || "",
+          });
+        }
+      }
+
+      while (newRecipients.length < 3) {
+        newRecipients.push({
+          id: Date.now().toString() + newRecipients.length,
+          address: "",
+          amount: "",
+          label: "",
+        });
+      }
+
+      setRecipients(newRecipients);
+
+      router.replace("/split", { scroll: false });
+    }
+  }, [searchParams, savedContacts, router]);
+
+  useEffect(() => {
     const contacts = loadContacts();
     setSavedContacts(contacts);
 
-    const cache = loadCache();
-    if (cache) {
-      if (cache.wallets && cache.wallets.length > 0) {
-        const cachedRecipients = cache.wallets.map((wallet, index) => ({
-          id: Date.now().toString() + index,
-          address: wallet,
-          amount: cache.amounts?.[index] || "",
-          label: contacts.find(c => c.address === wallet)?.label || "",
-        }));
-        setRecipients(cachedRecipients);
-      }
-      if (cache.amount) {
-        setEqualAmount(cache.amount);
+    if (!searchParams.get("mode")) {
+      const cache = loadCache();
+      if (cache) {
+        if (cache.wallets && cache.wallets.length > 0) {
+          const cachedRecipients = cache.wallets.map((wallet, index) => ({
+            id: Date.now().toString() + index,
+            address: wallet,
+            amount: cache.amounts?.[index] || "",
+            label: contacts.find(c => c.address === wallet)?.label || "",
+          }));
+          setRecipients(cachedRecipients);
+        }
+        if (cache.amount) {
+          setEqualAmount(cache.amount);
+        }
       }
     }
-  }, []);
+  }, [searchParams]);
 
   useEffect(() => {
     const wallets = recipients.map(r => r.address).filter(Boolean);
