@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Contact, History, Split } from "lucide-react";
+import { useTheme } from "next-themes";
 import { useDarkMode } from "usehooks-ts";
 import { hardhat } from "viem/chains";
 import { Bars3Icon } from "@heroicons/react/24/outline";
@@ -72,7 +73,8 @@ export const Header = () => {
   const { targetNetwork } = useTargetNetwork();
   const isLocalNetwork = targetNetwork.id === hardhat.id;
 
-  const { isDarkMode } = useDarkMode();
+  const { resolvedTheme } = useTheme();
+  const isDarkMode = resolvedTheme === "dark";
   const [logoSrc, setLogoSrc] = useState("/bg.svg");
 
   useEffect(() => {
