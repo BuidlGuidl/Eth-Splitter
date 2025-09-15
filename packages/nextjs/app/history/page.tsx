@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/router";
 import { HistoryCard } from "./_components/HistoryCard";
 import { HistoryDetailsDrawer } from "./_components/HistoryDetailsDrawer";
 import { HistoryFilters } from "./_components/HistoryFilters";
@@ -19,6 +20,7 @@ const ITEMS_PER_PAGE = 12;
 
 const HistoryPage = () => {
   const { address } = useAccount();
+  const router = useRouter();
   const { data: history = [], isLoading, error } = useSplitterHistory();
 
   const [selectedFilter, setSelectedFilter] = useState<FilterType>("all");
@@ -27,6 +29,43 @@ const HistoryPage = () => {
   const [selectedSplit, setSelectedSplit] = useState<SplitHistoryItem | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+
+  const handleRepeat = (
+    split: SplitHistoryItem,
+    isEqual: boolean,
+    isErc20: boolean,
+    onRepeat?: () => void,
+    e?: React.MouseEvent,
+  ) => {
+    if (e) e.stopPropagation();
+
+    if (!split) return;
+
+    const params = new URLSearchParams();
+
+    params.append("mode", isEqual ? "EQUAL" : "UNEQUAL");
+
+    if (isErc20) {
+      if (!split.token || !split.tokenSymbol || split.tokenDecimals === undefined || split.tokenDecimals === null) {
+        console.error("Missing ERC20 token information for repeat split.");
+        return;
+      }
+      params.append("token", split.token);
+      params.append("tokenSymbol", split.tokenSymbol);
+      params.append("tokenDecimals", split.tokenDecimals.toString());
+    } else {
+      params.append("token", "ETH");
+    }
+
+    split.recipients.forEach((recipient, index) => {
+      params.append(`recipient_${index}`, recipient);
+    });
+    params.append("recipientCount", split.recipientCount.toString());
+
+    router.push(`/split?${params.toString()}`);
+
+    if (onRepeat) onRepeat();
+  };
 
   const filteredAndSortedHistory = useMemo(() => {
     let filtered = [...history];
@@ -72,7 +111,7 @@ const HistoryPage = () => {
   const endIndex = startIndex + ITEMS_PER_PAGE;
   const paginatedHistory = filteredAndSortedHistory.slice(startIndex, endIndex);
 
-  React.useEffect(() => {
+  useEffect(() => {
     setCurrentPage(1);
   }, [selectedFilter, sortBy, searchTerm]);
 
@@ -241,7 +280,13 @@ const HistoryPage = () => {
           <AnimatePresence mode="popLayout">
             <motion.div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" layout>
               {paginatedHistory.map((split, index) => (
-                <HistoryCard key={split.id} split={split} onClick={() => handleCardClick(split)} delay={index * 0.05} />
+                <HistoryCard
+                  key={split.id}
+                  split={split}
+                  onClick={() => handleCardClick(split)}
+                  delay={index * 0.05}
+                  handleRepeat={handleRepeat}
+                />
               ))}
             </motion.div>
           </AnimatePresence>
@@ -257,6 +302,7 @@ const HistoryPage = () => {
           setDrawerOpen(false);
           setSelectedSplit(null);
         }}
+        handleRepeat={handleRepeat}
       />
     </div>
   );

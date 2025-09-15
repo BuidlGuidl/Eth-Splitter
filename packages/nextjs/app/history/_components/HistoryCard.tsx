@@ -1,5 +1,4 @@
 import React from "react";
-import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { ArrowRight, Clock, Coins, Repeat, Users } from "lucide-react";
 import { formatUnits } from "viem";
@@ -12,37 +11,20 @@ interface HistoryCardProps {
   split: SplitHistoryItem;
   onClick: () => void;
   delay?: number;
+  handleRepeat: (
+    split: SplitHistoryItem,
+    isEqual: boolean,
+    isErc20: boolean,
+    onSuccess?: () => void,
+    e?: React.MouseEvent,
+  ) => void;
 }
 
-export const HistoryCard: React.FC<HistoryCardProps> = ({ split, onClick, delay = 0 }) => {
+export const HistoryCard: React.FC<HistoryCardProps> = ({ split, onClick, delay = 0, handleRepeat }) => {
   const { targetNetwork } = useTargetNetwork();
-  const router = useRouter();
 
   const isErc20 = isErc20Transaction(split);
   const isEqual = isEqualSplit(split);
-
-  const handleRepeat = (e: React.MouseEvent) => {
-    e.stopPropagation();
-
-    const params = new URLSearchParams();
-
-    params.append("mode", isEqual ? "EQUAL" : "UNEQUAL");
-
-    if (isErc20) {
-      params.append("token", split.token!);
-      params.append("tokenSymbol", split.tokenSymbol!);
-      params.append("tokenDecimals", split.tokenDecimals!.toString());
-    } else {
-      params.append("token", "ETH");
-    }
-
-    split.recipients.forEach((recipient, index) => {
-      params.append(`recipient_${index}`, recipient);
-    });
-    params.append("recipientCount", split.recipientCount.toString());
-
-    router.push(`/split?${params.toString()}`);
-  };
 
   const formatAmount = (amount: string, decimals = 18) => {
     const formatted = formatUnits(BigInt(amount), decimals);
@@ -124,6 +106,10 @@ export const HistoryCard: React.FC<HistoryCardProps> = ({ split, onClick, delay 
     }
   };
 
+  function _(): void {
+    throw new Error("Function not implemented.");
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -181,7 +167,11 @@ export const HistoryCard: React.FC<HistoryCardProps> = ({ split, onClick, delay 
         </div>
 
         <div className="card-actions justify-end">
-          <button className="btn btn-ghost btn-sm gap-1" onClick={handleRepeat} title="Repeat this split">
+          <button
+            className="btn btn-ghost btn-sm gap-1"
+            onClick={e => handleRepeat(split, isEqual, isErc20, _, e)}
+            title="Repeat this split"
+          >
             <Repeat className="w-4 h-4" />
             Repeat
           </button>

@@ -1,5 +1,4 @@
 import React from "react";
-import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { CheckCircle, Coins, Copy, ExternalLink, Hash, Layers, Repeat, Users, X } from "lucide-react";
 import { formatUnits } from "viem";
@@ -14,11 +13,17 @@ interface HistoryDetailsDrawerProps {
   split: SplitHistoryItem | null;
   isOpen: boolean;
   onClose: () => void;
+  handleRepeat: (
+    split: SplitHistoryItem,
+    isEqual: boolean,
+    isErc20: boolean,
+    onSuccess?: () => void,
+    e?: React.MouseEvent,
+  ) => void;
 }
 
-export const HistoryDetailsDrawer: React.FC<HistoryDetailsDrawerProps> = ({ split, isOpen, onClose }) => {
+export const HistoryDetailsDrawer: React.FC<HistoryDetailsDrawerProps> = ({ split, isOpen, onClose, handleRepeat }) => {
   const targetNetworks = getTargetNetworks();
-  const router = useRouter();
 
   const splitNetwork = targetNetworks.find(network => network.id == split?.chainId);
   const { copyToClipboard, isCopiedToClipboard } = useCopyToClipboard();
@@ -27,31 +32,6 @@ export const HistoryDetailsDrawer: React.FC<HistoryDetailsDrawerProps> = ({ spli
 
   const isErc20 = isErc20Transaction(split);
   const isEqual = isEqualSplit(split);
-
-  const handleRepeat = () => {
-    if (!split) return;
-
-    const params = new URLSearchParams();
-    const isEqual = isEqualSplit(split);
-
-    params.append("mode", isEqual ? "EQUAL" : "UNEQUAL");
-
-    if (isErc20Transaction(split)) {
-      params.append("token", split.token!);
-      params.append("tokenSymbol", split.tokenSymbol!);
-      params.append("tokenDecimals", split.tokenDecimals!.toString());
-    } else {
-      params.append("token", "ETH");
-    }
-
-    split.recipients.forEach((recipient, index) => {
-      params.append(`recipient_${index}`, recipient);
-    });
-    params.append("recipientCount", split.recipientCount.toString());
-
-    router.push(`/split?${params.toString()}`);
-    onClose();
-  };
 
   const formatAmount = (amount: string, decimals = 18) => {
     const formatted = formatUnits(BigInt(amount), decimals);
@@ -129,7 +109,11 @@ export const HistoryDetailsDrawer: React.FC<HistoryDetailsDrawerProps> = ({ spli
                   <div className="badge badge-lg badge-secondary">{getSplitTypeLabel()}</div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <button onClick={handleRepeat} className="btn btn-sm btn-primary gap-2" title="Repeat this split">
+                  <button
+                    onClick={() => handleRepeat(split, isEqual, isErc20, onClose)}
+                    className="btn btn-sm btn-primary gap-2"
+                    title="Repeat this split"
+                  >
                     <Repeat className="w-4 h-4" />
                     Repeat Split
                   </button>
