@@ -1,4 +1,3 @@
-// This file should be saved as: packages/nextjs/components/TransactionSuccess.tsx
 import React from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
@@ -67,7 +66,6 @@ export const TransactionSuccess: React.FC<TransactionSuccessProps> = ({
         transition={{ delay: 0.1 }}
         className="bg-base-100 rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden"
       >
-        {/* Success Header */}
         <div className="bg-gradient-to-r from-success/20 to-primary/20 p-8 text-center">
           <motion.div
             initial={{ scale: 0 }}
@@ -81,9 +79,7 @@ export const TransactionSuccess: React.FC<TransactionSuccessProps> = ({
           <p className="text-base-content/80">Your tokens have been distributed successfully</p>
         </div>
 
-        {/* Transaction Details */}
         <div className="p-6 space-y-6 max-h-[50vh] overflow-y-auto">
-          {/* Amount Summary */}
           <div className="bg-base-200 rounded-2xl p-4">
             <div className="text-center">
               <p className="text-sm text-base-content/60 mb-1">Total Amount Split</p>
@@ -96,7 +92,6 @@ export const TransactionSuccess: React.FC<TransactionSuccessProps> = ({
             </div>
           </div>
 
-          {/* Recipients Summary */}
           <div className="space-y-2">
             <h3 className="text-sm font-medium text-base-content/60">Recipients</h3>
             <div className="bg-base-200 rounded-xl p-3 max-h-32 overflow-y-auto">
@@ -124,7 +119,6 @@ export const TransactionSuccess: React.FC<TransactionSuccessProps> = ({
             </div>
           </div>
 
-          {/* Transaction Hash */}
           <div className="bg-base-200 rounded-xl p-4">
             <div className="flex justify-between items-center">
               <div>
@@ -146,7 +140,6 @@ export const TransactionSuccess: React.FC<TransactionSuccessProps> = ({
           </div>
         </div>
 
-        {/* Action Buttons */}
         <div className="p-6 bg-base-200/50 border-t border-base-300">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <button onClick={handleNewSplit} className="btn btn-primary gap-2">
