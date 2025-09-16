@@ -62,6 +62,18 @@ const HistoryPage = () => {
     });
     params.append("recipientCount", split.recipientCount.toString());
 
+    if (isEqual) {
+      if (split.amountPerRecipient) {
+        params.append("equalAmount", split.amountPerRecipient);
+      }
+    } else {
+      if (split.amounts && split.amounts.length > 0) {
+        split.amounts.forEach((amount, index) => {
+          params.append(`amount_${index}`, amount);
+        });
+      }
+    }
+
     router.push(`/split?${params.toString()}`);
 
     if (onRepeat) onRepeat();
@@ -127,26 +139,29 @@ const HistoryPage = () => {
 
     const getPageNumbers = () => {
       const pages: (number | string)[] = [];
-      const showEllipsisThreshold = 5;
+      const maxVisible = 5;
 
-      if (totalPages <= showEllipsisThreshold + 2) {
+      if (totalPages <= maxVisible) {
         for (let i = 1; i <= totalPages; i++) {
           pages.push(i);
         }
       } else {
         pages.push(1);
 
-        if (currentPage > 3) {
-          pages.push("...");
+        let start = Math.max(2, currentPage - 1);
+        let end = Math.min(totalPages - 1, currentPage + 1);
+
+        if (currentPage <= 2) {
+          end = 4;
+        } else if (currentPage >= totalPages - 1) {
+          start = totalPages - 3;
         }
 
-        for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) {
+        if (start > 2) pages.push("...");
+        for (let i = start; i <= end; i++) {
           pages.push(i);
         }
-
-        if (currentPage < totalPages - 2) {
-          pages.push("...");
-        }
+        if (end < totalPages - 1) pages.push("...");
 
         pages.push(totalPages);
       }
@@ -155,13 +170,8 @@ const HistoryPage = () => {
     };
 
     return (
-      <div className="flex flex-col sm:flex-row items-center justify-between mt-8 pt-6 border-t border-base-300 gap-4 ">
-        <div className="text-sm text-base-content/60 ">
-          Showing {startIndex + 1}-{Math.min(endIndex, filteredAndSortedHistory.length)} of{" "}
-          {filteredAndSortedHistory.length} split{filteredAndSortedHistory.length !== 1 ? "s" : ""}
-        </div>
-
-        <div className="flex items-center gap-2 ">
+      <div className="flex justify-center mt-8">
+        <div className="btn-group">
           <button
             onClick={() => handlePageChange(currentPage - 1)}
             disabled={currentPage === 1}
@@ -171,15 +181,13 @@ const HistoryPage = () => {
             <ChevronLeft className="w-4 h-4" />
           </button>
 
-          <div className="flex gap-1">
+          <div className="flex items-center gap-1 mx-2">
             {getPageNumbers().map((page, index) =>
               typeof page === "number" ? (
                 <button
                   key={index}
                   onClick={() => handlePageChange(page)}
-                  className={`btn btn-sm min-w-[2.5rem] ${
-                    page === currentPage ? "btn-primary" : "btn-ghost hover:btn-secondary"
-                  }`}
+                  className={`btn btn-sm ${currentPage === page ? "btn-primary" : "btn-ghost hover:btn-secondary"}`}
                   aria-label={`Go to page ${page}`}
                 >
                   {page}

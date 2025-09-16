@@ -146,15 +146,31 @@ function SplitContent() {
       const count = parseInt(recipientCount);
       const newRecipients: Recipient[] = [];
 
+      const equalAmountParam = searchParams.get("equalAmount");
+      if (mode === "EQUAL" && equalAmountParam) {
+        const decimals = tokenParam === "ETH" ? 18 : parseInt(searchParams.get("tokenDecimals") || "18");
+        const formattedAmount = formatUnits(BigInt(equalAmountParam), decimals);
+        setEqualAmount(formattedAmount);
+      }
+
       for (let i = 0; i < count; i++) {
         const recipientAddress = searchParams.get(`recipient_${i}`);
         if (recipientAddress) {
           const contact = savedContacts.find(c => c.address.toLowerCase() === recipientAddress.toLowerCase());
 
+          let amount = "";
+          if (mode === "UNEQUAL") {
+            const amountParam = searchParams.get(`amount_${i}`);
+            if (amountParam) {
+              const decimals = tokenParam === "ETH" ? 18 : parseInt(searchParams.get("tokenDecimals") || "18");
+              amount = formatUnits(BigInt(amountParam), decimals);
+            }
+          }
+
           newRecipients.push({
             id: Date.now().toString() + i,
             address: recipientAddress,
-            amount: "",
+            amount: amount,
             label: contact?.label || "",
           });
         }
