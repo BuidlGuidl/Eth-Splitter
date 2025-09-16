@@ -1,6 +1,6 @@
 import React from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { CheckCircle, Coins, Copy, ExternalLink, Hash, Layers, Users, X } from "lucide-react";
+import { CheckCircle, Coins, Copy, ExternalLink, Hash, Layers, Repeat, Users, X } from "lucide-react";
 import { formatUnits } from "viem";
 import { Address } from "~~/components/scaffold-eth";
 import { useCopyToClipboard } from "~~/hooks/scaffold-eth";
@@ -13,10 +13,18 @@ interface HistoryDetailsDrawerProps {
   split: SplitHistoryItem | null;
   isOpen: boolean;
   onClose: () => void;
+  handleRepeat: (
+    split: SplitHistoryItem,
+    isEqual: boolean,
+    isErc20: boolean,
+    onSuccess?: () => void,
+    e?: React.MouseEvent,
+  ) => void;
 }
 
-export const HistoryDetailsDrawer: React.FC<HistoryDetailsDrawerProps> = ({ split, isOpen, onClose }) => {
+export const HistoryDetailsDrawer: React.FC<HistoryDetailsDrawerProps> = ({ split, isOpen, onClose, handleRepeat }) => {
   const targetNetworks = getTargetNetworks();
+
   const splitNetwork = targetNetworks.find(network => network.id == split?.chainId);
   const { copyToClipboard, isCopiedToClipboard } = useCopyToClipboard();
 
@@ -100,9 +108,19 @@ export const HistoryDetailsDrawer: React.FC<HistoryDetailsDrawerProps> = ({ spli
                   <h2 className="text-xl font-bold mb-1">Split Details</h2>
                   <div className="badge badge-lg badge-secondary">{getSplitTypeLabel()}</div>
                 </div>
-                <button onClick={onClose} className="btn btn-ghost btn-circle">
-                  <X className="w-5 h-5" />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleRepeat(split, isEqual, isErc20, onClose)}
+                    className="btn btn-sm btn-primary gap-2"
+                    title="Repeat this split"
+                  >
+                    <Repeat className="w-4 h-4" />
+                    Repeat Split
+                  </button>
+                  <button onClick={onClose} className="btn btn-ghost btn-circle">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
 
               <div className="flex-1 overflow-y-auto p-6 space-y-6">

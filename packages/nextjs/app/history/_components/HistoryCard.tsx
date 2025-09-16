@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, Clock, Coins, Users } from "lucide-react";
+import { ArrowRight, Clock, Coins, Repeat, Users } from "lucide-react";
 import { formatUnits } from "viem";
 import { Address } from "~~/components/scaffold-eth";
 import { useTargetNetwork } from "~~/hooks/scaffold-eth";
@@ -11,9 +11,16 @@ interface HistoryCardProps {
   split: SplitHistoryItem;
   onClick: () => void;
   delay?: number;
+  handleRepeat: (
+    split: SplitHistoryItem,
+    isEqual: boolean,
+    isErc20: boolean,
+    onSuccess?: () => void,
+    e?: React.MouseEvent,
+  ) => void;
 }
 
-export const HistoryCard: React.FC<HistoryCardProps> = ({ split, onClick, delay = 0 }) => {
+export const HistoryCard: React.FC<HistoryCardProps> = ({ split, onClick, delay = 0, handleRepeat }) => {
   const { targetNetwork } = useTargetNetwork();
 
   const isErc20 = isErc20Transaction(split);
@@ -99,6 +106,10 @@ export const HistoryCard: React.FC<HistoryCardProps> = ({ split, onClick, delay 
     }
   };
 
+  function _(): void {
+    throw new Error("Function not implemented.");
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -156,6 +167,14 @@ export const HistoryCard: React.FC<HistoryCardProps> = ({ split, onClick, delay 
         </div>
 
         <div className="card-actions justify-end">
+          <button
+            className="btn btn-ghost btn-sm gap-1"
+            onClick={e => handleRepeat(split, isEqual, isErc20, _, e)}
+            title="Repeat this split"
+          >
+            <Repeat className="w-4 h-4" />
+            Repeat
+          </button>
           <button className="btn btn-ghost btn-sm gap-1">
             View Details
             <ArrowRight className="w-4 h-4" />

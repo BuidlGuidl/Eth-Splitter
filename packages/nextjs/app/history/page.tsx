@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { HistoryCard } from "./_components/HistoryCard";
 import { HistoryDetailsDrawer } from "./_components/HistoryDetailsDrawer";
 import { HistoryFilters } from "./_components/HistoryFilters";
@@ -19,6 +20,7 @@ const ITEMS_PER_PAGE = 12;
 
 const HistoryPage = () => {
   const { address } = useAccount();
+  const router = useRouter();
   const { data: history = [], isLoading, error } = useSplitterHistory();
 
   const [selectedFilter, setSelectedFilter] = useState<FilterType>("all");
@@ -28,15 +30,62 @@ const HistoryPage = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
 
+  const handleRepeat = (
+    split: SplitHistoryItem,
+    isEqual: boolean,
+    isErc20: boolean,
+    onRepeat?: () => void,
+    e?: React.MouseEvent,
+  ) => {
+    if (e) e.stopPropagation();
+
+    if (!split) return;
+
+    const params = new URLSearchParams();
+
+    params.append("mode", isEqual ? "EQUAL" : "UNEQUAL");
+
+    if (isErc20) {
+      if (!split.token || !split.tokenSymbol || split.tokenDecimals === undefined || split.tokenDecimals === null) {
+        console.error("Missing ERC20 token information for repeat split.");
+        return;
+      }
+      params.append("token", split.token);
+      params.append("tokenSymbol", split.tokenSymbol);
+      params.append("tokenDecimals", split.tokenDecimals.toString());
+    } else {
+      params.append("token", "ETH");
+    }
+
+    split.recipients.forEach((recipient, index) => {
+      params.append(`recipient_${index}`, recipient);
+    });
+    params.append("recipientCount", split.recipientCount.toString());
+
+    if (isEqual) {
+      if (split.amountPerRecipient) {
+        params.append("equalAmount", split.amountPerRecipient);
+      }
+    } else {
+      if (split.amounts && split.amounts.length > 0) {
+        split.amounts.forEach((amount, index) => {
+          params.append(`amount_${index}`, amount);
+        });
+      }
+    }
+
+    router.push(`/split?${params.toString()}`);
+
+    if (onRepeat) onRepeat();
+  };
+
   const filteredAndSortedHistory = useMemo(() => {
     let filtered = [...history];
 
-    // Filter by type
     if (selectedFilter !== "all") {
       filtered = filtered.filter(item => item.type === selectedFilter);
     }
 
-    // Filter by search term
     if (searchTerm) {
       const search = searchTerm.toLowerCase();
       filtered = filtered.filter(
@@ -48,7 +97,6 @@ const HistoryPage = () => {
       );
     }
 
-    // Sort
     filtered.sort((a, b) => {
       switch (sortBy) {
         case "date-desc":
@@ -72,7 +120,7 @@ const HistoryPage = () => {
   const endIndex = startIndex + ITEMS_PER_PAGE;
   const paginatedHistory = filteredAndSortedHistory.slice(startIndex, endIndex);
 
-  React.useEffect(() => {
+  useEffect(() => {
     setCurrentPage(1);
   }, [selectedFilter, sortBy, searchTerm]);
 
@@ -91,26 +139,29 @@ const HistoryPage = () => {
 
     const getPageNumbers = () => {
       const pages: (number | string)[] = [];
-      const showEllipsisThreshold = 5;
+      const maxVisible = 5;
 
-      if (totalPages <= showEllipsisThreshold + 2) {
+      if (totalPages <= maxVisible) {
         for (let i = 1; i <= totalPages; i++) {
           pages.push(i);
         }
       } else {
         pages.push(1);
 
-        if (currentPage > 3) {
-          pages.push("...");
+        let start = Math.max(2, currentPage - 1);
+        let end = Math.min(totalPages - 1, currentPage + 1);
+
+        if (currentPage <= 2) {
+          end = 4;
+        } else if (currentPage >= totalPages - 1) {
+          start = totalPages - 3;
         }
 
-        for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) {
+        if (start > 2) pages.push("...");
+        for (let i = start; i <= end; i++) {
           pages.push(i);
         }
-
-        if (currentPage < totalPages - 2) {
-          pages.push("...");
-        }
+        if (end < totalPages - 1) pages.push("...");
 
         pages.push(totalPages);
       }
@@ -119,13 +170,8 @@ const HistoryPage = () => {
     };
 
     return (
-      <div className="flex flex-col sm:flex-row items-center justify-between mt-8 pt-6 border-t border-base-300 gap-4 ">
-        <div className="text-sm text-base-content/60 ">
-          Showing {startIndex + 1}-{Math.min(endIndex, filteredAndSortedHistory.length)} of{" "}
-          {filteredAndSortedHistory.length} split{filteredAndSortedHistory.length !== 1 ? "s" : ""}
-        </div>
-
-        <div className="flex items-center gap-2 ">
+      <div className="flex justify-center mt-8">
+        <div className="btn-group">
           <button
             onClick={() => handlePageChange(currentPage - 1)}
             disabled={currentPage === 1}
@@ -135,15 +181,13 @@ const HistoryPage = () => {
             <ChevronLeft className="w-4 h-4" />
           </button>
 
-          <div className="flex gap-1">
+          <div className="flex items-center gap-1 mx-2">
             {getPageNumbers().map((page, index) =>
               typeof page === "number" ? (
                 <button
                   key={index}
                   onClick={() => handlePageChange(page)}
-                  className={`btn btn-sm min-w-[2.5rem] ${
-                    page === currentPage ? "btn-primary" : "btn-ghost hover:btn-secondary"
-                  }`}
+                  className={`btn btn-sm ${currentPage === page ? "btn-primary" : "btn-ghost hover:btn-secondary"}`}
                   aria-label={`Go to page ${page}`}
                 >
                   {page}
@@ -241,7 +285,13 @@ const HistoryPage = () => {
           <AnimatePresence mode="popLayout">
             <motion.div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" layout>
               {paginatedHistory.map((split, index) => (
-                <HistoryCard key={split.id} split={split} onClick={() => handleCardClick(split)} delay={index * 0.05} />
+                <HistoryCard
+                  key={split.id}
+                  split={split}
+                  onClick={() => handleCardClick(split)}
+                  delay={index * 0.05}
+                  handleRepeat={handleRepeat}
+                />
               ))}
             </motion.div>
           </AnimatePresence>
@@ -257,6 +307,7 @@ const HistoryPage = () => {
           setDrawerOpen(false);
           setSelectedSplit(null);
         }}
+        handleRepeat={handleRepeat}
       />
     </div>
   );
