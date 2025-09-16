@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { TransactionSuccess } from "./_components/TransactionSuccess";
 import { AlertCircle, ArrowLeft, CheckCircle } from "lucide-react";
 import { formatEther, formatGwei, formatUnits, parseEther, parseUnits } from "viem";
 import { useAccount, useBalance, useFeeData, usePublicClient } from "wagmi";
@@ -40,6 +41,13 @@ export default function SplitReviewPage() {
   const [gasEstimationError, setGasEstimationError] = useState<string | null>(null);
   const [isExecuting, setIsExecuting] = useState(false);
   const [isApproving, setIsApproving] = useState(false);
+  const [transactionSuccess, setTransactionSuccess] = useState<{
+    hash: string;
+    recipients: Recipient[];
+    totalAmount: string;
+    token: { address: string; symbol: string; name: string; decimals: number };
+    splitMode: "EQUAL" | "UNEQUAL";
+  } | null>(null);
   const { targetNetwork } = useTargetNetwork();
 
   const nativeCurrency = targetNetwork.nativeCurrency;
@@ -73,45 +81,48 @@ export default function SplitReviewPage() {
       router.push("/split");
       return;
     }
-    setSplitData(JSON.parse(data));
+
+    try {
+      const parsed = JSON.parse(data);
+      setSplitData(parsed);
+    } catch (error) {
+      console.error("Error parsing split data:", error);
+      notification.error("Invalid split data");
+      router.push("/split");
+    }
   }, [router]);
 
   const estimateGas = useCallback(async () => {
-    if (!splitData || !deployedContractInfo || !publicClient || !connectedAddress) {
-      return;
-    }
+    if (!splitData || !publicClient || !connectedAddress || !deployedContractInfo) return;
 
     setIsEstimatingGas(true);
     setGasEstimationError(null);
 
     try {
-      let estimatedGasResult = BigInt(0);
-
       const recipients = splitData.recipients.map(r => r.address as `0x${string}`);
+      let estimatedGas: bigint;
 
       if (splitData.token?.address === "ETH") {
         if (splitData.splitMode === "EQUAL") {
           const totalValue = parseEther(splitData.totalAmount);
-
-          estimatedGasResult = await publicClient.estimateContractGas({
+          estimatedGas = await publicClient.estimateContractGas({
             address: deployedContractInfo.address as `0x${string}`,
             abi: deployedContractInfo.abi,
             functionName: "splitEqualETH",
             args: [recipients],
-            value: totalValue,
             account: connectedAddress,
+            value: totalValue,
           });
         } else {
           const amounts = splitData.recipients.map(r => parseEther(r.amount));
           const totalValue = amounts.reduce((sum, amount) => sum + amount, BigInt(0));
-
-          estimatedGasResult = await publicClient.estimateContractGas({
+          estimatedGas = await publicClient.estimateContractGas({
             address: deployedContractInfo.address as `0x${string}`,
             abi: deployedContractInfo.abi,
             functionName: "splitETH",
             args: [recipients, amounts],
-            value: totalValue,
             account: connectedAddress,
+            value: totalValue,
           });
         }
       } else {
@@ -120,7 +131,7 @@ export default function SplitReviewPage() {
         const totalAmount = parseUnits(splitData.totalAmount, decimals);
 
         if (splitData.splitMode === "EQUAL") {
-          estimatedGasResult = await publicClient.estimateContractGas({
+          estimatedGas = await publicClient.estimateContractGas({
             address: deployedContractInfo.address as `0x${string}`,
             abi: deployedContractInfo.abi,
             functionName: "splitEqualERC20",
@@ -129,8 +140,7 @@ export default function SplitReviewPage() {
           });
         } else {
           const amounts = splitData.recipients.map(r => parseUnits(r.amount, decimals));
-
-          estimatedGasResult = await publicClient.estimateContractGas({
+          estimatedGas = await publicClient.estimateContractGas({
             address: deployedContractInfo.address as `0x${string}`,
             abi: deployedContractInfo.abi,
             functionName: "splitERC20",
@@ -140,27 +150,21 @@ export default function SplitReviewPage() {
         }
       }
 
-      const gasWithBuffer = (estimatedGasResult * BigInt(110)) / BigInt(100);
-      setEstimatedGas(gasWithBuffer);
-      setGasEstimationError(null);
+      const buffer = (estimatedGas * BigInt(120)) / BigInt(100);
+      setEstimatedGas(buffer);
     } catch (error) {
-      console.error("Gas estimation error:", error);
-      setGasEstimationError("Unable to estimate gas accurately");
-
-      const baseGas = BigInt(50000);
-      const perRecipientGas = BigInt(30000);
-      const fallbackGas = baseGas + perRecipientGas * BigInt(splitData.recipients.length);
+      console.error("Error estimating gas:", error);
+      setGasEstimationError("Could not estimate gas. The transaction may fail.");
+      const fallbackGas = BigInt(300000);
       setEstimatedGas(fallbackGas);
     } finally {
       setIsEstimatingGas(false);
     }
-  }, [splitData, deployedContractInfo, publicClient, connectedAddress]);
+  }, [splitData, publicClient, connectedAddress, deployedContractInfo]);
 
   useEffect(() => {
-    if (splitData && deployedContractInfo && publicClient && connectedAddress) {
-      estimateGas();
-    }
-  }, [splitData, deployedContractInfo, publicClient, connectedAddress, estimateGas]);
+    estimateGas();
+  }, [estimateGas]);
 
   const handleApproveToken = async () => {
     if (!splitData || !splitData.token || splitData.token.address === "ETH") {
@@ -196,12 +200,13 @@ export default function SplitReviewPage() {
 
     try {
       const recipients = splitData.recipients.map(r => r.address as `0x${string}`);
+      let txHash: string | undefined;
 
       if (splitData.token.address === "ETH") {
         if (splitData.splitMode === "EQUAL") {
           const totalValue = parseEther(splitData.totalAmount);
 
-          await writeSplitter({
+          txHash = await writeSplitter({
             functionName: "splitEqualETH",
             args: [recipients],
             value: totalValue,
@@ -210,7 +215,7 @@ export default function SplitReviewPage() {
           const amounts = splitData.recipients.map(r => parseEther(r.amount));
           const totalValue = amounts.reduce((sum, amount) => sum + amount, BigInt(0));
 
-          await writeSplitter({
+          txHash = await writeSplitter({
             functionName: "splitETH",
             args: [recipients, amounts],
             value: totalValue,
@@ -228,23 +233,30 @@ export default function SplitReviewPage() {
         }
 
         if (splitData.splitMode === "EQUAL") {
-          await writeSplitter({
+          txHash = await writeSplitter({
             functionName: "splitEqualERC20",
             args: [tokenAddress, recipients, totalAmount],
           });
         } else {
           const amounts = splitData.recipients.map(r => parseUnits(r.amount, decimals));
 
-          await writeSplitter({
+          txHash = await writeSplitter({
             functionName: "splitERC20",
             args: [tokenAddress, recipients, amounts],
           });
         }
       }
 
-      notification.success("Split executed successfully!");
-      localStorage.removeItem("pendingSplit");
-      router.push("/split");
+      if (txHash) {
+
+        setTransactionSuccess({
+          hash: txHash,
+          recipients: splitData.recipients,
+          totalAmount: splitData.totalAmount,
+          token: splitData.token,
+          splitMode: splitData.splitMode,
+        });
+      }
     } catch (error) {
       console.error("Error executing split:", error);
       notification.error("Failed to execute split");
@@ -278,6 +290,18 @@ export default function SplitReviewPage() {
     ? parseUnits(splitData.totalAmount, splitData.token?.decimals || 18)
     : BigInt(0);
   const hasSufficientAllowance = tokenAllowance && tokenAllowance >= totalAmountBigInt;
+
+  if (transactionSuccess) {
+    return (
+      <TransactionSuccess
+        transactionHash={transactionSuccess.hash}
+        recipients={transactionSuccess.recipients}
+        totalAmount={transactionSuccess.totalAmount}
+        token={transactionSuccess.token}
+        splitMode={transactionSuccess.splitMode}
+      />
+    );
+  }
 
   if (!splitData || !splitData.token) {
     return (
@@ -493,12 +517,21 @@ export default function SplitReviewPage() {
                 <div className="mt-6 p-4 bg-base-200 rounded-xl">
                   <p className="text-xs text-base-content/60 mb-1">Your {splitData.token.symbol} Balance</p>
                   <p className="text-sm font-medium">
-                    {tokenBalance ? formatUnits(tokenBalance as bigint, splitData.token.decimals) : "0"}{" "}
+                    {tokenBalance
+                      ? formatUnits(
+                          typeof tokenBalance === "object" && "value" in tokenBalance
+                            ? tokenBalance.value
+                            : tokenBalance,
+                          splitData.token.decimals || 18,
+                        )
+                      : "0"}{" "}
                     {splitData.token.symbol}
                   </p>
-                  {parseUnits(splitData.totalAmount, splitData.token.decimals) > (tokenBalance as bigint) && (
-                    <p className="text-xs text-error mt-2">Insufficient balance</p>
-                  )}
+                  {tokenBalance &&
+                    typeof tokenBalance === "object" &&
+                    parseUnits(splitData.totalAmount, splitData.token.decimals || 18) > tokenBalance.value && (
+                      <p className="text-xs text-error mt-2">Insufficient balance</p>
+                    )}
                 </div>
               )}
             </div>
