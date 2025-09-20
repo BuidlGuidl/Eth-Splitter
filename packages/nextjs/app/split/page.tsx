@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { AssetSelector } from "./_components/AssetSelector";
 import { BulkImportModal } from "./_components/BulkImportModal";
 import { RecipientRow } from "./_components/RecipientRow";
+import { ShareConfigButton } from "./_components/ShareConfigButton";
 import { SplitModeSelector } from "./_components/SplitModeSelector";
 import { TotalAmountDisplay } from "./_components/TotalAmountDisplay";
 import { AnimatePresence, motion } from "framer-motion";
@@ -156,6 +157,8 @@ function SplitContent() {
       for (let i = 0; i < count; i++) {
         const recipientAddress = searchParams.get(`recipient_${i}`);
         if (recipientAddress) {
+          const labelParam = searchParams.get(`label_${i}`);
+
           const contact = savedContacts.find(c => c.address.toLowerCase() === recipientAddress.toLowerCase());
 
           let amount = "";
@@ -171,7 +174,7 @@ function SplitContent() {
             id: Date.now().toString() + i,
             address: recipientAddress,
             amount: amount,
-            label: contact?.label || "",
+            label: labelParam || contact?.label || "",
           });
         }
       }
@@ -497,7 +500,16 @@ function SplitContent() {
   return (
     <div className="max-w-7xl w-full mx-auto py-10 px-4">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-3xl font-bold mb-8">Split Configuration</h1>
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-3xl font-bold">Split Configuration</h1>
+          <ShareConfigButton
+            splitMode={splitMode}
+            recipients={recipients}
+            selectedToken={selectedToken}
+            equalAmount={equalAmount}
+            className="hidden sm:flex"
+          />
+        </div>
 
         <div className="flex md:flex-row flex-col gap-6">
           <div className="md:w-[40%]">
@@ -600,9 +612,16 @@ function SplitContent() {
             </div>
 
             <div className="flex gap-4 mt-6">
+              <ShareConfigButton
+                splitMode={splitMode}
+                recipients={recipients}
+                selectedToken={selectedToken}
+                equalAmount={equalAmount}
+                className="sm:hidden"
+              />
               <button
                 onClick={handleReviewSplit}
-                className="btn btn-md rounded-md w-full btn-primary"
+                className="btn btn-md rounded-md flex-1 btn-primary"
                 disabled={!selectedToken || recipients.length < 2 || hasDuplicates}
               >
                 Review Split
