@@ -2,6 +2,7 @@ import React, { useCallback, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { CheckCircle, Link2, Share2 } from "lucide-react";
 import { parseUnits } from "viem";
+import { useChainId } from "wagmi";
 import { useCopyToClipboard } from "~~/hooks/scaffold-eth";
 import { notification } from "~~/utils/scaffold-eth";
 
@@ -30,6 +31,7 @@ export const ShareConfigButton: React.FC<ShareConfigButtonProps> = ({
   equalAmount,
   className = "",
 }) => {
+  const chainId = useChainId();
   const { copyToClipboard, isCopiedToClipboard } = useCopyToClipboard();
   const [showShareModal, setShowShareModal] = useState(false);
   const [generatedUrl, setGeneratedUrl] = useState<string>("");
@@ -49,6 +51,7 @@ export const ShareConfigButton: React.FC<ShareConfigButtonProps> = ({
 
     const params = new URLSearchParams();
 
+    params.append("chainId", chainId.toString());
     params.append("mode", splitMode);
 
     if (selectedToken.address === "ETH") {
@@ -93,7 +96,7 @@ export const ShareConfigButton: React.FC<ShareConfigButtonProps> = ({
     const shareableUrl = `${baseUrl}/split?${params.toString()}`;
 
     return shareableUrl;
-  }, [splitMode, recipients, selectedToken, equalAmount]);
+  }, [splitMode, recipients, selectedToken, equalAmount, chainId]);
 
   const handleShareClick = () => {
     const url = generateShareableUrl();
@@ -186,25 +189,31 @@ export const ShareConfigButton: React.FC<ShareConfigButtonProps> = ({
                     </>
                   ) : (
                     <>
-                      <Link2 className="w-4 h-4" />
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                        />
+                      </svg>
                       Copy Link
                     </>
                   )}
                 </button>
 
-                {typeof navigator !== "undefined" && typeof navigator.share === "function" && (
-                  <button onClick={handleNativeShare} className="btn btn-primary  gap-2">
+                {typeof navigator.share && (
+                  <button onClick={handleNativeShare} className="btn btn-primary gap-2">
                     <Share2 className="w-4 h-4" />
                     Share
                   </button>
                 )}
-              </div>
-
-              <div className="mt-4 p-3 bg-warning/30 rounded-xl">
-                <p className="text-xs text-warning-content">
-                  <strong>Note:</strong> Recipient will need to connect their wallet and have sufficient funds to
-                  execute this split.
-                </p>
               </div>
             </motion.div>
           </motion.div>

@@ -12,7 +12,7 @@ import { TotalAmountDisplay } from "./_components/TotalAmountDisplay";
 import { AnimatePresence, motion } from "framer-motion";
 import { AlertTriangle, ArrowRight, Download, Plus, Upload } from "lucide-react";
 import { formatUnits, isAddress, parseUnits } from "viem";
-import { useChainId } from "wagmi";
+import { useChainId, useSwitchChain } from "wagmi";
 import { Address, EtherInput, InputBase } from "~~/components/scaffold-eth";
 import { useTokenBalance } from "~~/hooks/useTokenBalance";
 import { notification } from "~~/utils/scaffold-eth";
@@ -89,8 +89,10 @@ function SplitContent() {
   const router = useRouter();
   const chainId = useChainId();
   const searchParams = useSearchParams();
+  const { switchChain } = useSwitchChain();
 
   const [selectedToken, setSelectedToken] = useState<Token | null>(null);
+  const [urlChainId, setUrlChainId] = useState<number | null>(null);
   const [splitMode, setSplitMode] = useState<SplitMode>("EQUAL");
   const [recipients, setRecipients] = useState<Recipient[]>([
     { id: "1", address: "", amount: "", label: "" },
@@ -109,7 +111,7 @@ function SplitContent() {
 
   const toggleUsdMode = () => setUsdMode(prev => !prev);
 
-  const tokenBalance = useTokenBalance(selectedToken?.address);
+  const tokenBalance = useTokenBalance(urlChainId || chainId, selectedToken?.address);
   const isCalculatingRef = useRef(false);
 
   const getTokenDecimals = (): number => {
@@ -121,8 +123,16 @@ function SplitContent() {
     const mode = searchParams.get("mode");
     const tokenParam = searchParams.get("token");
     const recipientCount = searchParams.get("recipientCount");
+    const urlChainId = searchParams.get("chainId");
+
+    if (urlChainId) {
+      setUrlChainId(parseInt(urlChainId));
+    }
 
     if (mode && tokenParam && recipientCount) {
+      if (switchChain && urlChainId) {
+        switchChain({ chainId: parseInt(urlChainId) });
+      }
       setSplitMode(mode as SplitMode);
 
       if (tokenParam === "ETH") {
@@ -192,7 +202,7 @@ function SplitContent() {
 
       router.replace("/split", { scroll: false });
     }
-  }, [searchParams, savedContacts, router]);
+  }, [searchParams, savedContacts, router, switchChain]);
 
   useEffect(() => {
     const contacts = loadContacts();
@@ -519,7 +529,7 @@ function SplitContent() {
               selectedToken={selectedToken}
               onTokenSelect={setSelectedToken}
               tokenBalance={tokenBalance}
-              chainId={chainId}
+              chainId={urlChainId || chainId}
             />
 
             {splitMode === "EQUAL" && (

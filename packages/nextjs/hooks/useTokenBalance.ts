@@ -5,7 +5,7 @@ import { erc20Abi } from "viem";
 import { useAccount, useBalance, useReadContract, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 import { wagmiConfig } from "~~/services/web3/wagmiConfig";
 
-export const useTokenBalance = (tokenAddress?: string) => {
+export const useTokenBalance = (chainId: number, tokenAddress?: string) => {
   const { address } = useAccount();
   const { data: deployedContractInfo } = useDeployedContractInfo({ contractName: "ETHSplitter" });
 
@@ -20,6 +20,7 @@ export const useTokenBalance = (tokenAddress?: string) => {
     abi: erc20Abi,
     functionName: "balanceOf",
     args: address ? [address] : undefined,
+    chainId: chainId,
     query: {
       enabled: !!tokenAddress && tokenAddress !== "ETH" && !!address,
     },
@@ -29,6 +30,7 @@ export const useTokenBalance = (tokenAddress?: string) => {
     address: tokenAddress as `0x${string}`,
     abi: erc20Abi,
     functionName: "decimals",
+    chainId: chainId,
     query: {
       enabled: !!tokenAddress && tokenAddress !== "ETH",
     },
@@ -38,6 +40,7 @@ export const useTokenBalance = (tokenAddress?: string) => {
     address: tokenAddress as `0x${string}`,
     abi: erc20Abi,
     functionName: "symbol",
+    chainId: chainId,
     query: {
       enabled: !!tokenAddress && tokenAddress !== "ETH",
     },
@@ -47,6 +50,7 @@ export const useTokenBalance = (tokenAddress?: string) => {
     address: tokenAddress as `0x${string}`,
     abi: erc20Abi,
     functionName: "name",
+    chainId: chainId,
     query: {
       enabled: !!tokenAddress && tokenAddress !== "ETH",
     },
@@ -56,7 +60,6 @@ export const useTokenBalance = (tokenAddress?: string) => {
 
   const { writeContract: approveWrite, isPending: isApproving, data: approveHash } = useWriteContract();
 
-  // Wait for transaction confirmation
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
     hash: approveHash,
   });

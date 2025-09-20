@@ -174,7 +174,7 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedToken]);
+  }, [selectedToken, tokenBalance]);
 
   const formatBalance = () => {
     if (!tokenBalance?.balance) return "0";

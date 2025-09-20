@@ -17,6 +17,7 @@ interface HistoryDetailsDrawerProps {
     split: SplitHistoryItem,
     isEqual: boolean,
     isErc20: boolean,
+    chainId: number,
     onSuccess?: () => void,
     e?: React.MouseEvent,
   ) => void;
@@ -110,7 +111,7 @@ export const HistoryDetailsDrawer: React.FC<HistoryDetailsDrawerProps> = ({ spli
                 </div>
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => handleRepeat(split, isEqual, isErc20, onClose)}
+                    onClick={() => handleRepeat(split, isEqual, isErc20, split.chainId, onClose)}
                     className="btn btn-sm btn-primary gap-2"
                     title="Repeat this split"
                   >
