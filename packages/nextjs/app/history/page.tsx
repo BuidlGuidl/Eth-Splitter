@@ -34,6 +34,7 @@ const HistoryPage = () => {
     split: SplitHistoryItem,
     isEqual: boolean,
     isErc20: boolean,
+    chainId: number,
     onRepeat?: () => void,
     e?: React.MouseEvent,
   ) => {
@@ -43,6 +44,7 @@ const HistoryPage = () => {
 
     const params = new URLSearchParams();
 
+    params.append("chainId", chainId.toString());
     params.append("mode", isEqual ? "EQUAL" : "UNEQUAL");
 
     if (isErc20) {

@@ -15,6 +15,7 @@ interface HistoryCardProps {
     split: SplitHistoryItem,
     isEqual: boolean,
     isErc20: boolean,
+    chainId: number,
     onSuccess?: () => void,
     e?: React.MouseEvent,
   ) => void;
@@ -169,7 +170,7 @@ export const HistoryCard: React.FC<HistoryCardProps> = ({ split, onClick, delay 
         <div className="card-actions justify-end">
           <button
             className="btn btn-ghost btn-sm gap-1"
-            onClick={e => handleRepeat(split, isEqual, isErc20, _, e)}
+            onClick={e => handleRepeat(split, isEqual, isErc20, split.chainId, _, e)}
             title="Repeat this split"
           >
             <Repeat className="w-4 h-4" />

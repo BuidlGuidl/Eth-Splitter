@@ -72,7 +72,7 @@ export default function SplitReviewPage() {
     approve,
     isApproving: isApprovingFromHook,
     isConfirming: isConfirmingApproval,
-  } = useTokenBalance(splitData?.token?.address);
+  } = useTokenBalance(targetNetwork.id, splitData?.token?.address);
 
   useEffect(() => {
     const data = localStorage.getItem("pendingSplit");
@@ -248,7 +248,6 @@ export default function SplitReviewPage() {
       }
 
       if (txHash) {
-
         setTransactionSuccess({
           hash: txHash,
           recipients: splitData.recipients,
