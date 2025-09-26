@@ -54,13 +54,14 @@ export default function Contacts() {
         <h1 className="text-3xl font-bold mb-8">Address Management</h1>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
-          <AddressImport existingContacts={addresses} onContactsAdded={handleContactsAdded} onExport={handleExport} />
+          <AddressImport existingContacts={addresses} onContactsAdded={handleContactsAdded} />
 
           <div className="md:border-l border-base-100 px-4">
             <ContactManagement
               contacts={addresses}
               onContactsChange={handleContactsChange}
               onDeleteContact={handleDeleteContact}
+              onExport={handleExport}
             />
           </div>
         </div>
