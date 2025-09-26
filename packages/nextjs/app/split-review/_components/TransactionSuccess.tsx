@@ -1,7 +1,7 @@
 import React from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { CheckCircle, ExternalLink, Home, Plus, Users } from "lucide-react";
+import { CheckCircle, ExternalLink, Plus, Users } from "lucide-react";
 import { Address } from "~~/components/scaffold-eth";
 import { useTargetNetwork } from "~~/hooks/scaffold-eth";
 import { getBlockExplorerTxLink } from "~~/utils/scaffold-eth";
@@ -41,17 +41,12 @@ export const TransactionSuccess: React.FC<TransactionSuccessProps> = ({
 
   const handleNewSplit = () => {
     localStorage.removeItem("pendingSplit");
-    router.push("/split");
+    router.push("/");
   };
 
   const handleViewHistory = () => {
     localStorage.removeItem("pendingSplit");
     router.push("/history");
-  };
-
-  const handleGoHome = () => {
-    localStorage.removeItem("pendingSplit");
-    router.push("/");
   };
 
   return (
@@ -149,10 +144,6 @@ export const TransactionSuccess: React.FC<TransactionSuccessProps> = ({
             <button onClick={handleViewHistory} className="btn btn-outline gap-2">
               <Users className="w-4 h-4" />
               View History
-            </button>
-            <button onClick={handleGoHome} className="btn btn-ghost gap-2">
-              <Home className="w-4 h-4" />
-              Home
             </button>
           </div>
         </div>

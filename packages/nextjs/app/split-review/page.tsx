@@ -78,7 +78,7 @@ export default function SplitReviewPage() {
     const data = localStorage.getItem("pendingSplit");
     if (!data) {
       notification.error("No split data found");
-      router.push("/split");
+      router.push("/");
       return;
     }
 
@@ -88,7 +88,7 @@ export default function SplitReviewPage() {
     } catch (error) {
       console.error("Error parsing split data:", error);
       notification.error("Invalid split data");
-      router.push("/split");
+      router.push("/");
     }
   }, [router]);
 
@@ -265,7 +265,7 @@ export default function SplitReviewPage() {
   };
 
   const handleBackToEdit = () => {
-    router.push("/split");
+    router.push("/");
   };
 
   const handleRefreshGasEstimate = () => {

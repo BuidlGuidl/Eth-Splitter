@@ -187,7 +187,6 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
   return (
     <div className="rounded-2xl p-6 mb-6 border border-base-100 shadow-lg">
       <h2 className="text-xl font-semibold mb-4">Select Asset</h2>
-      <p className="mb-4">Choose the asset you wish to split.</p>
 
       <div className="relative">
         <button

@@ -93,7 +93,7 @@ export const ShareConfigButton: React.FC<ShareConfigButtonProps> = ({
     }
 
     const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
-    const shareableUrl = `${baseUrl}/split?${params.toString()}`;
+    const shareableUrl = `${baseUrl}?${params.toString()}`;
 
     return shareableUrl;
   }, [splitMode, recipients, selectedToken, equalAmount, chainId]);

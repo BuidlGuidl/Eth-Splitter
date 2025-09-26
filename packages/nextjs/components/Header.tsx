@@ -23,11 +23,6 @@ export const menuLinks: HeaderMenuLink[] = [
     href: "/",
   },
   {
-    label: "Split",
-    href: "/split",
-    icon: <Split className="h-4 w-4" />,
-  },
-  {
     label: "Contacts",
     href: "/contacts",
     icon: <Contact className="h-4 w-4" />,

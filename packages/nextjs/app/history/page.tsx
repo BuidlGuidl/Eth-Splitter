@@ -76,7 +76,7 @@ const HistoryPage = () => {
       }
     }
 
-    router.push(`/split?${params.toString()}`);
+    router.push(`/?${params.toString()}`);
 
     if (onRepeat) onRepeat();
   };

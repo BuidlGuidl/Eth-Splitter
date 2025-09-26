@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, ChevronLeft, ChevronRight, Edit, Search, Trash2 } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Download, Edit, Search, Trash2 } from "lucide-react";
 import { Address, InputBase } from "~~/components/scaffold-eth";
 import { notification } from "~~/utils/scaffold-eth";
 import { Contact, updateContact } from "~~/utils/splitter";
@@ -14,6 +14,7 @@ interface ContactManagementProps {
   contacts: Contact[];
   onContactsChange: (contacts: Contact[]) => void;
   onDeleteContact: (address: string) => void;
+  onExport: () => void;
   className?: string;
 }
 
@@ -21,6 +22,7 @@ export const ContactManagement: React.FC<ContactManagementProps> = ({
   contacts,
   onContactsChange,
   onDeleteContact,
+  onExport,
   className = "",
 }) => {
   const [editingContact, setEditingContact] = useState<string | null>(null);
@@ -139,11 +141,18 @@ export const ContactManagement: React.FC<ContactManagementProps> = ({
   return (
     <div className={className}>
       <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-xl font-semibold">Saved Contacts</h2>
-          <p className="text-sm text-base-content/60 mt-1">
-            {contacts.length} total contact{contacts.length !== 1 ? "s" : ""}
-          </p>
+        <div className="flex justify-between w-full  items-start">
+          <div>
+            <h2 className="text-xl font-semibold">Saved Contacts</h2>
+            <p className="text-sm text-base-content/60 mt-1">
+              {contacts.length} total contact{contacts.length !== 1 ? "s" : ""}
+            </p>
+          </div>
+
+          <button onClick={onExport} className="btn btn-md rounded-md bg-primary mt-6">
+            <Download className="w-5 h-5 mr-2" />
+            Export Addresses (CSV)
+          </button>
         </div>
 
         {contacts.length > 5 && (

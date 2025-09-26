@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Download, FileText, Loader2, Plus, Upload } from "lucide-react";
+import { FileText, Loader2, Upload } from "lucide-react";
 import Papa from "papaparse";
 import { AddressInput, InputBase } from "~~/components/scaffold-eth";
 import { notification } from "~~/utils/scaffold-eth";
@@ -12,16 +12,10 @@ const MAX_LABEL_LENGTH = 25;
 interface AddressImportProps {
   existingContacts: Contact[];
   onContactsAdded: (newContacts: Contact[]) => void;
-  onExport: () => void;
   className?: string;
 }
 
-export const AddressImport: React.FC<AddressImportProps> = ({
-  existingContacts,
-  onContactsAdded,
-  onExport,
-  className = "",
-}) => {
+export const AddressImport: React.FC<AddressImportProps> = ({ existingContacts, onContactsAdded, className = "" }) => {
   const [newAddress, setNewAddress] = useState("");
   const [newLabel, setNewLabel] = useState("");
   const [isAdding, setIsAdding] = useState(false);
@@ -261,14 +255,7 @@ export const AddressImport: React.FC<AddressImportProps> = ({
             />
           </div>
           <button onClick={handleAddAddress} disabled={isAdding} className="w-full btn btn-md rounded-md btn-primary">
-            {isAdding ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <>
-                <Plus className="w-5 h-5 mr-2" />
-                Add Address
-              </>
-            )}
+            {isAdding ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Add Address</>}
           </button>
         </div>
       ) : (
@@ -302,13 +289,6 @@ export const AddressImport: React.FC<AddressImportProps> = ({
           </div>
         </div>
       )}
-
-      <div className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">OR</div>
-
-      <button onClick={onExport} className="btn btn-md rounded-md bg-primary w-full mt-6">
-        <Download className="w-5 h-5 mr-2" />
-        Export Addresses (CSV)
-      </button>
     </div>
   );
 };
