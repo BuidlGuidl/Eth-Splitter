@@ -69,10 +69,10 @@ export const Header = () => {
 
   const { resolvedTheme } = useTheme();
   const isDarkMode = resolvedTheme === "dark";
-  const [logoSrc, setLogoSrc] = useState("/bg.svg");
+  const [logoSrc, setLogoSrc] = useState("/es.svg");
 
   useEffect(() => {
-    const newLogoSrc = isDarkMode ? "/bg.svg" : "/bg-lm.svg";
+    const newLogoSrc = isDarkMode ? "/es.svg" : "/es-lm.svg";
     setLogoSrc(newLogoSrc);
   }, [isDarkMode]);
 
