@@ -104,18 +104,14 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
 
         const addressOrEns = parts[0];
         let amount = "";
-        let label = "";
 
         if (splitMode === "UNEQUAL") {
           amount = parts[1] || "";
-          label = parts.slice(2).join(" ") || "";
 
           if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
             errors.push(`Line ${i + 1}: Invalid or missing amount for address ${addressOrEns}`);
             continue;
           }
-        } else {
-          label = parts.slice(1).join(" ") || "";
         }
 
         let resolvedAddress = "";
@@ -150,13 +146,10 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
 
         validatedAddresses.add(addressLower);
 
-        const savedContact = savedContacts.find(c => c.address.toLowerCase() === resolvedAddress.toLowerCase());
-
         recipients.push({
           id: Date.now().toString() + i,
           address: resolvedAddress,
           amount: amount,
-          label: label || savedContact?.label || (ensName ? ensName : ""),
           ensName: ensName,
         });
       }
@@ -216,9 +209,9 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
     const contactsText = availableContacts
       .map(contact => {
         if (splitMode === "EQUAL") {
-          return `${contact.address}, ${contact.label}`;
+          return `${contact.address}`;
         } else {
-          return `${contact.address}, , ${contact.label}`;
+          return `${contact.address}, `;
         }
       })
       .join("\n");
@@ -233,12 +226,11 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
         <div className="space-y-1 text-xs">
           <p className="font-medium">Format for Equal Split:</p>
           <p>• One address/ENS per line</p>
-          <p>• Optional: Add label after address (comma or space separated)</p>
           <p className="mt-2 ">Examples:</p>
           <code className="block bg-base-300 p-2 rounded mt-1 md:text-xs  text-[0.6rem]">
-            0x742d35Cc6634C0532925a3b844Bc9e7595f0fA7B, Alice
+            0x742d35Cc6634C0532925a3b844Bc9e7595f0fA7B
             <br />
-            vitalik.eth, Vitalik
+            vitalik.eth
             <br />
             0x123...abc
           </code>
@@ -248,13 +240,13 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
       return (
         <div className="space-y-1 text-xs">
           <p className="font-medium">Format for Custom Split:</p>
-          <p>• Address/ENS, Amount, Label (optional)</p>
+          <p>• Address/ENS, Amount</p>
           <p>• Amount is required for each recipient</p>
           <p className="mt-2">Examples:</p>
           <code className="block bg-base-300 p-2 rounded mt-1 md:text-xs text-[0.6rem]">
-            0x742d35Cc6634C0532925a3b844Bc9e7595f0fA7B, 1.5, Alice
+            0x742d35Cc6634C0532925a3b844Bc9e7595f0fA7B, 1.5
             <br />
-            vitalik.eth, 2.0, Vitalik
+            vitalik.eth, 2.0
             <br />
             0x123...abc, 0.5
           </code>
@@ -302,8 +294,8 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
                 onChange={e => setBulkText(e.target.value)}
                 placeholder={
                   splitMode === "EQUAL"
-                    ? "0x742d35Cc6634C0532925a3b844Bc9e7595f0fA7B, Alice\nvitalik.eth\n0x123...abc, Bob"
-                    : "0x742d35Cc6634C0532925a3b844Bc9e7595f0fA7B, 1.5, Alice\nvitalik.eth, 2.0\n0x123...abc, 0.5, Bob"
+                    ? "0x742d35Cc6634C0532925a3b844Bc9e7595f0fA7B\nvitalik.eth\n0x123...abc"
+                    : "0x742d35Cc6634C0532925a3b844Bc9e7595f0fA7B, 1.5\nvitalik.eth, 2.0\n0x123...abc, 0.5"
                 }
                 className="textarea textarea-bordered w-full h-40 font-mono text-sm rounded-md bg-base-200 "
                 disabled={isResolving}

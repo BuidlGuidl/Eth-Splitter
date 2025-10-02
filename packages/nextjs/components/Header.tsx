@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Contact, History, Split } from "lucide-react";
+import { Contact, History } from "lucide-react";
 import { useTheme } from "next-themes";
 import { hardhat } from "viem/chains";
 import { Bars3Icon } from "@heroicons/react/24/outline";
@@ -21,11 +21,6 @@ export const menuLinks: HeaderMenuLink[] = [
   {
     label: "Home",
     href: "/",
-  },
-  {
-    label: "Split",
-    href: "/split",
-    icon: <Split className="h-4 w-4" />,
   },
   {
     label: "Contacts",

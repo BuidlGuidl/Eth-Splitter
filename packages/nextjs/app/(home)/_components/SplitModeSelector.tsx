@@ -13,7 +13,6 @@ export const SplitModeSelector: React.FC<SplitModeSelectorProps> = ({ splitMode,
   return (
     <div className="rounded-2xl shadow-lg p-6 mb-6 border border-base-100">
       <h2 className="text-xl font-semibold mb-4">Split Mode</h2>
-      <p className="mb-4">Decide how to distribute the funds.</p>
 
       <div className="grid grid-cols-2 gap-4">
         <button
