@@ -51,9 +51,10 @@ export default function Contacts() {
   return (
     <div className="max-w-7xl w-full mx-auto py-10 min-h-screen px-2">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-3xl font-bold mb-8">Address Management</h1>
+        <h1 className="text-3xl font-bold">Address Management</h1>
+        <h2>Organise your contacts</h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full mt-8">
           <AddressImport existingContacts={addresses} onContactsAdded={handleContactsAdded} />
 
           <div className="md:border-l border-base-100 px-4">
