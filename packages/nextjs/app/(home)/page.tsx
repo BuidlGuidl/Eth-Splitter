@@ -511,7 +511,7 @@ function SplitContent() {
     <div className="max-w-7xl w-full mx-auto py-10 px-4">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
         <div className="flex justify-between items-end">
-          <div className="mb-8">
+          <div>
             <h1 className="text-3xl font-bold">Split Configuration</h1>
             <h2>Effortlessly manage and distribute funds with precision and transparency</h2>
           </div>
