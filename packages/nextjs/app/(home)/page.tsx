@@ -529,7 +529,9 @@ function SplitContent() {
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
         <div className="flex justify-between items-end">
           <div>
-            <h1 className="text-lg">Effortlessly manage and distribute funds with precision and transparency</h1>
+            <h1 className="text-lg font-bold">
+              Effortlessly manage and distribute funds with precision and transparency
+            </h1>
           </div>
           <div>
             <ShareConfigButton
