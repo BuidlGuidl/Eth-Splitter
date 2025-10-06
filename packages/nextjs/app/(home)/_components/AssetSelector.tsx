@@ -242,7 +242,7 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => handleTokenSelect(token)}
-            className={`px-3 py-2 rounded-lg  transition-all flex items-center gap-2 ${
+            className={`cursor-pointer px-3 py-2 rounded-lg  transition-all flex items-center gap-2 ${
               selectedToken?.address === token.address ? "bg-primary" : "bg-secondary "
             }`}
           >
@@ -258,7 +258,7 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setShowCustomInput(true)}
-            className="px-3 py-2 rounded-lgtransition-all flex items-center gap-2 bg-secondary"
+            className="cursor-pointer px-3 py-2 rounded-lgtransition-all flex items-center gap-2 bg-secondary"
           >
             <Plus className="w-4 h-4" />
             <span>Other</span>
@@ -282,7 +282,7 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
                   setCustomTokenError("");
                   setIsCustomTokenLoading(false);
                 }}
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 hover:bg-base-300 rounded"
+                className="cursor-pointer absolute right-2 top-1/2 transform -translate-y-1/2 p-1 hover:bg-base-300 rounded"
               >
                 <X className="w-4 h-4" />
               </button>
