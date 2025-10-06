@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown, Coins } from "lucide-react";
-import { formatUnits } from "viem";
+import { motion } from "framer-motion";
+import { AlertCircle, Coins, Plus, X } from "lucide-react";
+import { formatUnits, isAddress } from "viem";
 import { erc20Abi } from "viem";
 import { useReadContract } from "wagmi";
 import { AddressInput } from "~~/components/scaffold-eth";
@@ -31,43 +31,34 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
   chainId,
 }) => {
   const { targetNetwork } = useTargetNetwork();
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [customTokenAddress, setCustomTokenAddress] = useState("");
-  const [fetchingCustomToken, setFetchingCustomToken] = useState(false);
+  const [customTokenError, setCustomTokenError] = useState("");
   const [tokenList, setTokenList] = useState<Token[]>([]);
   const [tokenInfo, setTokenInfo] = useState<{ name: string; symbol: string }>({
     name: "Select Token",
     symbol: "",
   });
+  const [isCustomTokenLoading, setIsCustomTokenLoading] = useState(false);
 
   const nativeCurrency = targetNetwork.nativeCurrency || { name: "Ether", symbol: "ETH", decimals: 18 };
 
-  const { data: customTokenSymbol } = useReadContract({
+  const { data: customTokenSymbol, error: symbolError } = useReadContract({
     address: customTokenAddress as `0x${string}`,
     abi: erc20Abi,
     functionName: "symbol",
-    query: {
-      enabled: !!customTokenAddress && customTokenAddress.startsWith("0x"),
-    },
   });
 
-  const { data: customTokenName } = useReadContract({
+  const { data: customTokenName, error: nameError } = useReadContract({
     address: customTokenAddress as `0x${string}`,
     abi: erc20Abi,
     functionName: "name",
-    query: {
-      enabled: !!customTokenAddress && customTokenAddress.startsWith("0x"),
-    },
   });
 
-  const { data: customTokenDecimals } = useReadContract({
+  const { data: customTokenDecimals, error: decimalsError } = useReadContract({
     address: customTokenAddress as `0x${string}`,
     abi: erc20Abi,
     functionName: "decimals",
-    query: {
-      enabled: !!customTokenAddress && customTokenAddress.startsWith("0x"),
-    },
   });
 
   const chainTokens = tokens[chainId as keyof typeof tokens];
@@ -106,30 +97,68 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
 
   const handleTokenSelect = (token: Token) => {
     onTokenSelect(token);
-    setIsDropdownOpen(false);
     setShowCustomInput(false);
     setCustomTokenAddress("");
+    setCustomTokenError("");
   };
 
-  const handleCustomToken = async () => {
-    if (!customTokenAddress || !customTokenAddress.startsWith("0x")) {
+  const handleAddressChange = (value: string) => {
+    setCustomTokenAddress(value);
+    setCustomTokenError("");
+    if (value) {
+      setIsCustomTokenLoading(true);
+    } else {
+      setIsCustomTokenLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!customTokenAddress) {
+      setCustomTokenError("");
+      setIsCustomTokenLoading(false);
       return;
     }
 
-    setFetchingCustomToken(true);
+    setIsCustomTokenLoading(true);
 
-    setTimeout(() => {
+    const isValidAddress = customTokenAddress && isAddress(customTokenAddress);
+
+    if (!isValidAddress) {
+      if (customTokenAddress && !isAddress(customTokenAddress)) {
+        setCustomTokenError("Invalid address format");
+      } else {
+        setCustomTokenError("");
+      }
+      setIsCustomTokenLoading(false);
+      return;
+    }
+
+    if (symbolError || nameError || decimalsError) {
+      setCustomTokenError("Not a valid ERC20 token contract");
+      setIsCustomTokenLoading(false);
+      return;
+    }
+
+    if (customTokenSymbol && customTokenName && customTokenDecimals !== undefined) {
       const customToken: Token = {
         address: customTokenAddress,
-        symbol: customTokenSymbol || "TOKEN",
-        name: customTokenName || "Custom Token",
-        decimals: customTokenDecimals || 18,
+        symbol: customTokenSymbol,
+        name: customTokenName,
+        decimals: customTokenDecimals,
       };
 
       handleTokenSelect(customToken);
-      setFetchingCustomToken(false);
-    }, 500);
-  };
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    customTokenAddress,
+    customTokenSymbol,
+    customTokenName,
+    customTokenDecimals,
+    symbolError,
+    nameError,
+    decimalsError,
+  ]);
 
   useEffect(() => {
     if (
@@ -188,99 +217,92 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
     <div className="rounded-2xl p-6 mb-6 border border-base-100 shadow-lg">
       <h2 className="text-xl font-semibold mb-4">Select Asset</h2>
 
-      <div className="relative">
-        <button
-          onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-          className="w-full px-4 py-3 rounded-xl focus:ring-2 focus:ring-primary transition-all flex items-center justify-between border border-base-100 hover:border-primary"
-        >
-          <div className="flex items-center">
-            <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold mr-3 bg-primary">
-              {tokenInfo.symbol ? tokenInfo.symbol.charAt(0) : <Coins className="w-5 h-5" />}
-            </div>
-            <div className="text-left">
-              <div className="font-medium">
-                {tokenInfo.symbol ? `${tokenInfo.name} (${tokenInfo.symbol})` : "Select Token"}
-              </div>
-              {selectedToken && tokenBalance && (
-                <div className="text-xs opacity-70">
-                  Balance: {formatBalance()} {tokenInfo.symbol}
-                </div>
-              )}
-            </div>
+      <div className="flex items-center justify-between mb-4 p-3 bg-base-200 rounded-xl">
+        <div className="flex items-center">
+          <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold mr-3 bg-primary">
+            {tokenInfo.symbol ? tokenInfo.symbol.charAt(0) : <Coins className="w-5 h-5" />}
           </div>
-          <ChevronDown className={`w-5 h-5 transition-transform ${isDropdownOpen ? "rotate-180" : ""}`} />
-        </button>
-
-        <AnimatePresence>
-          {isDropdownOpen && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="absolute z-10 w-full mt-2 bg-base-200 border border-base-300 rounded-xl shadow-lg overflow-hidden"
-            >
-              {tokenList.map(token => (
-                <button
-                  key={token.address}
-                  onClick={() => handleTokenSelect(token)}
-                  className="w-full px-4 py-3 hover:bg-base-300 cursor-pointer transition-colors flex items-center border-b border-base-100 justify-between"
-                >
-                  <div className="flex items-center">
-                    <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center font-bold mr-3">
-                      {token.symbol.charAt(0)}
-                    </div>
-                    <div className="text-left">
-                      <div className="font-medium">{token.name}</div>
-                      <div className="text-xs opacity-70">{token.symbol}</div>
-                    </div>
-                  </div>
-                  {token.address === selectedToken?.address && <div className="w-2 h-2 rounded-full bg-primary"></div>}
-                </button>
-              ))}
-
-              <div className=" p-3">
-                {!showCustomInput ? (
-                  <button onClick={() => setShowCustomInput(true)} className="w-full text-sm font-bold hover:underline">
-                    + Custom Token
-                  </button>
-                ) : (
-                  <div className="space-y-2">
-                    <AddressInput
-                      value={customTokenAddress}
-                      onChange={setCustomTokenAddress}
-                      placeholder="Token contract address"
-                    />
-                    <div className="flex gap-2">
-                      <button
-                        onClick={handleCustomToken}
-                        className="btn btn-sm btn-primary rounded-md flex-1"
-                        disabled={!customTokenAddress || fetchingCustomToken}
-                      >
-                        {fetchingCustomToken ? (
-                          <>
-                            <span className="loading loading-spinner loading-xs"></span>
-                            Loading...
-                          </>
-                        ) : (
-                          "Add"
-                        )}
-                      </button>
-                      <button
-                        onClick={() => {
-                          setShowCustomInput(false);
-                          setCustomTokenAddress("");
-                        }}
-                        className="btn btn-sm btn-ghost rounded-md"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                )}
+          <div className="text-left">
+            <div className="font-medium">
+              {tokenInfo.symbol ? `${tokenInfo.name} (${tokenInfo.symbol})` : "Select Token"}
+            </div>
+            {selectedToken && tokenBalance && (
+              <div className="text-xs opacity-70">
+                Balance: {formatBalance()} {tokenInfo.symbol}
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-2 mb-4">
+        {tokenList.map(token => (
+          <motion.button
+            key={token.address}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => handleTokenSelect(token)}
+            className={`cursor-pointer px-3 py-2 rounded-lg  transition-all flex items-center gap-2 ${
+              selectedToken?.address === token.address ? "bg-primary" : "bg-secondary "
+            }`}
+          >
+            <span className="font-medium">{token.symbol}</span>
+            {selectedToken?.address === token.address && (
+              <div className="w-2 h-2 rounded-full bg-primary-content"></div>
+            )}
+          </motion.button>
+        ))}
+
+        {!showCustomInput ? (
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setShowCustomInput(true)}
+            className="cursor-pointer px-3 py-2 rounded-lgtransition-all flex items-center gap-2 bg-secondary"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Other</span>
+          </motion.button>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="flex-1 min-w-[200px]"
+          >
+            <div className="relative">
+              <AddressInput
+                value={customTokenAddress}
+                onChange={handleAddressChange}
+                placeholder="Paste token contract address"
+              />
+              <button
+                onClick={() => {
+                  setShowCustomInput(false);
+                  setCustomTokenAddress("");
+                  setCustomTokenError("");
+                  setIsCustomTokenLoading(false);
+                }}
+                className="cursor-pointer absolute right-2 top-1/2 transform -translate-y-1/2 p-1 hover:bg-base-300 rounded"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {isCustomTokenLoading && (
+              <div className="flex items-center gap-2 mt-2 text-sm">
+                <span className="loading loading-spinner loading-xs"></span>
+                <span>Loading token...</span>
+              </div>
+            )}
+
+            {customTokenError && (
+              <div className="flex items-center gap-2 mt-2 text-error text-sm">
+                <AlertCircle className="w-4 h-4" />
+                <span>{customTokenError}</span>
+              </div>
+            )}
+          </motion.div>
+        )}
       </div>
 
       {selectedToken && tokenBalance?.allowance !== undefined && selectedToken.address !== "ETH" && (
