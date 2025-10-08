@@ -324,7 +324,24 @@ function SplitContent() {
   );
 
   const handleBulkImport = (newRecipients: Recipient[]) => {
-    setRecipients(prevRecipients => [...prevRecipients, ...newRecipients]);
+    const validNewRecipients = newRecipients.filter(r => r.address.trim() !== "");
+
+    const currentValidRecipients = recipients.filter(r => r.address.trim() !== "");
+
+    const combinedRecipients = [...currentValidRecipients, ...validNewRecipients];
+
+    if (combinedRecipients.length < 2) {
+      while (combinedRecipients.length < 2) {
+        combinedRecipients.push({
+          id: Date.now().toString() + combinedRecipients.length,
+          address: "",
+          amount: "",
+          label: "",
+        });
+      }
+    }
+
+    setRecipients(combinedRecipients);
   };
 
   const handleImportFromStorage = () => {
@@ -512,8 +529,9 @@ function SplitContent() {
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
         <div className="flex justify-between items-end">
           <div>
-            <h1 className="text-3xl font-bold">Split Configuration</h1>
-            <h2>Effortlessly manage and distribute funds with precision and transparency</h2>
+            <h1 className="text-lg font-bold">
+              Effortlessly manage and distribute funds with precision and transparency
+            </h1>
           </div>
           <div>
             <ShareConfigButton
