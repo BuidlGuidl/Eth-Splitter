@@ -214,10 +214,8 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
   };
 
   return (
-    <div className="rounded-2xl p-6 mb-6 border border-base-100 shadow-lg">
-      <h2 className="text-xl font-semibold mb-4">Select Asset</h2>
-
-      <div className="flex items-center justify-between mb-4 p-3 bg-base-200 rounded-xl">
+    <div className="p-4 bg-base-200/50 border border-base-300 rounded-xl">
+      <div className="flex items-center justify-between mb-3 px-3 py-1.5 bg-base-200 rounded-xl">
         <div className="flex items-center">
           <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold mr-3 bg-primary">
             {tokenInfo.symbol ? tokenInfo.symbol.charAt(0) : <Coins className="w-5 h-5" />}
@@ -235,7 +233,7 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2 mb-4">
+      <div className="flex flex-wrap gap-2">
         {tokenList.map(token => (
           <motion.button
             key={token.address}
@@ -306,8 +304,8 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
       </div>
 
       {selectedToken && tokenBalance?.allowance !== undefined && selectedToken.address !== "ETH" && (
-        <div className="mt-4 p-3 bg-warning/10 rounded-lg">
-          <p className="text-sm">
+        <div className="mt-3 p-2 bg-warning/10 rounded-lg">
+          <p className="text-xs">
             <span className="font-medium">Allowance:</span>{" "}
             {formatUnits(tokenBalance.allowance, tokenBalance.decimals || 18)} {tokenInfo.symbol}
           </p>

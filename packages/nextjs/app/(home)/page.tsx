@@ -8,6 +8,7 @@ import { BulkImportModal } from "./_components/BulkImportModal";
 import { RecipientRow } from "./_components/RecipientRow";
 import { ShareConfigButton } from "./_components/ShareConfigButton";
 import { TotalAmountDisplay } from "./_components/TotalAmountDisplay";
+import { useHeaderActions } from "~~/components/HeaderActionsContext";
 import { AnimatePresence, motion } from "framer-motion";
 import { AlertTriangle, ArrowRight, Download, Plus, Upload } from "lucide-react";
 import { formatUnits, isAddress, parseUnits } from "viem";
@@ -87,13 +88,13 @@ function SplitContent() {
   const chainId = useChainId();
   const searchParams = useSearchParams();
   const { switchChain } = useSwitchChain();
+  const { setCustomActions } = useHeaderActions();
 
   const [selectedToken, setSelectedToken] = useState<Token | null>(null);
   const [urlChainId, setUrlChainId] = useState<number | null>(null);
   const [recipients, setRecipients] = useState<Recipient[]>([
     { id: "1", address: "", amount: "", label: "" },
     { id: "2", address: "", amount: "", label: "" },
-    { id: "3", address: "", amount: "", label: "" },
   ]);
   const [totalAmount, setTotalAmount] = useState("");
   const [equalAmount, setEqualAmount] = useState("");
@@ -181,7 +182,7 @@ function SplitContent() {
         }
       }
 
-      while (newRecipients.length < 3) {
+      while (newRecipients.length < 2) {
         newRecipients.push({
           id: Date.now().toString() + newRecipients.length,
           address: "",
@@ -482,57 +483,55 @@ function SplitContent() {
 
   const hasDuplicates = duplicateAddresses.length > 0;
 
+  // Set the Share Config button in the header
+  useEffect(() => {
+    setCustomActions(
+      <ShareConfigButton
+        recipients={recipients}
+        selectedToken={selectedToken}
+        equalAmount={equalAmount}
+        className="mr-2"
+      />
+    );
+
+    // Clean up when component unmounts
+    return () => setCustomActions(null);
+  }, [recipients, selectedToken, equalAmount, setCustomActions]);
+
   return (
     <div className="max-w-7xl w-full mx-auto py-10 px-4">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-        <div className="flex justify-between items-end">
-          <div>
-            <h1 className="text-lg font-bold">
-              Effortlessly manage and distribute funds with precision and transparency
-            </h1>
-          </div>
-          <div>
-            <ShareConfigButton
-              recipients={recipients}
-              selectedToken={selectedToken}
-              equalAmount={equalAmount}
-              className="hidden sm:flex"
-            />
-          </div>
-        </div>
-
-        <div className="flex md:flex-row flex-col gap-6 mt-4">
-          <div className="md:w-[40%]">
-            <AssetSelector
-              selectedToken={selectedToken}
-              onTokenSelect={setSelectedToken}
-              tokenBalance={tokenBalance}
-              chainId={urlChainId || chainId}
-            />
-          </div>
-
-          <div className="md:w-[60%]">
+        <div className="flex justify-center">
+          <div className="w-full max-w-4xl">
             <div className="rounded-2xl shadow-lg p-6 border border-base-100">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h2 className="text-xl font-semibold">Recipients</h2>
-                  <p className="text-sm mt-1">Add addresses and amounts</p>
+              <div className="flex flex-col gap-4 mb-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-xl font-semibold">Configure Split</h2>
+                  </div>
+                  <div className="flex gap-2 md:flex-row flex-col items-end">
+                    <button onClick={() => setShowBulkImport(true)} className="btn btn-sm btn-ghost rounded-md">
+                      <Upload className="w-4 h-4 mr-1" />
+                      Bulk Add Addresses
+                    </button>
+                    <button onClick={handleImportFromStorage} className="btn btn-sm btn-ghost rounded-md">
+                      <Download className="w-4 h-4 mr-1" />
+                      Add From Contacts
+                    </button>
+                  </div>
                 </div>
-                <div className="flex gap-2 md:flex-row flex-col items-end">
-                  <button onClick={() => setShowBulkImport(true)} className="btn btn-sm btn-ghost rounded-md">
-                    <Upload className="w-4 h-4 mr-1" />
-                    Bulk Add
-                  </button>
-                  <button onClick={handleImportFromStorage} className="btn btn-sm btn-ghost rounded-md">
-                    <Download className="w-4 h-4 mr-1" />
-                    From Contacts
-                  </button>
-                </div>
+
+                <AssetSelector
+                  selectedToken={selectedToken}
+                  onTokenSelect={setSelectedToken}
+                  tokenBalance={tokenBalance}
+                  chainId={urlChainId || chainId}
+                />
               </div>
 
               <div className="mb-6 p-4 bg-base-300/30 border border-base-300 rounded-xl">
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-sm font-medium">Amount Per Recipient (Optional)</label>
+                  <label className="text-sm font-medium">Auto Fill (Optional)</label>
                   <span className="text-xs opacity-60">Leave empty to set individual amounts</span>
                 </div>
                 {selectedToken?.address === "ETH" ? (
@@ -597,12 +596,6 @@ function SplitContent() {
             </div>
 
             <div className="flex gap-4 mt-6">
-              <ShareConfigButton
-                recipients={recipients}
-                selectedToken={selectedToken}
-                equalAmount={equalAmount}
-                className="sm:hidden"
-              />
               <button
                 onClick={handleReviewSplit}
                 className="btn btn-md rounded-md flex-1 btn-primary"
