@@ -25,7 +25,6 @@ interface TransactionSuccessProps {
     name: string;
     decimals: number;
   };
-  splitMode: "EQUAL" | "UNEQUAL";
 }
 
 export const TransactionSuccess: React.FC<TransactionSuccessProps> = ({
@@ -33,7 +32,6 @@ export const TransactionSuccess: React.FC<TransactionSuccessProps> = ({
   recipients,
   totalAmount,
   token,
-  splitMode,
 }) => {
   const router = useRouter();
   const { targetNetwork } = useTargetNetwork();
@@ -98,10 +96,7 @@ export const TransactionSuccess: React.FC<TransactionSuccessProps> = ({
                       {recipient.label && <span className="text-xs text-base-content/60">({recipient.label})</span>}
                     </div>
                     <span className="font-medium">
-                      {splitMode === "EQUAL"
-                        ? (parseFloat(totalAmount) / recipients.length).toFixed(4)
-                        : recipient.amount}{" "}
-                      {token.symbol}
+                      {recipient.amount} {token.symbol}
                     </span>
                   </div>
                 ))}
