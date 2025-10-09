@@ -41,9 +41,40 @@ export const loadContacts = (): Contact[] => {
     const contacts = window.localStorage.getItem(CONTACTS_STORAGE_KEY);
     if (contacts) {
       try {
-        return JSON.parse(contacts);
+        const parsed = JSON.parse(contacts);
+
+        if (Array.isArray(parsed) && parsed.length > 0 && typeof parsed[0] === "string") {
+          console.log("Migrating old contacts format to new structure");
+
+          const migrated = parsed.map(address => ({
+            address,
+            label: "",
+          }));
+
+          window.localStorage.setItem(CONTACTS_STORAGE_KEY, JSON.stringify(migrated));
+
+          return migrated;
+        }
+
+        if (Array.isArray(parsed)) {
+          const validContacts = parsed.filter(
+            item =>
+              item && typeof item === "object" && typeof item.address === "string" && typeof item.label === "string",
+          ) as Contact[];
+
+          if (validContacts.length !== parsed.length) {
+            window.localStorage.setItem(CONTACTS_STORAGE_KEY, JSON.stringify(validContacts));
+          }
+
+          return validContacts;
+        }
+
+        console.error("Invalid contacts format - resetting storage");
+        window.localStorage.removeItem(CONTACTS_STORAGE_KEY);
+        return [];
       } catch (error) {
         console.error("Failed to parse contacts:", error);
+        window.localStorage.removeItem(CONTACTS_STORAGE_KEY);
         return [];
       }
     }
@@ -125,7 +156,7 @@ export const updateCacheWallets = (wallets: string[]) => {
       wallets: [],
       amounts: [],
       amount: "",
-      expiry: now + 30 * 60 * 1000, // 30 minutes from now
+      expiry: now + 30 * 60 * 1000,
     };
 
     if (cachedString) {
