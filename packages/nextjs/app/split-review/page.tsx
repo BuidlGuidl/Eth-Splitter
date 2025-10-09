@@ -93,10 +93,10 @@ export default function SplitReviewPage() {
   // Helper function to determine if all amounts are equal
   const isEqualSplit = useCallback(() => {
     if (!splitData || !splitData.recipients.length) return false;
-    
+
     const amounts = splitData.recipients.map(r => parseFloat(r.amount || "0"));
     const firstAmount = amounts[0];
-    
+
     // Check if all amounts are the same and greater than 0
     return amounts.every(amt => amt > 0 && amt === firstAmount);
   }, [splitData]);
@@ -170,7 +170,7 @@ export default function SplitReviewPage() {
     } finally {
       setIsEstimatingGas(false);
     }
-  }, [splitData, publicClient, connectedAddress, deployedContractInfo]);
+  }, [splitData, publicClient, connectedAddress, deployedContractInfo, isEqualSplit]);
 
   useEffect(() => {
     estimateGas();

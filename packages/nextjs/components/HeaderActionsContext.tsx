@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode } from "react";
+import { ReactNode, createContext, useContext, useState } from "react";
 
 interface HeaderActionsContextType {
   customActions: ReactNode;
@@ -26,4 +26,3 @@ export const useHeaderActions = () => {
   }
   return context;
 };
-

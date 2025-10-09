@@ -1,5 +1,5 @@
+import { Share_Tech_Mono, Space_Grotesk } from "next/font/google";
 import "@rainbow-me/rainbowkit/styles.css";
-import { Space_Grotesk, Share_Tech_Mono } from "next/font/google";
 import { ScaffoldEthAppWithProviders } from "~~/components/ScaffoldEthAppWithProviders";
 import { ThemeProvider } from "~~/components/ThemeProvider";
 import "~~/styles/globals.css";

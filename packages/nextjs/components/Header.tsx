@@ -8,8 +8,8 @@ import { Contact, History } from "lucide-react";
 import { useTheme } from "next-themes";
 import { hardhat } from "viem/chains";
 import { Bars3Icon } from "@heroicons/react/24/outline";
-import { FaucetButton, RainbowKitCustomConnectButton } from "~~/components/scaffold-eth";
 import { useHeaderActions } from "~~/components/HeaderActionsContext";
+import { FaucetButton, RainbowKitCustomConnectButton } from "~~/components/scaffold-eth";
 import { useOutsideClick, useTargetNetwork } from "~~/hooks/scaffold-eth";
 
 type HeaderMenuLink = {

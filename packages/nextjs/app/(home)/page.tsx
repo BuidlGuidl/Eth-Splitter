@@ -8,12 +8,12 @@ import { BulkImportModal } from "./_components/BulkImportModal";
 import { RecipientRow } from "./_components/RecipientRow";
 import { ShareConfigButton } from "./_components/ShareConfigButton";
 import { TotalAmountDisplay } from "./_components/TotalAmountDisplay";
-import { useHeaderActions } from "~~/components/HeaderActionsContext";
 import { AnimatePresence, motion } from "framer-motion";
 import { AlertTriangle, ArrowRight, Download, Plus, Upload } from "lucide-react";
 import { formatUnits, isAddress, parseUnits } from "viem";
 import { useChainId, useSwitchChain } from "wagmi";
 import { Address, EtherInput, InputBase } from "~~/components/scaffold-eth";
+import { useHeaderActions } from "~~/components/HeaderActionsContext";
 import { useTokenBalance } from "~~/hooks/useTokenBalance";
 import { notification } from "~~/utils/scaffold-eth";
 import { Contact, loadCache, loadContacts, updateCacheAmounts, updateCacheWallets } from "~~/utils/splitter";
@@ -49,19 +49,6 @@ const addAmounts = (amounts: string[], decimals: number): string => {
     return formatUnits(sum, decimals);
   } catch (error) {
     console.error("Error adding amounts:", error);
-    return "0";
-  }
-};
-
-const multiplyAmount = (amount: string, count: number, decimals: number): string => {
-  try {
-    if (!amount || amount === "" || count === 0) return "0";
-
-    const parsed = parseUnits(amount, decimals);
-    const result = parsed * BigInt(count);
-    return formatUnits(result, decimals);
-  } catch (error) {
-    console.error("Error multiplying amount:", error);
     return "0";
   }
 };
@@ -262,17 +249,6 @@ function SplitContent() {
     return duplicates;
   }, []);
 
-  const getUniqueValidRecipients = useCallback((recipients: Recipient[]): Recipient[] => {
-    const seenAddresses = new Set<string>();
-    return recipients.filter(r => {
-      if (!validateAddress(r.address)) return false;
-      const normalizedAddress = r.address.toLowerCase();
-      if (seenAddresses.has(normalizedAddress)) return false;
-      seenAddresses.add(normalizedAddress);
-      return true;
-    });
-  }, []);
-
   const addRecipient = () => {
     const newRecipient: Recipient = {
       id: Date.now().toString(),
@@ -416,7 +392,7 @@ function SplitContent() {
       isCalculatingRef.current = false;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [equalAmount, recipients, findDuplicateAddresses, getTokenDecimals]);
+  }, [equalAmount, recipients, findDuplicateAddresses]);
 
   const validateForm = (): boolean => {
     const newErrors: { [key: string]: string } = {};
@@ -491,7 +467,7 @@ function SplitContent() {
         selectedToken={selectedToken}
         equalAmount={equalAmount}
         className="mr-2"
-      />
+      />,
     );
 
     // Clean up when component unmounts
@@ -591,7 +567,11 @@ function SplitContent() {
               </button>
 
               {selectedToken && (
-                <TotalAmountDisplay totalAmount={totalAmount || "0"} token={selectedToken} tokenBalance={tokenBalance} />
+                <TotalAmountDisplay
+                  totalAmount={totalAmount || "0"}
+                  token={selectedToken}
+                  tokenBalance={tokenBalance}
+                />
               )}
             </div>
 
