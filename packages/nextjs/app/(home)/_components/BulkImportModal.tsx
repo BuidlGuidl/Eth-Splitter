@@ -80,6 +80,18 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
         if (parts.length === 0) continue;
 
         const addressOrEns = parts[0];
+        let amount = "";
+
+        if (splitMode === "UNEQUAL") {
+          if (parts.length >= 2) {
+            amount = parts[1] || "";
+
+            if (amount && (isNaN(parseFloat(amount)) || parseFloat(amount) <= 0)) {
+              errors.push(`Line ${i + 1}: Invalid amount for address ${addressOrEns}`);
+              continue;
+            }
+          }
+        }
 
         let resolvedAddress = "";
         let ensName = "";
@@ -116,7 +128,7 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
         recipients.push({
           id: Date.now().toString() + i,
           address: resolvedAddress,
-          amount: "",
+          amount: amount,
           ensName: ensName,
         });
       }
@@ -173,30 +185,54 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
       return;
     }
 
-    const contactsText = availableContacts.map(contact => contact.address).join("\n");
+    const contactsText = availableContacts
+      .map(contact => {
+        if (splitMode === "EQUAL") {
+          return `${contact.address}`;
+        } else {
+          return `${contact.address}`;
+        }
+      })
+      .join("\n");
 
     setBulkText(contactsText);
     notification.success(`Loaded ${availableContacts.length} contacts (excluding duplicates)`);
   };
 
   const getInstructions = () => {
-    return (
-      <div className="space-y-1 text-xs">
-        <p className="font-medium">Format:</p>
-        <p>• One address/ENS per line</p>
-        {splitMode === "UNEQUAL" && (
-          <p className="text-base-content/70">• Amounts can be added individually after import</p>
-        )}
-        <p className="mt-2">Examples:</p>
-        <code className="block bg-base-300 p-2 rounded mt-1 md:text-xs text-[0.6rem]">
-          0x742d35Cc6634C0532925a3b844Bc9e7595f0fA7B
-          <br />
-          vitalik.eth
-          <br />
-          0x123...abc
-        </code>
-      </div>
-    );
+    if (splitMode === "EQUAL") {
+      return (
+        <div className="space-y-1 text-xs">
+          <p className="font-medium">Format for Equal Split:</p>
+          <p>• One address/ENS per line</p>
+          <p className="mt-2">Examples:</p>
+          <code className="block bg-base-300 p-2 rounded mt-1 md:text-xs text-[0.6rem]">
+            0x742d35Cc6634C0532925a3b844Bc9e7595f0fA7B
+            <br />
+            vitalik.eth
+            <br />
+            0x123...abc
+          </code>
+        </div>
+      );
+    } else {
+      return (
+        <div className="space-y-1 text-xs">
+          <p className="font-medium">Format for Custom Split:</p>
+          <p>• Address/ENS (amount is optional)</p>
+          <p>• If amount is provided: Address/ENS, Amount</p>
+          <p>• If no amount: just Address/ENS</p>
+          <p className="mt-2">Examples:</p>
+          <code className="block bg-base-300 p-2 rounded mt-1 md:text-xs text-[0.6rem]">
+            0x742d35Cc6634C0532925a3b844Bc9e7595f0fA7B, 1.5
+            <br />
+            vitalik.eth
+            <br />
+            0x123...abc, 0.5
+          </code>
+        </div>
+      );
+    }
   };
 
   if (!isOpen) return null;
@@ -236,7 +272,11 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
               <textarea
                 value={bulkText}
                 onChange={e => setBulkText(e.target.value)}
-                placeholder={"0x742d35Cc6634C0532925a3b844Bc9e7595f0fA7B\nvitalik.eth\n0x123...abc"}
+                placeholder={
+                  splitMode === "EQUAL"
+                    ? "0x742d35Cc6634C0532925a3b844Bc9e7595f0fA7B\nvitalik.eth\n0x123...abc"
+                    : "0x742d35Cc6634C0532925a3b844Bc9e7595f0fA7B, 1.5\nvitalik.eth\n0x123...abc, 0.5"
+                }
                 className="textarea textarea-bordered w-full h-40 font-mono text-sm rounded-md bg-base-200"
                 disabled={isResolving}
               />
