@@ -396,20 +396,23 @@ function SplitContent() {
       if (splitMode === "EQUAL") {
         const uniqueValidRecipients = getUniqueValidRecipients(recipients);
 
-        if (uniqueValidRecipients.length === 0) {
-          setTotalAmount("");
-          return;
-        }
-
         if (!equalAmount || !validateAmount(equalAmount)) {
-          setTotalAmount("");
+          setTotalAmount("0");
+          setRecipients(prevRecipients =>
+            prevRecipients.map(r => ({
+              ...r,
+              amount: "",
+              percentage: 0,
+            })),
+          );
           return;
         }
 
-        const totalNeeded = multiplyAmount(equalAmount, uniqueValidRecipients.length, decimals);
+        const recipientCount = uniqueValidRecipients.length > 0 ? uniqueValidRecipients.length : recipients.length;
+        const totalNeeded = multiplyAmount(equalAmount, recipientCount, decimals);
         setTotalAmount(totalNeeded);
 
-        const percentage = 100 / uniqueValidRecipients.length;
+        const percentage = recipientCount > 0 ? 100 / recipientCount : 0;
 
         setRecipients(prevRecipients =>
           prevRecipients.map(r => ({
@@ -419,9 +422,8 @@ function SplitContent() {
           })),
         );
       } else {
-        const uniqueValidRecipients = getUniqueValidRecipients(recipients);
-
-        const validAmounts = uniqueValidRecipients
+        // For unequal splits, sum all valid amounts regardless of whether addresses are filled
+        const validAmounts = recipients
           .map(r => r.amount)
           .filter(amount => amount && validateAmount(amount));
 
@@ -638,8 +640,8 @@ function SplitContent() {
                 Add Recipient
               </button>
 
-              {totalAmount && selectedToken && (
-                <TotalAmountDisplay totalAmount={totalAmount} token={selectedToken} tokenBalance={tokenBalance} />
+              {selectedToken && (
+                <TotalAmountDisplay totalAmount={totalAmount || "0"} token={selectedToken} tokenBalance={tokenBalance} />
               )}
             </div>
 
