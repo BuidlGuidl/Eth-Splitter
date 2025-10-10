@@ -144,11 +144,6 @@ export const tokens: TokensType = {
     name: "base-goerli",
     contracts: [
       {
-        name: "BASE",
-        address: "0x4200000000000000000000000000000000000010",
-        decimals: 18,
-      },
-      {
         name: "USDC",
         address: "0x07865c6e87b9f70255377e024ace6630c1eaa37f",
         decimals: 6,
@@ -169,11 +164,6 @@ export const tokens: TokensType = {
     chainId: "8453",
     name: "base",
     contracts: [
-      {
-        name: "BASE",
-        address: "0xd07379a755a8f11b57610154861d694b2a0f615a",
-        decimals: 18,
-      },
       {
         name: "USDC",
         address: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
