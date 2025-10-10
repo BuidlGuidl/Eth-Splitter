@@ -6,11 +6,28 @@ import { getTargetNetworks } from "~~/utils/scaffold-eth";
 
 const allowedNetworks = getTargetNetworks();
 
-type NetworkOptionsProps = {
-  hidden?: boolean;
+const getChainDisplayName = (chainName: string): string => {
+  // Custom display names for chains
+  const nameMap: { [key: string]: string } = {
+    "op mainnet": "Optimism",
+    "optimism": "Optimism",
+  };
+  
+  const lowerName = chainName.toLowerCase();
+  if (nameMap[lowerName]) {
+    return nameMap[lowerName];
+  }
+  
+  // Default: return as is
+  return chainName;
 };
 
-export const NetworkOptions = ({ hidden = false }: NetworkOptionsProps) => {
+type NetworkOptionsProps = {
+  hidden?: boolean;
+  onNetworkSwitch?: () => void;
+};
+
+export const NetworkOptions = ({ hidden = false, onNetworkSwitch }: NetworkOptionsProps) => {
   const { switchChain } = useSwitchChain();
   const { chain } = useAccount();
   const { resolvedTheme } = useTheme();
@@ -27,6 +44,7 @@ export const NetworkOptions = ({ hidden = false }: NetworkOptionsProps) => {
               type="button"
               onClick={() => {
                 switchChain?.({ chainId: allowedNetwork.id });
+                onNetworkSwitch?.();
               }}
             >
               <ArrowsRightLeftIcon className="h-6 w-4 ml-2 sm:ml-0" />
@@ -37,7 +55,7 @@ export const NetworkOptions = ({ hidden = false }: NetworkOptionsProps) => {
                     color: getNetworkColor(allowedNetwork, isDarkMode),
                   }}
                 >
-                  {allowedNetwork.name}
+                  {getChainDisplayName(allowedNetwork.name)}
                 </span>
               </span>
             </button>

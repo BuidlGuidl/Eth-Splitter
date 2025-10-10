@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { forwardRef, useRef, useState } from "react";
 import { NetworkOptions } from "./NetworkOptions";
 import { getAddress } from "viem";
 import { Address } from "viem";
@@ -28,12 +28,12 @@ type AddressInfoDropdownProps = {
   ensAvatar?: string;
 };
 
-export const AddressInfoDropdown = ({
+export const AddressInfoDropdown = forwardRef<HTMLDetailsElement, AddressInfoDropdownProps>(({
   address,
   ensAvatar,
   displayName,
   blockExplorerAddressLink,
-}: AddressInfoDropdownProps) => {
+}, ref) => {
   const { disconnect } = useDisconnect();
   const { connector } = useAccount();
   const checkSumAddress = getAddress(address);
@@ -45,14 +45,15 @@ export const AddressInfoDropdown = ({
 
   const closeDropdown = () => {
     setSelectingNetwork(false);
-    dropdownRef.current?.removeAttribute("open");
+    const dropdown = (ref as React.RefObject<HTMLDetailsElement>)?.current || dropdownRef.current;
+    dropdown?.removeAttribute("open");
   };
 
-  useOutsideClick(dropdownRef, closeDropdown);
+  useOutsideClick((ref as React.RefObject<HTMLDetailsElement>) || dropdownRef, closeDropdown);
 
   return (
     <>
-      <details ref={dropdownRef} className="dropdown dropdown-end leading-3">
+      <details ref={ref || dropdownRef} className="dropdown dropdown-end leading-3">
         <summary className="btn btn-secondary btn-sm pl-0 pr-2 shadow-md dropdown-toggle gap-0 h-auto!">
           <BlockieAvatar address={checkSumAddress} size={30} ensImage={ensAvatar} />
           <span className="ml-2 mr-1">
@@ -133,4 +134,6 @@ export const AddressInfoDropdown = ({
       </details>
     </>
   );
-};
+});
+
+AddressInfoDropdown.displayName = "AddressInfoDropdown";
