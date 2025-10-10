@@ -10,14 +10,14 @@ const getChainDisplayName = (chainName: string): string => {
   // Custom display names for chains
   const nameMap: { [key: string]: string } = {
     "op mainnet": "Optimism",
-    "optimism": "Optimism",
+    optimism: "Optimism",
   };
-  
+
   const lowerName = chainName.toLowerCase();
   if (nameMap[lowerName]) {
     return nameMap[lowerName];
   }
-  
+
   // Default: return as is
   return chainName;
 };

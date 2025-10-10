@@ -14,18 +14,20 @@ import { useNetworkColor, useOutsideClick } from "~~/hooks/scaffold-eth";
 import { useTargetNetwork } from "~~/hooks/scaffold-eth/useTargetNetwork";
 import { getBlockExplorerAddressLink } from "~~/utils/scaffold-eth";
 
-const getChainDisplayName = (chainName: string): string => {
+const getChainDisplayName = (chainName?: string): string => {
+  if (!chainName) return "Unknown";
+
   // Custom display names for chains
   const nameMap: { [key: string]: string } = {
     "op mainnet": "Optimism",
-    "optimism": "Optimism",
+    optimism: "Optimism",
   };
-  
+
   const lowerName = chainName.toLowerCase();
   if (nameMap[lowerName]) {
     return nameMap[lowerName];
   }
-  
+
   // Default: return as is
   return chainName;
 };
@@ -39,7 +41,7 @@ export const RainbowKitCustomConnectButton = () => {
   const [showNetworkOptions, setShowNetworkOptions] = useState(false);
   const networkDropdownRef = useRef<HTMLDivElement>(null);
   const addressDropdownRef = useRef<HTMLDetailsElement>(null);
-  
+
   useOutsideClick(networkDropdownRef, () => setShowNetworkOptions(false));
 
   const handleNetworkButtonClick = () => {
@@ -85,7 +87,7 @@ export const RainbowKitCustomConnectButton = () => {
                     >
                       {getChainDisplayName(chain.name)}
                     </button>
-                    
+
                     {showNetworkOptions && (
                       <ul className="absolute top-full menu p-2 mt-1 right-0 shadow-center shadow-accent bg-base-200 rounded-box gap-1 z-50 min-w-[200px]">
                         <NetworkOptions onNetworkSwitch={() => setShowNetworkOptions(false)} />
