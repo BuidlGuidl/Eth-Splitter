@@ -481,20 +481,8 @@ function SplitContent() {
           <div className="w-full max-w-4xl">
             <div className="rounded-2xl shadow-lg p-6 border border-base-100">
               <div className="flex flex-col gap-4 mb-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-xl font-semibold">Configure Split</h2>
-                  </div>
-                  <div className="flex gap-2 md:flex-row flex-col items-end">
-                    <button onClick={() => setShowBulkImport(true)} className="btn btn-sm btn-ghost rounded-md">
-                      <Upload className="w-4 h-4 mr-1" />
-                      Bulk Add Addresses
-                    </button>
-                    <button onClick={handleImportFromStorage} className="btn btn-sm btn-ghost rounded-md">
-                      <Download className="w-4 h-4 mr-1" />
-                      Add From Contacts
-                    </button>
-                  </div>
+                <div className="flex items-center justify-start">
+                  <h2 className="text-lg sm:text-xl font-semibold text-left">Effortlessly distribute funds with precision and transparency</h2>
                 </div>
 
                 <AssetSelector
@@ -503,6 +491,17 @@ function SplitContent() {
                   tokenBalance={tokenBalance}
                   chainId={urlChainId || chainId}
                 />
+
+                <div className="flex gap-2 justify-center flex-wrap">
+                  <button onClick={() => setShowBulkImport(true)} className="btn btn-sm btn-ghost rounded-md">
+                    <Upload className="w-4 h-4 mr-1" />
+                    Bulk Add Addresses
+                  </button>
+                  <button onClick={handleImportFromStorage} className="btn btn-sm btn-ghost rounded-md">
+                    <Download className="w-4 h-4 mr-1" />
+                    Add From Contacts
+                  </button>
+                </div>
               </div>
 
               <div className="mb-6 p-4 bg-base-300/30 border border-base-300 rounded-xl">
