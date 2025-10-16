@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import { SplitMode } from "../page";
 import { Recipient } from "../page";
 import { motion } from "framer-motion";
 import { Minus, User } from "lucide-react";
@@ -18,7 +17,6 @@ interface RecipientRowProps {
     ensName?: string;
   };
   index: number;
-  splitMode: SplitMode;
   selectedToken: { address: string; symbol: string; name: string; decimals: number } | null;
   equalAmount: string;
   savedContacts: Contact[];
@@ -33,7 +31,6 @@ interface RecipientRowProps {
 export const RecipientRow: React.FC<RecipientRowProps> = ({
   recipient,
   index,
-  splitMode,
   selectedToken,
   equalAmount,
   errors,
@@ -69,42 +66,31 @@ export const RecipientRow: React.FC<RecipientRowProps> = ({
           )}
         </div>
 
-        {splitMode === "UNEQUAL" ? (
-          <div>
-            {selectedToken?.address === "ETH" ? (
-              <EtherInput
-                value={recipient.amount}
-                onChange={value => onUpdate(recipient.id, "amount", value)}
-                placeholder="0.0"
-                usdMode={usdMode}
-                onToggleUsdMode={onToggleUsdMode}
-              />
-            ) : (
-              <InputBase
-                value={recipient.amount}
-                onChange={value => onUpdate(recipient.id, "amount", value)}
-                placeholder="0.0"
-                suffix={
-                  recipient.percentage !== undefined && recipient.percentage > 0 ? (
-                    <span className="px-2 text-xs my-auto opacity-90">{recipient.percentage.toFixed(1)}%</span>
-                  ) : undefined
-                }
-              />
-            )}
-            {errors[`${recipient.id}-amount`] && (
-              <p className="mt-1 text-sm text-error">{errors[`${recipient.id}-amount`]}</p>
-            )}
-          </div>
-        ) : (
-          splitMode === "EQUAL" &&
-          equalAmount && (
-            <div className="">
-              <div className="px-4 py-2 bg-primary/10 border border-primary/30 rounded-xl font-medium text-sm">
-                {equalAmount} {selectedToken?.symbol}
-              </div>
-            </div>
-          )
-        )}
+        <div>
+          {selectedToken?.address === "ETH" ? (
+            <EtherInput
+              value={recipient.amount}
+              onChange={value => onUpdate(recipient.id, "amount", value)}
+              placeholder={equalAmount || "0.0"}
+              usdMode={usdMode}
+              onToggleUsdMode={onToggleUsdMode}
+            />
+          ) : (
+            <InputBase
+              value={recipient.amount}
+              onChange={value => onUpdate(recipient.id, "amount", value)}
+              placeholder={equalAmount || "0.0"}
+              suffix={
+                recipient.percentage !== undefined && recipient.percentage > 0 ? (
+                  <span className="px-2 text-xs my-auto opacity-90">{recipient.percentage.toFixed(1)}%</span>
+                ) : undefined
+              }
+            />
+          )}
+          {errors[`${recipient.id}-amount`] && (
+            <p className="mt-1 text-sm text-error">{errors[`${recipient.id}-amount`]}</p>
+          )}
+        </div>
       </div>
 
       <button

@@ -7,13 +7,13 @@ import { AssetSelector } from "./_components/AssetSelector";
 import { BulkImportModal } from "./_components/BulkImportModal";
 import { RecipientRow } from "./_components/RecipientRow";
 import { ShareConfigButton } from "./_components/ShareConfigButton";
-import { SplitModeSelector } from "./_components/SplitModeSelector";
 import { TotalAmountDisplay } from "./_components/TotalAmountDisplay";
 import { AnimatePresence, motion } from "framer-motion";
 import { AlertTriangle, ArrowRight, Download, Plus, Upload } from "lucide-react";
 import { formatUnits, isAddress, parseUnits } from "viem";
 import { useChainId, useSwitchChain } from "wagmi";
 import { Address, EtherInput, InputBase } from "~~/components/scaffold-eth";
+import { useHeaderActions } from "~~/components/HeaderActionsContext";
 import { useTokenBalance } from "~~/hooks/useTokenBalance";
 import { notification } from "~~/utils/scaffold-eth";
 import { Contact, loadCache, loadContacts, updateCacheAmounts, updateCacheWallets } from "~~/utils/splitter";
@@ -34,8 +34,6 @@ interface Token {
   decimals: number;
 }
 
-export type SplitMode = "EQUAL" | "UNEQUAL";
-
 const addAmounts = (amounts: string[], decimals: number): string => {
   try {
     const sum = amounts.reduce((acc, amount) => {
@@ -51,19 +49,6 @@ const addAmounts = (amounts: string[], decimals: number): string => {
     return formatUnits(sum, decimals);
   } catch (error) {
     console.error("Error adding amounts:", error);
-    return "0";
-  }
-};
-
-const multiplyAmount = (amount: string, count: number, decimals: number): string => {
-  try {
-    if (!amount || amount === "" || count === 0) return "0";
-
-    const parsed = parseUnits(amount, decimals);
-    const result = parsed * BigInt(count);
-    return formatUnits(result, decimals);
-  } catch (error) {
-    console.error("Error multiplying amount:", error);
     return "0";
   }
 };
@@ -90,14 +75,13 @@ function SplitContent() {
   const chainId = useChainId();
   const searchParams = useSearchParams();
   const { switchChain } = useSwitchChain();
+  const { setCustomActions } = useHeaderActions();
 
   const [selectedToken, setSelectedToken] = useState<Token | null>(null);
   const [urlChainId, setUrlChainId] = useState<number | null>(null);
-  const [splitMode, setSplitMode] = useState<SplitMode>("EQUAL");
   const [recipients, setRecipients] = useState<Recipient[]>([
     { id: "1", address: "", amount: "", label: "" },
     { id: "2", address: "", amount: "", label: "" },
-    { id: "3", address: "", amount: "", label: "" },
   ]);
   const [totalAmount, setTotalAmount] = useState("");
   const [equalAmount, setEqualAmount] = useState("");
@@ -120,7 +104,6 @@ function SplitContent() {
   };
 
   useEffect(() => {
-    const mode = searchParams.get("mode");
     const tokenParam = searchParams.get("token");
     const recipientCount = searchParams.get("recipientCount");
     const urlChainId = searchParams.get("chainId");
@@ -129,11 +112,10 @@ function SplitContent() {
       setUrlChainId(parseInt(urlChainId));
     }
 
-    if (mode && tokenParam && recipientCount) {
+    if (tokenParam && recipientCount) {
       if (switchChain && urlChainId) {
         switchChain({ chainId: parseInt(urlChainId) });
       }
-      setSplitMode(mode as SplitMode);
 
       if (tokenParam === "ETH") {
         setSelectedToken({
@@ -158,7 +140,7 @@ function SplitContent() {
       const newRecipients: Recipient[] = [];
 
       const equalAmountParam = searchParams.get("equalAmount");
-      if (mode === "EQUAL" && equalAmountParam) {
+      if (equalAmountParam) {
         const decimals = tokenParam === "ETH" ? 18 : parseInt(searchParams.get("tokenDecimals") || "18");
         const formattedAmount = formatUnits(BigInt(equalAmountParam), decimals);
         setEqualAmount(formattedAmount);
@@ -172,12 +154,10 @@ function SplitContent() {
           const contact = savedContacts.find(c => c.address.toLowerCase() === recipientAddress.toLowerCase());
 
           let amount = "";
-          if (mode === "UNEQUAL") {
-            const amountParam = searchParams.get(`amount_${i}`);
-            if (amountParam) {
-              const decimals = tokenParam === "ETH" ? 18 : parseInt(searchParams.get("tokenDecimals") || "18");
-              amount = formatUnits(BigInt(amountParam), decimals);
-            }
+          const amountParam = searchParams.get(`amount_${i}`);
+          if (amountParam) {
+            const decimals = tokenParam === "ETH" ? 18 : parseInt(searchParams.get("tokenDecimals") || "18");
+            amount = formatUnits(BigInt(amountParam), decimals);
           }
 
           newRecipients.push({
@@ -189,7 +169,7 @@ function SplitContent() {
         }
       }
 
-      while (newRecipients.length < 3) {
+      while (newRecipients.length < 2) {
         newRecipients.push({
           id: Date.now().toString() + newRecipients.length,
           address: "",
@@ -208,7 +188,7 @@ function SplitContent() {
     const contacts = loadContacts();
     setSavedContacts(contacts);
 
-    if (!searchParams.get("mode")) {
+    if (!searchParams.get("token")) {
       const cache = loadCache();
       if (cache) {
         if (cache.wallets && cache.wallets.length > 0) {
@@ -267,17 +247,6 @@ function SplitContent() {
     });
 
     return duplicates;
-  }, []);
-
-  const getUniqueValidRecipients = useCallback((recipients: Recipient[]): Recipient[] => {
-    const seenAddresses = new Set<string>();
-    return recipients.filter(r => {
-      if (!validateAddress(r.address)) return false;
-      const normalizedAddress = r.address.toLowerCase();
-      if (seenAddresses.has(normalizedAddress)) return false;
-      seenAddresses.add(normalizedAddress);
-      return true;
-    });
   }, []);
 
   const addRecipient = () => {
@@ -393,56 +362,37 @@ function SplitContent() {
 
       const decimals = getTokenDecimals();
 
-      if (splitMode === "EQUAL") {
-        const uniqueValidRecipients = getUniqueValidRecipients(recipients);
-
-        if (uniqueValidRecipients.length === 0) {
-          setTotalAmount("");
-          return;
+      // Collect all amounts: use individual amounts if set, otherwise use equalAmount
+      const amounts: string[] = [];
+      recipients.forEach(r => {
+        if (r.amount && validateAmount(r.amount)) {
+          // Has individual amount
+          amounts.push(r.amount);
+        } else if (equalAmount && validateAmount(equalAmount)) {
+          // No individual amount but equalAmount is set
+          amounts.push(equalAmount);
         }
+      });
 
-        if (!equalAmount || !validateAmount(equalAmount)) {
-          setTotalAmount("");
-          return;
-        }
+      const total = addAmounts(amounts, decimals);
+      setTotalAmount(total);
 
-        const totalNeeded = multiplyAmount(equalAmount, uniqueValidRecipients.length, decimals);
-        setTotalAmount(totalNeeded);
-
-        const percentage = 100 / uniqueValidRecipients.length;
-
-        setRecipients(prevRecipients =>
-          prevRecipients.map(r => ({
-            ...r,
-            amount: validateAddress(r.address) ? equalAmount : "",
-            percentage: validateAddress(r.address) ? percentage : 0,
-          })),
-        );
-      } else {
-        const uniqueValidRecipients = getUniqueValidRecipients(recipients);
-
-        const validAmounts = uniqueValidRecipients
-          .map(r => r.amount)
-          .filter(amount => amount && validateAmount(amount));
-
-        const total = addAmounts(validAmounts, decimals);
-        setTotalAmount(total);
-
-        setRecipients(prevRecipients =>
-          prevRecipients.map(r => {
-            if (!r.amount || !validateAmount(r.amount)) {
-              return { ...r, percentage: 0 };
-            }
-            const percentage = calculatePercentage(r.amount, total, decimals);
-            return { ...r, percentage };
-          }),
-        );
-      }
+      // Calculate percentages
+      setRecipients(prevRecipients =>
+        prevRecipients.map(r => {
+          const effectiveAmount = r.amount || equalAmount;
+          if (!effectiveAmount || !validateAmount(effectiveAmount)) {
+            return { ...r, percentage: 0 };
+          }
+          const percentage = calculatePercentage(effectiveAmount, total, decimals);
+          return { ...r, percentage };
+        }),
+      );
     } finally {
       isCalculatingRef.current = false;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [splitMode, equalAmount, recipients, findDuplicateAddresses, getUniqueValidRecipients, getTokenDecimals]);
+  }, [equalAmount, recipients, findDuplicateAddresses]);
 
   const validateForm = (): boolean => {
     const newErrors: { [key: string]: string } = {};
@@ -457,16 +407,13 @@ function SplitContent() {
         isValid = false;
       }
 
-      if (splitMode === "UNEQUAL" && !validateAmount(r.amount)) {
+      // Check if recipient has an individual amount or equalAmount is set
+      const effectiveAmount = r.amount || equalAmount;
+      if (!effectiveAmount || !validateAmount(effectiveAmount)) {
         newErrors[`${r.id}-amount`] = "Valid amount required";
         isValid = false;
       }
     });
-
-    if (splitMode === "EQUAL" && !validateAmount(equalAmount)) {
-      newErrors["equalAmount"] = "Valid amount required";
-      isValid = false;
-    }
 
     if (!selectedToken) {
       notification.error("Please select a token");
@@ -495,7 +442,6 @@ function SplitContent() {
       token: selectedToken,
       recipients,
       totalAmount,
-      splitMode,
     };
 
     localStorage.setItem("pendingSplit", JSON.stringify(splitData));
@@ -509,56 +455,60 @@ function SplitContent() {
 
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [splitMode, equalAmount, recipients, selectedToken]);
-
-  useEffect(() => {
-    if (splitMode === "UNEQUAL") {
-      const timer = setTimeout(() => {
-        calculateDistribution();
-      }, 300);
-
-      return () => clearTimeout(timer);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [recipients.map(r => r.amount).join(","), splitMode, selectedToken]);
+  }, [equalAmount, recipients, selectedToken]);
 
   const hasDuplicates = duplicateAddresses.length > 0;
+
+  // Set the Share Config button in the header
+  useEffect(() => {
+    setCustomActions(
+      <ShareConfigButton
+        recipients={recipients}
+        selectedToken={selectedToken}
+        equalAmount={equalAmount}
+        className="mr-2"
+      />,
+    );
+
+    // Clean up when component unmounts
+    return () => setCustomActions(null);
+  }, [recipients, selectedToken, equalAmount, setCustomActions]);
 
   return (
     <div className="max-w-7xl w-full mx-auto py-10 px-4">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-        <div className="flex justify-between items-end">
-          <div>
-            <h1 className="text-lg font-bold">
-              Effortlessly manage and distribute funds with precision and transparency
-            </h1>
-          </div>
-          <div>
-            <ShareConfigButton
-              splitMode={splitMode}
-              recipients={recipients}
-              selectedToken={selectedToken}
-              equalAmount={equalAmount}
-              className="hidden sm:flex"
-            />
-          </div>
-        </div>
+        <div className="flex justify-center">
+          <div className="w-full max-w-4xl">
+            <div className="rounded-2xl shadow-lg p-6 border border-base-100">
+              <div className="flex flex-col gap-4 mb-6">
+                <div className="flex items-center justify-start">
+                  <h2 className="text-lg sm:text-xl font-semibold text-left">Effortlessly distribute funds with precision and transparency</h2>
+                </div>
 
-        <div className="flex md:flex-row flex-col gap-6 mt-4">
-          <div className="md:w-[40%]">
-            <SplitModeSelector splitMode={splitMode} onModeChange={setSplitMode} />
+                <AssetSelector
+                  selectedToken={selectedToken}
+                  onTokenSelect={setSelectedToken}
+                  tokenBalance={tokenBalance}
+                  chainId={urlChainId || chainId}
+                />
 
-            <AssetSelector
-              selectedToken={selectedToken}
-              onTokenSelect={setSelectedToken}
-              tokenBalance={tokenBalance}
-              chainId={urlChainId || chainId}
-            />
+                <div className="flex gap-2 justify-center flex-wrap">
+                  <button onClick={() => setShowBulkImport(true)} className="btn btn-sm btn-ghost rounded-md">
+                    <Upload className="w-4 h-4 mr-1" />
+                    Bulk Add Addresses
+                  </button>
+                  <button onClick={handleImportFromStorage} className="btn btn-sm btn-ghost rounded-md">
+                    <Download className="w-4 h-4 mr-1" />
+                    Add From Contacts
+                  </button>
+                </div>
+              </div>
 
-            {splitMode === "EQUAL" && (
-              <div className="rounded-2xl shadow-lg p-6 mb-6 border border-base-100">
-                <h2 className="text-xl font-semibold mb-4">Amount Per Recipient</h2>
-
+              <div className="mb-6 p-4 bg-base-300/30 border border-base-300 rounded-xl">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm font-medium">Auto Fill (Optional)</label>
+                  <span className="text-xs opacity-60">Leave empty to set individual amounts</span>
+                </div>
                 {selectedToken?.address === "ETH" ? (
                   <EtherInput value={equalAmount} onChange={setEqualAmount} placeholder="0.0" />
                 ) : (
@@ -571,28 +521,6 @@ function SplitContent() {
                     }
                   />
                 )}
-                {errors["equalAmount"] && <p className="mt-1 text-sm text-error">{errors["equalAmount"]}</p>}
-              </div>
-            )}
-          </div>
-
-          <div className="md:w-[60%]">
-            <div className="rounded-2xl shadow-lg p-6 border border-base-100">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h2 className="text-xl font-semibold">Recipients</h2>
-                  <p className="text-sm mt-1">Add addresses</p>
-                </div>
-                <div className="flex gap-2 md:flex-row flex-col items-end">
-                  <button onClick={() => setShowBulkImport(true)} className="btn btn-sm btn-ghost rounded-md">
-                    <Upload className="w-4 h-4 mr-1" />
-                    Bulk Add
-                  </button>
-                  <button onClick={handleImportFromStorage} className="btn btn-sm btn-ghost rounded-md">
-                    <Download className="w-4 h-4 mr-1" />
-                    From Contacts
-                  </button>
-                </div>
               </div>
 
               {hasDuplicates && (
@@ -618,7 +546,6 @@ function SplitContent() {
                       key={recipient.id}
                       recipient={recipient}
                       index={index}
-                      splitMode={splitMode}
                       selectedToken={selectedToken}
                       equalAmount={equalAmount}
                       savedContacts={savedContacts}
@@ -638,19 +565,16 @@ function SplitContent() {
                 Add Recipient
               </button>
 
-              {totalAmount && selectedToken && (
-                <TotalAmountDisplay totalAmount={totalAmount} token={selectedToken} tokenBalance={tokenBalance} />
+              {selectedToken && (
+                <TotalAmountDisplay
+                  totalAmount={totalAmount || "0"}
+                  token={selectedToken}
+                  tokenBalance={tokenBalance}
+                />
               )}
             </div>
 
             <div className="flex gap-4 mt-6">
-              <ShareConfigButton
-                splitMode={splitMode}
-                recipients={recipients}
-                selectedToken={selectedToken}
-                equalAmount={equalAmount}
-                className="sm:hidden"
-              />
               <button
                 onClick={handleReviewSplit}
                 className="btn btn-md rounded-md flex-1 btn-primary"
@@ -668,7 +592,6 @@ function SplitContent() {
         isOpen={showBulkImport}
         onClose={() => setShowBulkImport(false)}
         onImport={handleBulkImport}
-        splitMode={splitMode}
         savedContacts={savedContacts}
         existingRecipients={recipients}
       />

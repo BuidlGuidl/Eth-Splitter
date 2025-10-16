@@ -7,7 +7,6 @@ import { useCopyToClipboard } from "~~/hooks/scaffold-eth";
 import { notification } from "~~/utils/scaffold-eth";
 
 interface ShareConfigButtonProps {
-  splitMode: "EQUAL" | "UNEQUAL";
   recipients: Array<{
     id: string;
     address: string;
@@ -25,7 +24,6 @@ interface ShareConfigButtonProps {
 }
 
 export const ShareConfigButton: React.FC<ShareConfigButtonProps> = ({
-  splitMode,
   recipients,
   selectedToken,
   equalAmount,
@@ -52,7 +50,6 @@ export const ShareConfigButton: React.FC<ShareConfigButtonProps> = ({
     const params = new URLSearchParams();
 
     params.append("chainId", chainId.toString());
-    params.append("mode", splitMode);
 
     if (selectedToken.address === "ETH") {
       params.append("token", "ETH");
@@ -70,33 +67,33 @@ export const ShareConfigButton: React.FC<ShareConfigButtonProps> = ({
     });
     params.append("recipientCount", validRecipients.length.toString());
 
-    if (splitMode === "EQUAL") {
-      if (equalAmount && equalAmount.trim() !== "") {
+    // Include equalAmount if set
+    if (equalAmount && equalAmount.trim() !== "") {
+      const decimals = selectedToken.address === "ETH" ? 18 : selectedToken.decimals;
+      try {
+        const rawAmount = parseUnits(equalAmount, decimals);
+        params.append("equalAmount", rawAmount.toString());
+      } catch {}
+    }
+
+    // Include individual amounts if they exist
+    validRecipients.forEach((recipient, index) => {
+      if (recipient.amount && recipient.amount.trim() !== "") {
         const decimals = selectedToken.address === "ETH" ? 18 : selectedToken.decimals;
         try {
-          const rawAmount = parseUnits(equalAmount, decimals);
-          params.append("equalAmount", rawAmount.toString());
-        } catch {}
-      }
-    } else {
-      validRecipients.forEach((recipient, index) => {
-        if (recipient.amount && recipient.amount.trim() !== "") {
-          const decimals = selectedToken.address === "ETH" ? 18 : selectedToken.decimals;
-          try {
-            const rawAmount = parseUnits(recipient.amount, decimals);
-            params.append(`amount_${index}`, rawAmount.toString());
-          } catch {
-            params.append(`amount_${index}`, recipient.amount);
-          }
+          const rawAmount = parseUnits(recipient.amount, decimals);
+          params.append(`amount_${index}`, rawAmount.toString());
+        } catch {
+          params.append(`amount_${index}`, recipient.amount);
         }
-      });
-    }
+      }
+    });
 
     const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
     const shareableUrl = `${baseUrl}?${params.toString()}`;
 
     return shareableUrl;
-  }, [splitMode, recipients, selectedToken, equalAmount, chainId]);
+  }, [recipients, selectedToken, equalAmount, chainId]);
 
   const handleShareClick = () => {
     const url = generateShareableUrl();

@@ -1,14 +1,16 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { AlertCircle, Coins, Plus, X } from "lucide-react";
+import { AlertCircle, ChevronDown, Coins, Network, Plus, X } from "lucide-react";
 import { formatUnits, isAddress } from "viem";
 import { erc20Abi } from "viem";
-import { useReadContract } from "wagmi";
+import { useReadContract, useSwitchChain } from "wagmi";
 import { AddressInput } from "~~/components/scaffold-eth";
 import { tokens } from "~~/constants/tokens";
 import { useTargetNetwork } from "~~/hooks/scaffold-eth";
+import { useOutsideClick } from "~~/hooks/scaffold-eth";
+import scaffoldConfig from "~~/scaffold.config";
 
 interface Token {
   address: string;
@@ -31,6 +33,8 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
   chainId,
 }) => {
   const { targetNetwork } = useTargetNetwork();
+  const { switchChain } = useSwitchChain();
+  const [showChainSelector, setShowChainSelector] = useState(false);
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [customTokenAddress, setCustomTokenAddress] = useState("");
   const [customTokenError, setCustomTokenError] = useState("");
@@ -40,6 +44,9 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
     symbol: "",
   });
   const [isCustomTokenLoading, setIsCustomTokenLoading] = useState(false);
+
+  const chainSelectorRef = useRef<HTMLDivElement>(null);
+  useOutsideClick(chainSelectorRef, () => setShowChainSelector(false));
 
   const nativeCurrency = targetNetwork.nativeCurrency || { name: "Ether", symbol: "ETH", decimals: 18 };
 
@@ -213,29 +220,96 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
     return formatUnits(tokenBalance.balance, tokenBalance.decimals || 18);
   };
 
-  return (
-    <div className="rounded-2xl p-6 mb-6 border border-base-100 shadow-lg">
-      <h2 className="text-xl font-semibold mb-4">Select Asset</h2>
+  const getChainDisplayName = (chainName: string): string => {
+    // Custom display names for chains
+    const nameMap: { [key: string]: string } = {
+      "op mainnet": "Optimism",
+      "optimism": "Optimism",
+    };
+    
+    const lowerName = chainName.toLowerCase();
+    if (nameMap[lowerName]) {
+      return nameMap[lowerName];
+    }
+    
+    // Default: capitalize first letter
+    return chainName.charAt(0).toUpperCase() + chainName.slice(1);
+  };
 
-      <div className="flex items-center justify-between mb-4 p-3 bg-base-200 rounded-xl">
-        <div className="flex items-center">
-          <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold mr-3 bg-primary">
-            {tokenInfo.symbol ? tokenInfo.symbol.charAt(0) : <Coins className="w-5 h-5" />}
-          </div>
-          <div className="text-left">
-            <div className="font-medium">
-              {tokenInfo.symbol ? `${tokenInfo.name} (${tokenInfo.symbol})` : "Select Token"}
+  const handleChainSwitch = (newChainId: number) => {
+    if (switchChain) {
+      switchChain({ chainId: newChainId });
+      setShowChainSelector(false);
+    }
+  };
+
+  return (
+    <div className="p-4 bg-base-200/50 border border-base-300 rounded-xl">
+      {/* Chain Selector */}
+      <div className="mb-3">
+        <label className="text-xs font-semibold text-base-content/70 mb-1.5 block">Chain</label>
+        <div className="relative" ref={chainSelectorRef}>
+          <button
+            onClick={() => setShowChainSelector(!showChainSelector)}
+            className="w-full flex items-center justify-between px-3 py-2 bg-base-300 hover:bg-base-content/10 rounded-xl transition-colors border border-base-content/10"
+          >
+            <div className="flex items-center gap-2">
+              <Network className="w-4 h-4" />
+              <span className="font-medium text-sm">
+                {getChainDisplayName(targetNetwork.name)}
+              </span>
             </div>
-            {selectedToken && tokenBalance && (
-              <div className="text-xs opacity-70">
-                Balance: {formatBalance()} {tokenInfo.symbol}
+            <ChevronDown className={`w-4 h-4 transition-transform ${showChainSelector ? "rotate-180" : ""}`} />
+          </button>
+
+          {showChainSelector && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="absolute top-full left-0 right-0 mt-2 bg-base-200 border border-base-300 rounded-xl shadow-lg z-50 overflow-hidden"
+            >
+              {scaffoldConfig.targetNetworks.map(network => (
+                <button
+                  key={network.id}
+                  onClick={() => handleChainSwitch(network.id)}
+                  className={`w-full flex items-center justify-between px-3 py-2 hover:bg-base-300 transition-colors ${
+                    network.id === chainId ? "bg-primary/20" : ""
+                  }`}
+                >
+                  <span className="font-medium text-sm">
+                    {getChainDisplayName(network.name)}
+                  </span>
+                  {network.id === chainId && <div className="w-2 h-2 rounded-full bg-primary"></div>}
+                </button>
+              ))}
+            </motion.div>
+          )}
+        </div>
+      </div>
+
+      {/* Asset Display */}
+      <div className="mb-3">
+        <label className="text-xs font-semibold text-base-content/70 mb-1.5 block">Asset</label>
+        <div className="flex items-center justify-between px-3 py-1.5 bg-base-200 rounded-xl">
+          <div className="flex items-center">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold mr-3 bg-primary">
+              {tokenInfo.symbol ? tokenInfo.symbol.charAt(0) : <Coins className="w-5 h-5" />}
+            </div>
+            <div className="text-left">
+              <div className="font-medium">
+                {tokenInfo.symbol ? `${tokenInfo.name} (${tokenInfo.symbol})` : "Select Token"}
               </div>
-            )}
+              {selectedToken && tokenBalance && (
+                <div className="text-xs opacity-70">
+                  Balance: {formatBalance()} {tokenInfo.symbol}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2 mb-4">
+      <div className="flex flex-wrap gap-2">
         {tokenList.map(token => (
           <motion.button
             key={token.address}
@@ -306,8 +380,8 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
       </div>
 
       {selectedToken && tokenBalance?.allowance !== undefined && selectedToken.address !== "ETH" && (
-        <div className="mt-4 p-3 bg-warning/10 rounded-lg">
-          <p className="text-sm">
+        <div className="mt-3 p-2 bg-warning/10 rounded-lg">
+          <p className="text-xs">
             <span className="font-medium">Allowance:</span>{" "}
             {formatUnits(tokenBalance.allowance, tokenBalance.decimals || 18)} {tokenInfo.symbol}
           </p>

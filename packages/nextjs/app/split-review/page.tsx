@@ -26,7 +26,6 @@ interface SplitData {
   token: { address: string; symbol: string; name: string; decimals: number } | null;
   recipients: Recipient[];
   totalAmount: string;
-  splitMode: "EQUAL" | "UNEQUAL";
 }
 
 export default function SplitReviewPage() {
@@ -46,7 +45,6 @@ export default function SplitReviewPage() {
     recipients: Recipient[];
     totalAmount: string;
     token: { address: string; symbol: string; name: string; decimals: number };
-    splitMode: "EQUAL" | "UNEQUAL";
   } | null>(null);
   const { targetNetwork } = useTargetNetwork();
 
@@ -92,6 +90,17 @@ export default function SplitReviewPage() {
     }
   }, [router]);
 
+  // Helper function to determine if all amounts are equal
+  const isEqualSplit = useCallback(() => {
+    if (!splitData || !splitData.recipients.length) return false;
+
+    const amounts = splitData.recipients.map(r => parseFloat(r.amount || "0"));
+    const firstAmount = amounts[0];
+
+    // Check if all amounts are the same and greater than 0
+    return amounts.every(amt => amt > 0 && amt === firstAmount);
+  }, [splitData]);
+
   const estimateGas = useCallback(async () => {
     if (!splitData || !publicClient || !connectedAddress || !deployedContractInfo) return;
 
@@ -101,9 +110,10 @@ export default function SplitReviewPage() {
     try {
       const recipients = splitData.recipients.map(r => r.address as `0x${string}`);
       let estimatedGas: bigint;
+      const useEqualSplit = isEqualSplit();
 
       if (splitData.token?.address === "ETH") {
-        if (splitData.splitMode === "EQUAL") {
+        if (useEqualSplit) {
           const totalValue = parseEther(splitData.totalAmount);
           estimatedGas = await publicClient.estimateContractGas({
             address: deployedContractInfo.address as `0x${string}`,
@@ -130,7 +140,7 @@ export default function SplitReviewPage() {
         const decimals = splitData.token?.decimals || 18;
         const totalAmount = parseUnits(splitData.totalAmount, decimals);
 
-        if (splitData.splitMode === "EQUAL") {
+        if (useEqualSplit) {
           estimatedGas = await publicClient.estimateContractGas({
             address: deployedContractInfo.address as `0x${string}`,
             abi: deployedContractInfo.abi,
@@ -160,7 +170,7 @@ export default function SplitReviewPage() {
     } finally {
       setIsEstimatingGas(false);
     }
-  }, [splitData, publicClient, connectedAddress, deployedContractInfo]);
+  }, [splitData, publicClient, connectedAddress, deployedContractInfo, isEqualSplit]);
 
   useEffect(() => {
     estimateGas();
@@ -201,9 +211,10 @@ export default function SplitReviewPage() {
     try {
       const recipients = splitData.recipients.map(r => r.address as `0x${string}`);
       let txHash: string | undefined;
+      const useEqualSplit = isEqualSplit();
 
       if (splitData.token.address === "ETH") {
-        if (splitData.splitMode === "EQUAL") {
+        if (useEqualSplit) {
           const totalValue = parseEther(splitData.totalAmount);
 
           txHash = await writeSplitter({
@@ -232,7 +243,7 @@ export default function SplitReviewPage() {
           return;
         }
 
-        if (splitData.splitMode === "EQUAL") {
+        if (useEqualSplit) {
           txHash = await writeSplitter({
             functionName: "splitEqualERC20",
             args: [tokenAddress, recipients, totalAmount],
@@ -253,7 +264,6 @@ export default function SplitReviewPage() {
           recipients: splitData.recipients,
           totalAmount: splitData.totalAmount,
           token: splitData.token,
-          splitMode: splitData.splitMode,
         });
       }
     } catch (error) {
@@ -297,7 +307,6 @@ export default function SplitReviewPage() {
         recipients={transactionSuccess.recipients}
         totalAmount={transactionSuccess.totalAmount}
         token={transactionSuccess.token}
-        splitMode={transactionSuccess.splitMode}
       />
     );
   }
@@ -373,10 +382,7 @@ export default function SplitReviewPage() {
                         </div>
                       </td>
                       <td className="text-right py-4 font-medium">
-                        {splitData.splitMode === "EQUAL"
-                          ? (parseFloat(splitData.totalAmount) / splitData.recipients.length).toFixed(4)
-                          : recipient.amount}{" "}
-                        {splitData.token?.symbol}
+                        {recipient.amount} {splitData.token?.symbol}
                       </td>
                       <td className="text-right py-4">
                         <span className="text-primary font-medium">

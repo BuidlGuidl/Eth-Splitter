@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import { SplitMode } from "../page";
 import { AnimatePresence, motion } from "framer-motion";
 import { FileText, Info, Upload, X } from "lucide-react";
 import { getAddress, isAddress } from "viem";
@@ -23,7 +22,6 @@ interface BulkImportModalProps {
   isOpen: boolean;
   onClose: () => void;
   onImport: (recipients: Recipient[]) => void;
-  splitMode: SplitMode;
   savedContacts: Contact[];
   existingRecipients?: Recipient[];
 }
@@ -32,7 +30,6 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
   isOpen,
   onClose,
   onImport,
-  splitMode,
   savedContacts,
   existingRecipients = [],
 }) => {
@@ -82,14 +79,13 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
         const addressOrEns = parts[0];
         let amount = "";
 
-        if (splitMode === "UNEQUAL") {
-          if (parts.length >= 2) {
-            amount = parts[1] || "";
+        // Amounts are always optional - if provided, validate them
+        if (parts.length >= 2) {
+          amount = parts[1] || "";
 
-            if (amount && (isNaN(parseFloat(amount)) || parseFloat(amount) <= 0)) {
-              errors.push(`Line ${i + 1}: Invalid amount for address ${addressOrEns}`);
-              continue;
-            }
+          if (amount && (isNaN(parseFloat(amount)) || parseFloat(amount) <= 0)) {
+            errors.push(`Line ${i + 1}: Invalid amount for address ${addressOrEns}`);
+            continue;
           }
         }
 
@@ -185,54 +181,28 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
       return;
     }
 
-    const contactsText = availableContacts
-      .map(contact => {
-        if (splitMode === "EQUAL") {
-          return `${contact.address}`;
-        } else {
-          return `${contact.address}`;
-        }
-      })
-      .join("\n");
+    const contactsText = availableContacts.map(contact => `${contact.address}`).join("\n");
 
     setBulkText(contactsText);
     notification.success(`Loaded ${availableContacts.length} contacts (excluding duplicates)`);
   };
 
   const getInstructions = () => {
-    if (splitMode === "EQUAL") {
-      return (
-        <div className="space-y-1 text-xs">
-          <p className="font-medium">Format for Equal Split:</p>
-          <p>• One address/ENS per line</p>
-          <p className="mt-2">Examples:</p>
-          <code className="block bg-base-300 p-2 rounded mt-1 md:text-xs text-[0.6rem]">
-            0x742d35Cc6634C0532925a3b844Bc9e7595f0fA7B
-            <br />
-            vitalik.eth
-            <br />
-            0x123...abc
-          </code>
-        </div>
-      );
-    } else {
-      return (
-        <div className="space-y-1 text-xs">
-          <p className="font-medium">Format for Custom Split:</p>
-          <p>• Address/ENS (amount is optional)</p>
-          <p>• If amount is provided: Address/ENS, Amount</p>
-          <p>• If no amount: just Address/ENS</p>
-          <p className="mt-2">Examples:</p>
-          <code className="block bg-base-300 p-2 rounded mt-1 md:text-xs text-[0.6rem]">
-            0x742d35Cc6634C0532925a3b844Bc9e7595f0fA7B, 1.5
-            <br />
-            vitalik.eth
-            <br />
-            0x123...abc, 0.5
-          </code>
-        </div>
-      );
-    }
+    return (
+      <div className="space-y-1 text-xs">
+        <p className="font-medium">Format:</p>
+        <p>• One address/ENS per line</p>
+        <p>• Optionally add amounts: Address/ENS, Amount</p>
+        <p className="mt-2">Examples:</p>
+        <code className="block bg-base-300 p-2 rounded mt-1 md:text-xs text-[0.6rem]">
+          0x742d35Cc6634C0532925a3b844Bc9e7595f0fA7B
+          <br />
+          vitalik.eth, 1.5
+          <br />
+          0x123...abc, 0.5
+        </code>
+      </div>
+    );
   };
 
   if (!isOpen) return null;
@@ -272,11 +242,7 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
               <textarea
                 value={bulkText}
                 onChange={e => setBulkText(e.target.value)}
-                placeholder={
-                  splitMode === "EQUAL"
-                    ? "0x742d35Cc6634C0532925a3b844Bc9e7595f0fA7B\nvitalik.eth\n0x123...abc"
-                    : "0x742d35Cc6634C0532925a3b844Bc9e7595f0fA7B, 1.5\nvitalik.eth\n0x123...abc, 0.5"
-                }
+                placeholder="0x742d35Cc6634C0532925a3b844Bc9e7595f0fA7B&#10;vitalik.eth, 1.5&#10;0x123...abc, 0.5"
                 className="textarea textarea-bordered w-full h-40 font-mono text-sm rounded-md bg-base-200"
                 disabled={isResolving}
               />
