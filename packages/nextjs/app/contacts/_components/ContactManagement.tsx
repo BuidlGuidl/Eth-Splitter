@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, ChevronLeft, ChevronRight, Download, Edit, Search, Trash2 } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Download, Edit, Trash2 } from "lucide-react";
 import { Address, InputBase } from "~~/components/scaffold-eth";
 import { notification } from "~~/utils/scaffold-eth";
 import { Contact, updateContact } from "~~/utils/splitter";
@@ -92,7 +92,7 @@ export const ContactManagement: React.FC<ContactManagementProps> = ({
     return (
       <div className="flex items-center justify-between mt-6 pt-4 border-t border-base-100">
         <div className="text-sm text-base-content/60">
-          Showing {startIndex + 1}-{Math.min(endIndex, filteredContacts.length)} of {filteredContacts.length} contacts
+          Showing {startIndex + 1}-{Math.min(endIndex, filteredContacts.length)}
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -154,19 +154,6 @@ export const ContactManagement: React.FC<ContactManagementProps> = ({
             Export Addresses (CSV)
           </button>
         </div>
-
-        {contacts.length > 5 && (
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-base-content/40" />
-            <input
-              type="text"
-              placeholder="Search contacts..."
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              className="input input-bordered input-sm pl-9 w-64"
-            />
-          </div>
-        )}
       </div>
 
       {filteredContacts.length === 0 ? (
@@ -194,14 +181,14 @@ export const ContactManagement: React.FC<ContactManagementProps> = ({
                 </tr>
               </thead>
               <tbody className="divide-y divide-base-200">
-                <AnimatePresence mode="wait">
-                  {paginatedContacts.map((contact, index) => (
+                <AnimatePresence initial={false}>
+                  {paginatedContacts.map(contact => (
                     <motion.tr
                       key={contact.address}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      transition={{ delay: index * 0.05 }}
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0, transition: { duration: 0.2 } }}
+                      transition={{ duration: 0.2 }}
                       className="group hover:bg-base-200/30 transition-colors"
                     >
                       <td className="px-2 py-3">

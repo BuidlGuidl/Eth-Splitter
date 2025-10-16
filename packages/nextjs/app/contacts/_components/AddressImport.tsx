@@ -216,7 +216,7 @@ export const AddressImport: React.FC<AddressImportProps> = ({ existingContacts, 
   };
 
   return (
-    <div className={`px-4 ${className} border p-4 border-base-100 rounded-md shadow-lg`}>
+    <div className={`px-4 ${className} border p-4 border-base-100 rounded-md shadow-lg h-fit`}>
       <h2 className="text-xl font-semibold mb-6">Add or Import Addresses</h2>
 
       <div className="flex space-x-2 mb-6">
