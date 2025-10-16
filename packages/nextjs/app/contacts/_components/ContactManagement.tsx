@@ -1,8 +1,10 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, ChevronLeft, ChevronRight, Download, Edit, Trash2 } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Download, Edit, Search, Trash2 } from "lucide-react";
+import { normalize } from "viem/ens";
+import { useEnsAddress } from "wagmi";
 import { Address, InputBase } from "~~/components/scaffold-eth";
 import { notification } from "~~/utils/scaffold-eth";
 import { Contact, updateContact } from "~~/utils/splitter";
@@ -29,15 +31,50 @@ export const ContactManagement: React.FC<ContactManagementProps> = ({
   const [editLabel, setEditLabel] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  const isEnsName = debouncedSearchTerm.includes(".eth");
+
+  const { data: resolvedAddress } = useEnsAddress({
+    name: isEnsName ? normalize(debouncedSearchTerm) : undefined,
+  });
 
   const filteredContacts = useMemo(() => {
-    if (!searchTerm) return contacts;
+    let filtered = contacts;
 
-    const search = searchTerm.toLowerCase();
-    return contacts.filter(
-      contact => contact.address.toLowerCase().includes(search) || contact.label?.toLowerCase().includes(search),
-    );
-  }, [contacts, searchTerm]);
+    if (debouncedSearchTerm) {
+      const search = debouncedSearchTerm.toLowerCase();
+
+      filtered = contacts.filter(contact => {
+        const addressMatch = contact.address.toLowerCase().includes(search);
+
+        const labelMatch = contact.label?.toLowerCase().includes(search);
+
+        const ensMatch = resolvedAddress && contact.address.toLowerCase() === resolvedAddress.toLowerCase();
+
+        return addressMatch || labelMatch || ensMatch;
+      });
+    }
+
+    return filtered.sort((a, b) => {
+      const labelA = (a.label || "").toLowerCase();
+      const labelB = (b.label || "").toLowerCase();
+
+      if (!labelA && !labelB) return 0;
+      if (!labelA) return 1;
+      if (!labelB) return -1;
+
+      return labelA.localeCompare(labelB);
+    });
+  }, [contacts, debouncedSearchTerm, resolvedAddress]);
 
   const totalPages = Math.ceil(filteredContacts.length / CONTACTS_PER_PAGE);
   const startIndex = (currentPage - 1) * CONTACTS_PER_PAGE;
@@ -46,7 +83,7 @@ export const ContactManagement: React.FC<ContactManagementProps> = ({
 
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm]);
+  }, [debouncedSearchTerm]);
 
   const handleLabelChange = (value: string) => {
     if (value.length <= MAX_LABEL_LENGTH) {
@@ -92,7 +129,7 @@ export const ContactManagement: React.FC<ContactManagementProps> = ({
     return (
       <div className="flex items-center justify-between mt-6 pt-4 border-t border-base-100">
         <div className="text-sm text-base-content/60">
-          Showing {startIndex + 1}-{Math.min(endIndex, filteredContacts.length)}
+          Showing {startIndex + 1}-{Math.min(endIndex, filteredContacts.length)} of {filteredContacts.length}
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -140,8 +177,8 @@ export const ContactManagement: React.FC<ContactManagementProps> = ({
 
   return (
     <div className={className}>
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex justify-between w-full  items-start">
+      <div className="flex flex-col items-center justify-between mb-6">
+        <div className="flex justify-between w-full items-start">
           <div>
             <h2 className="text-xl font-semibold">Saved Contacts</h2>
             <p className="text-sm text-base-content/60 mt-1">
@@ -154,13 +191,34 @@ export const ContactManagement: React.FC<ContactManagementProps> = ({
             Export Addresses (CSV)
           </button>
         </div>
+
+        {contacts.length > 3 && (
+          <div className="relative mr-auto mt-2 w-full">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-base-content/40" />
+            <input
+              type="text"
+              placeholder="Search by address, ENS, or label..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="input input-sm pl-9 w-full rounded-md"
+            />
+            {isEnsName && resolvedAddress && (
+              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                <span className="text-xs text-success">✓ ENS resolved</span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {filteredContacts.length === 0 ? (
         <div className="text-center py-12 bg-base-100 rounded-lg">
           {searchTerm ? (
             <>
-              <p className="text-gray-600 dark:text-gray-400">No contacts match &quot;{searchTerm}&quot;</p>
+              <p className="text-gray-600 dark:text-gray-400">
+                No contacts match &quot;{searchTerm}&quot;
+                {isEnsName && !resolvedAddress && " (ENS name not found)"}
+              </p>
               <button onClick={() => setSearchTerm("")} className="mt-2 text-primary hover:text-primary-focus">
                 Clear search
               </button>
@@ -213,7 +271,7 @@ export const ContactManagement: React.FC<ContactManagementProps> = ({
                           </div>
                         ) : (
                           <div className="flex items-center gap-2">
-                            <span className="text-sm px-2 py-1 bg-base-200 rounded">{contact.label || "No label"}</span>
+                            <span className="text-sm px-2 py-1 bg-base-200 rounded">{contact.label || "-"}</span>
                             <button
                               onClick={() => handleStartEdit(contact)}
                               className="btn btn-sm btn-ghost btn-circle opacity-0 group-hover:opacity-100 transition-opacity"
