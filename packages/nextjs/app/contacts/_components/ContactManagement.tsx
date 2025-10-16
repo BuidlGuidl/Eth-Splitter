@@ -192,7 +192,7 @@ export const ContactManagement: React.FC<ContactManagementProps> = ({
           </button>
         </div>
 
-        {contacts.length > 3 && (
+        {contacts.length > CONTACTS_PER_PAGE && (
           <div className="relative mr-auto mt-2 w-full">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-base-content/40" />
             <input
