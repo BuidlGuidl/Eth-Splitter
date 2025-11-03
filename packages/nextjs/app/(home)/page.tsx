@@ -12,8 +12,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { AlertTriangle, ArrowRight, Download, Plus, Upload } from "lucide-react";
 import { formatUnits, isAddress, parseUnits } from "viem";
 import { useChainId, useSwitchChain } from "wagmi";
-import { Address, EtherInput, InputBase } from "~~/components/scaffold-eth";
 import { useHeaderActions } from "~~/components/HeaderActionsContext";
+import { Address, EtherInput, InputBase } from "~~/components/scaffold-eth";
 import { useTokenBalance } from "~~/hooks/useTokenBalance";
 import { notification } from "~~/utils/scaffold-eth";
 import { Contact, loadCache, loadContacts, updateCacheAmounts, updateCacheWallets } from "~~/utils/splitter";
@@ -438,9 +438,14 @@ function SplitContent() {
 
     calculateDistribution();
 
+    const normalizedRecipients = recipients.map(r => ({
+      ...r,
+      amount: r.amount || equalAmount,
+    }));
+
     const splitData = {
       token: selectedToken,
-      recipients,
+      recipients: normalizedRecipients,
       totalAmount,
     };
 
@@ -459,7 +464,6 @@ function SplitContent() {
 
   const hasDuplicates = duplicateAddresses.length > 0;
 
-  // Set the Share Config button in the header
   useEffect(() => {
     setCustomActions(
       <ShareConfigButton
@@ -470,7 +474,6 @@ function SplitContent() {
       />,
     );
 
-    // Clean up when component unmounts
     return () => setCustomActions(null);
   }, [recipients, selectedToken, equalAmount, setCustomActions]);
 
@@ -482,7 +485,9 @@ function SplitContent() {
             <div className="rounded-2xl shadow-lg p-6 border border-base-100">
               <div className="flex flex-col gap-4 mb-6">
                 <div className="flex items-center justify-start">
-                  <h2 className="text-lg sm:text-xl font-semibold text-left">Effortlessly distribute funds with precision and transparency</h2>
+                  <h2 className="text-lg sm:text-xl font-semibold text-left">
+                    Effortlessly distribute funds with precision and transparency
+                  </h2>
                 </div>
 
                 <AssetSelector
