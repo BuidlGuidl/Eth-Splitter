@@ -480,7 +480,11 @@ export default function SplitReviewPage() {
                     isEstimatingGas ||
                     (needsApproval && !hasSufficientAllowance) ||
                     isApproving ||
-                    isConfirmingApproval
+                    isConfirmingApproval ||
+                    (splitData.token.address === "ETH" &&
+                      ethBalance &&
+                      parseEther(splitData.totalAmount) + totalGasCost > ethBalance.value) ||
+                    (ethBalance && totalGasCost > ethBalance.value)
                   }
                   className={`btn btn-lg w-full rounded-xl ${
                     needsApproval && !hasSufficientAllowance ? "btn-disabled" : "btn-primary"
@@ -514,29 +518,47 @@ export default function SplitReviewPage() {
                   <p className="text-sm font-medium">
                     {ethBalance ? formatEther(ethBalance.value) : "0"} {nativeCurrency.symbol}
                   </p>
-                  {ethBalance && parseEther(splitData.totalAmount) > ethBalance.value && (
-                    <p className="text-xs text-error mt-2">Insufficient balance</p>
+                  {ethBalance && parseEther(splitData.totalAmount) + totalGasCost > ethBalance.value && (
+                    <p className="text-xs text-error mt-2">
+                      Insufficient balance (need {formatEther(parseEther(splitData.totalAmount) + totalGasCost)}{" "}
+                      {nativeCurrency.symbol} including gas)
+                    </p>
                   )}
                 </div>
               ) : (
-                <div className="mt-6 p-4 bg-base-200 rounded-xl">
-                  <p className="text-xs text-base-content/60 mb-1">Your {splitData.token.symbol} Balance</p>
-                  <p className="text-sm font-medium">
-                    {tokenBalance
-                      ? formatUnits(
-                          typeof tokenBalance === "object" && "value" in tokenBalance
-                            ? tokenBalance.value
-                            : tokenBalance,
-                          splitData.token.decimals || 18,
-                        )
-                      : "0"}{" "}
-                    {splitData.token.symbol}
-                  </p>
-                  {tokenBalance &&
-                    typeof tokenBalance === "object" &&
-                    parseUnits(splitData.totalAmount, splitData.token.decimals || 18) > tokenBalance.value && (
-                      <p className="text-xs text-error mt-2">Insufficient balance</p>
+                <div className="mt-6 space-y-3">
+                  <div className="p-4 bg-base-200 rounded-xl">
+                    <p className="text-xs text-base-content/60 mb-1">Your {splitData.token.symbol} Balance</p>
+                    <p className="text-sm font-medium">
+                      {tokenBalance
+                        ? formatUnits(
+                            typeof tokenBalance === "object" && "value" in tokenBalance
+                              ? tokenBalance.value
+                              : tokenBalance,
+                            splitData.token.decimals || 18,
+                          )
+                        : "0"}{" "}
+                      {splitData.token.symbol}
+                    </p>
+                    {tokenBalance &&
+                      typeof tokenBalance === "object" &&
+                      parseUnits(splitData.totalAmount, splitData.token.decimals || 18) > tokenBalance.value && (
+                        <p className="text-xs text-error mt-2">Insufficient token balance</p>
+                      )}
+                  </div>
+                  <div className="p-4 bg-base-200 rounded-xl">
+                    <p className="text-xs text-base-content/60 mb-1">
+                      Your {nativeCurrency.symbol} Balance (for gas)
+                    </p>
+                    <p className="text-sm font-medium">
+                      {ethBalance ? formatEther(ethBalance.value) : "0"} {nativeCurrency.symbol}
+                    </p>
+                    {ethBalance && totalGasCost > ethBalance.value && (
+                      <p className="text-xs text-error mt-2">
+                        Insufficient {nativeCurrency.symbol} for gas (need ~{formatEther(totalGasCost)})
+                      </p>
                     )}
+                  </div>
                 </div>
               )}
             </div>
