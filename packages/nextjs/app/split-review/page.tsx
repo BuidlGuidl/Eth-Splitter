@@ -266,9 +266,17 @@ export default function SplitReviewPage() {
           token: splitData.token,
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error executing split:", error);
-      notification.error("Failed to execute split");
+      
+      // Check for chain mismatch error
+      if (error?.message?.includes("chain") && error?.message?.includes("does not match")) {
+        notification.error(
+          `Please switch your wallet to ${targetNetwork.name} using the network selector in the top-right corner`
+        );
+      } else {
+        notification.error("Failed to execute split");
+      }
     } finally {
       setIsExecuting(false);
     }

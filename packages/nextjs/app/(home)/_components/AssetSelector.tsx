@@ -7,6 +7,7 @@ import { formatUnits, isAddress } from "viem";
 import { erc20Abi } from "viem";
 import { useReadContract, useSwitchChain } from "wagmi";
 import { AddressInput } from "~~/components/scaffold-eth";
+import { useAccount } from "wagmi";
 import { tokens } from "~~/constants/tokens";
 import { useTargetNetwork } from "~~/hooks/scaffold-eth";
 import { useOutsideClick } from "~~/hooks/scaffold-eth";
@@ -34,6 +35,7 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
 }) => {
   const { targetNetwork } = useTargetNetwork();
   const { switchChain } = useSwitchChain();
+  const { chain: walletChain } = useAccount();
   const [showChainSelector, setShowChainSelector] = useState(false);
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [customTokenAddress, setCustomTokenAddress] = useState("");
@@ -236,10 +238,15 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
     return chainName.charAt(0).toUpperCase() + chainName.slice(1);
   };
 
-  const handleChainSwitch = (newChainId: number) => {
+  const handleChainSwitch = async (newChainId: number) => {
     if (switchChain) {
-      switchChain({ chainId: newChainId });
-      setShowChainSelector(false);
+      try {
+        await switchChain({ chainId: newChainId });
+        setShowChainSelector(false);
+      } catch (error) {
+        console.error("Failed to switch chain:", error);
+        // Keep selector open so user can try again
+      }
     }
   };
 
@@ -247,7 +254,12 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
     <div className="p-4 bg-base-200/50 border border-base-300 rounded-xl">
       {/* Chain Selector */}
       <div className="mb-3">
-        <label className="text-xs font-semibold text-base-content/70 mb-1.5 block">Chain</label>
+        <label className="text-xs font-semibold text-base-content/70 mb-1.5 block">
+          Chain
+          <span className="font-normal text-xs ml-2 text-base-content/50">
+            (Switches your wallet network)
+          </span>
+        </label>
         <div className="relative" ref={chainSelectorRef}>
           <button
             onClick={() => setShowChainSelector(!showChainSelector)}
@@ -285,6 +297,14 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
             </motion.div>
           )}
         </div>
+        
+        {walletChain && walletChain.id !== targetNetwork.id && (
+          <div className="mt-2 p-2 bg-warning/10 rounded-lg border border-warning/30">
+            <p className="text-xs text-warning">
+              ⚠️ Your wallet is connected to {walletChain.name}. Please switch to {targetNetwork.name} to continue.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Asset Display */}

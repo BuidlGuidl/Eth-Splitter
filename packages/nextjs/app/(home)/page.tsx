@@ -579,15 +579,27 @@ function SplitContent() {
               )}
             </div>
 
-            <div className="flex gap-4 mt-6">
-              <button
-                onClick={handleReviewSplit}
-                className="btn btn-md rounded-md flex-1 btn-primary"
-                disabled={!selectedToken || recipients.length < 2 || hasDuplicates}
-              >
-                Review Split
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </button>
+            <div className="mt-6">
+              <div className="flex gap-4">
+                <button
+                  onClick={handleReviewSplit}
+                  className="btn btn-md rounded-md flex-1 btn-primary"
+                  disabled={
+                    !selectedToken ||
+                    recipients.length < 2 ||
+                    hasDuplicates ||
+                    (urlChainId && urlChainId !== chainId)
+                  }
+                >
+                  Review Split
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </button>
+              </div>
+              {urlChainId && urlChainId !== chainId && (
+                <p className="text-xs text-warning mt-2 text-center">
+                  ⚠️ Please switch your wallet network to continue
+                </p>
+              )}
             </div>
           </div>
         </div>
