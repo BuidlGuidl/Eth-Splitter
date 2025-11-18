@@ -52,9 +52,6 @@ export default function SplitReviewPage() {
 
   const { writeContractAsync: writeSplitter } = useScaffoldWriteContract({
     contractName: "ETHSplitter",
-    // Disable simulation to avoid false "User rejected" errors on some networks
-    // The transaction will still be validated by the wallet before execution
-    disableSimulate: true,
   });
 
   const { data: deployedContractInfo } = useDeployedContractInfo({
@@ -210,17 +207,18 @@ export default function SplitReviewPage() {
     }
 
     setIsExecuting(true);
+    let transactionHash: string | undefined;
 
     try {
       const recipients = splitData.recipients.map(r => r.address as `0x${string}`);
-      let txHash: string | undefined;
       const useEqualSplit = isEqualSplit();
 
+      // Execute the transaction
       if (splitData.token.address === "ETH") {
         if (useEqualSplit) {
           const totalValue = parseEther(splitData.totalAmount);
 
-          txHash = await writeSplitter({
+          transactionHash = await writeSplitter({
             functionName: "splitEqualETH",
             args: [recipients],
             value: totalValue,
@@ -229,7 +227,7 @@ export default function SplitReviewPage() {
           const amounts = splitData.recipients.map(r => parseEther(r.amount));
           const totalValue = amounts.reduce((sum, amount) => sum + amount, BigInt(0));
 
-          txHash = await writeSplitter({
+          transactionHash = await writeSplitter({
             functionName: "splitETH",
             args: [recipients, amounts],
             value: totalValue,
@@ -247,40 +245,67 @@ export default function SplitReviewPage() {
         }
 
         if (useEqualSplit) {
-          txHash = await writeSplitter({
+          transactionHash = await writeSplitter({
             functionName: "splitEqualERC20",
             args: [tokenAddress, recipients, totalAmount],
           });
         } else {
           const amounts = splitData.recipients.map(r => parseUnits(r.amount, decimals));
 
-          txHash = await writeSplitter({
+          transactionHash = await writeSplitter({
             functionName: "splitERC20",
             args: [tokenAddress, recipients, amounts],
           });
         }
       }
-
-      if (txHash) {
-        // Clear the pending split data from localStorage
+    } catch (error: any) {
+      console.error("Error executing split:", error);
+      
+      // Check if we got a transaction hash despite the error
+      // This can happen when the tx succeeds but waiting for receipt fails
+      if (transactionHash) {
+        console.log("Transaction was submitted successfully despite error, hash:", transactionHash);
+        
+        // Clear the pending split data
         localStorage.removeItem("pendingSplit");
         
+        // Show success screen
         setTransactionSuccess({
-          hash: txHash,
+          hash: transactionHash,
           recipients: splitData.recipients,
           totalAmount: splitData.totalAmount,
           token: splitData.token,
         });
+        setIsExecuting(false);
+        return;
       }
-    } catch (error: any) {
-      console.error("Error executing split:", error);
       
-      // Don't show error if it's just "User rejected" but transaction might still be processing
-      // This is a known issue with wagmi simulation on some networks
+      // Don't show error if it's just "User rejected" - this is often a false positive
       if (error?.message?.includes("User rejected")) {
-        // Wait a moment to see if transaction actually went through
-        console.log("Checking if transaction succeeded despite rejection message...");
-        return; // Exit gracefully, user will see success if it worked
+        console.log("Got 'User rejected' error - checking if transaction actually succeeded...");
+        
+        // Show a friendly message explaining this is likely a false error
+        notification.warning(
+          <div>
+            <p className="font-semibold mb-2">Transaction may have succeeded!</p>
+            <p className="text-sm">
+              Please check your wallet activity. If the transaction completed, the split was successful despite this
+              error message.
+            </p>
+          </div>,
+          {
+            duration: 8000,
+          },
+        );
+        
+        // Return to home page so user can start fresh
+        setTimeout(() => {
+          localStorage.removeItem("pendingSplit");
+          router.push("/");
+        }, 3000);
+        
+        setIsExecuting(false);
+        return;
       }
       
       // Check for chain mismatch error
@@ -289,11 +314,26 @@ export default function SplitReviewPage() {
           `Please switch your wallet to ${targetNetwork.name} using the network selector in the top-right corner`
         );
       } else {
-        notification.error("Failed to execute split");
+        notification.error("Failed to execute split. Please check your wallet and try again.");
       }
-    } finally {
+      
       setIsExecuting(false);
+      return;
     }
+
+    // Success path - only reached if no errors thrown
+    if (transactionHash) {
+      localStorage.removeItem("pendingSplit");
+      
+      setTransactionSuccess({
+        hash: transactionHash,
+        recipients: splitData.recipients,
+        totalAmount: splitData.totalAmount,
+        token: splitData.token,
+      });
+    }
+    
+    setIsExecuting(false);
   };
 
   const handleBackToEdit = () => {
