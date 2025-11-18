@@ -12,6 +12,7 @@ import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { Address } from "viem";
 import { useNetworkColor, useOutsideClick } from "~~/hooks/scaffold-eth";
 import { useTargetNetwork } from "~~/hooks/scaffold-eth/useTargetNetwork";
+import scaffoldConfig from "~~/scaffold.config";
 import { getBlockExplorerAddressLink } from "~~/utils/scaffold-eth";
 
 const getChainDisplayName = (chainName?: string): string => {
@@ -72,7 +73,11 @@ export const RainbowKitCustomConnectButton = () => {
                 );
               }
 
-              if (chain.unsupported || chain.id !== targetNetwork.id) {
+              const isChainSupported = scaffoldConfig.targetNetworks.some(
+                targetNet => targetNet.id === chain.id
+              );
+              
+              if (chain.unsupported || !isChainSupported) {
                 return <WrongNetworkDropdown />;
               }
 
