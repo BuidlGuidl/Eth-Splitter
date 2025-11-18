@@ -588,14 +588,14 @@ function SplitContent() {
                     !selectedToken ||
                     recipients.length < 2 ||
                     hasDuplicates ||
-                    (urlChainId && urlChainId !== chainId)
+                    Boolean(urlChainId && urlChainId !== chainId)
                   }
                 >
                   Review Split
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </button>
               </div>
-              {urlChainId && urlChainId !== chainId && (
+              {urlChainId !== null && urlChainId !== chainId && (
                 <p className="text-xs text-warning mt-2 text-center">
                   ⚠️ Please switch your wallet network to continue
                 </p>
